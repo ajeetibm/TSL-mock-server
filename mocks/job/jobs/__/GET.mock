@@ -1,0 +1,198 @@
+HTTP/1.1 200 OK
+X-Requested-By: Dinkar Chavhan
+Content-Type: application/json
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS
+Access-Control-Allow-Headers: Content-Type, Authorization
+
+{
+	"jobId": "12345",
+	"jobNumber": "SDF7865434",
+	"title": "Sample job",
+	"description": "Sample job description",
+	"status": "NEW",
+	"address":
+			{
+				"firstname": "fname",
+				"lastname": "lname",
+				"address1": "Salt lake",
+				"address2": "sec 5",
+				"city": "kolkata",
+				"state": "west bengal",
+				"country": "India",
+				"zip": "212422",
+				"area": "webel city"
+			},
+	"date": "746546598476",
+	"isEmergency": "0",
+	"isRecurring": "0",
+	"propertyType": "apartment",
+	"products":
+			[
+				{
+					"productId": "12345",
+					"title": "product title 1",
+					"description": "product description 1",
+					"image": "product image 1",
+					"count": "1",
+					"category": "category name"
+				},
+				{
+					"productId": "23456",
+					"title": "product title 2",
+					"description": "product description 2",
+					"image": "product image 2",
+					"count": "3",
+					"category": "category name 2"
+				}
+			],
+	"quotes":
+			[
+				{
+					"quoteId": "123",
+					"title": "Sample quote 1",
+					"laborCharge": 23,
+					"transportCharge": 10,
+					"tax": 5,
+					"serviceCharge": 8,
+					"amount": 300,
+					"plumber": "Plumber A",
+          "hours":60,
+					"flag": "0",
+					"status": "NEW",
+					"date": "456546598497",
+					"notes":
+							[
+								{
+									"description": "Sample note",
+									"user": "Home Owner's Name",
+									"date": "556546598425"
+								},
+								{
+									"description": "Sample note 1",
+									"user": "Plumber's Name",
+									"date": "856546598436"
+								}
+							],					
+					"parts":
+							{
+								"items":
+										[
+											{
+												"itemName": "part1",
+												"price": "10",
+												"count": "1"
+											},
+											{
+												"itemName": "part2",
+												"price": "15",
+												"count": "2"
+											}
+										],
+								"invoice":
+										[								
+											{
+												"name": "filename1",
+												"invoiceNumber": "INV57657876768",
+												"amount": 300,
+												"url": "Image Url"
+											},
+											{
+												"name": "filename1",
+												"invoiceNumber": "INV57657876769",
+												"amount": 400,
+												"url": "Image Url2"
+											}
+										],
+								"amount": 100		
+							},
+					"media":
+							[
+								{
+									"name": "filename",
+									"content-type": "video",
+									"url": "url"
+								},
+								{
+									"name": "filename1",
+									"content-type": "video",
+									"url": "url1"
+								}
+							],
+					"history":
+							[
+								{
+									"date": "timestamp",
+									"description": "sample quote description"
+								},
+								{
+									"date": "timestamp",
+									"description": "sample quote description"
+								}
+							],
+					"worker":
+							{
+								"firstName": "jhon",
+								"profilePicture": "url",
+								"ratings": "2.5",
+								"jobsCount": "10",
+								"skills": "skills",
+								"distance": "base/live location distance"
+							}
+				},
+				{
+					"quoteId": "234",
+					"title": "Sample quote 2",
+					"laborCharge": 40,
+					"transportCharge": 11,
+					"tax": 6,
+					"serviceCharge": 7,
+					"amount": 454,
+					"plumber": "Plumber B",
+          "hours":50,
+					"flag": "0",
+					"status": "NEW",
+					"date": "236546598430",
+					"notes":
+							[
+								{
+									"description": "Sample note",
+									"user": "Home Owner's Name",
+									"date": "556546598425"
+								},
+								{
+									"description": "Sample note 1",
+									"user": "Plumber's Name",
+									"date": "856546598436"
+								}
+							]
+				}						
+			],
+	"images":
+			[
+				{
+					"title": "Sample image",
+					"url": "Image url",
+					"date": "556546598425"
+				},
+				{
+					"title": "Sample image 2",
+					"url": "Image url 2",
+					"date": "556546598425"
+				}
+			],
+	"history":
+			[
+				{
+					"date": "timestamp",
+					"description": "sample description"
+				},
+				{
+					"date": "timestamp",
+					"description": "sample description"
+				}
+			]
+}
+
+
+

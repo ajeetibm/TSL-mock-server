@@ -1,0 +1,26 @@
+HTTP/1.1 200 OK
+X-Requested-By: Sushma Prasad
+Content-Type: application/json
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS
+Access-Control-Allow-Headers: Content-Type, Authorization
+
+
+{
+  "incidentId": 12345,
+  "isReOpen":true,
+  "reopenReason":"issue_reoccurred",
+  "description": 
+    "media": [
+    {
+      "name": "filename1",
+      "content-type": "image",
+      "url": "url"
+    },
+    {
+      "name": "filename2",
+      "content-type": "video",
+      "url": "url1"
+    }
+  ]
+}

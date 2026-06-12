@@ -1,0 +1,34 @@
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+	"name": "Krish",
+	"onBoardingStatus": "SUBMITTED",
+	"onBoardingnotes": "",
+	"profilePicUrl": "https://i.pravatar.cc/150?img=3",
+	"banner": ["https://i.pravatar.cc/150?img=6", "image2Url", "image3Url", "image4Url"],
+	"jobCount": {
+					"newJob": "1",
+					"inProgress": "3",
+					"completed": "1",
+					"Cancelled": "0",
+					"Rejected": "0",
+					"Settled": "0"
+				},
+  "incidentCount": {
+        "newIncident": 3,
+        "inProgress": 2,
+        "completed": 5,
+        "declined": 0,
+        "rejected": 0
+    },
+	"jobsInvited": "5",
+	"yearlyEarning": "5433",
+	"monthlyEarning": {
+		"1": "100",
+		"2": "200",
+		"3": "150",
+		"4": "80",
+		"5": "444"
+	}
+}

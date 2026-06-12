@@ -1,0 +1,24 @@
+HTTP/1.1 200 OK
+X-Requested-By: Sushma Prasad
+Content-Type: application/json
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS
+Access-Control-Allow-Headers: Content-Type, Authorization
+
+{
+    "jobCount": {
+        "draft": 1,
+        "newJob": 8,
+        "inProgress": 27,
+        "completed": 10,
+        "cancelled": 1,
+        "rejected": null,
+        "settled": 9
+    },
+    "noOfServiceProvidersToBeSettled": 4,
+    "noOfJobsToBeSettled": 7,
+    "serviceProviders": 14,
+    "homeOwners": 4,
+    "executed": 18,
+    "submitted": 22
+}

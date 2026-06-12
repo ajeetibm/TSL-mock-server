@@ -1,0 +1,115 @@
+
+HTTP/1.1 200 OK
+X-Requested-By: Dinkar Chavhan
+Content-Type: application/json
+
+{
+    "jobs": [
+        {
+            "locationName": "KOVURU,POTTI SRIRAMULU",
+            "productNameList": [
+                "Wash Basin Replace and/or  Installation"
+            ],
+            "jobId": 33,
+            "jobNumber": 73618660,
+            "description": "I will be busy so hurry up",
+            "status": "New",
+            "jobVisitDate": 1770717585000,
+            "jobExecutionDate": 1770718545000,
+            "jobCreationDate": 1770638191201,
+            "jobCompletionDate": null,
+            "owner": {
+                "ratings": null,
+                "reviews": null,
+                "feedbackCount": null,
+                "firstname": "Anurima",
+                "phone": null,
+                "distance": null,
+                "profilePicture": "https://i.pravatar.cc/150?img=1"
+            },
+            "quote": {
+                "quoteId": 21,
+                "title": "Sample quote",
+                "amount": "621.0",
+                "plumber": null,
+                "plumberRating": null,
+                "status": "QUOTE_SUBMITTED",
+                "date": 1770727441505,
+                "locationName": null,
+                "feedbackCount": null
+            }
+        },
+        {
+            "locationName": "area 1",
+            "productNameList": [
+                "Storm water pipe inspection",
+                "Storm water pipe leakage",
+                "Storm water pipe installation ",
+                "Storm water pipe fixing",
+                "Storm water chamber installation and fixing "
+            ],
+            "jobId": 11,
+            "jobNumber": 66283773,
+            "description": null,
+            "status": "New",
+            "jobVisitDate": 1769774997000,
+            "jobExecutionDate": 1769774997000,
+            "jobCreationDate": 1769767820985,
+            "jobCompletionDate": null,
+            "owner": {
+                "ratings": "4.5",
+                "reviews": "1",
+                "feedbackCount": "1",
+                "firstname": "Swati",
+                "phone": null,
+                "distance": null,
+                "profilePicture": "https://i.pravatar.cc/150?img=2"
+            },
+            "quote": {
+                "quoteId": 22,
+                "title": "Sample quote",
+                "amount": "690.0",
+                "plumber": null,
+                "plumberRating": null,
+                "status": "QUOTE_SUBMITTED",
+                "date": 1770815373425,
+                "locationName": null,
+                "feedbackCount": null
+            }
+        },
+        {
+            "locationName": "area 1",
+            "productNameList": [
+                "New Borehole Installation "
+            ],
+            "jobId": 13,
+            "jobNumber": 23256241,
+            "description": null,
+            "status": "New",
+            "jobVisitDate": 1770634906000,
+            "jobExecutionDate": 1770634906000,
+            "jobCreationDate": 1770289353939,
+            "jobCompletionDate": null,
+            "owner": {
+                "ratings": "4.5",
+                "reviews": "1",
+                "feedbackCount": "1",
+                "firstname": "Swati",
+                "phone": null,
+                "distance": null,
+                "profilePicture":  "https://i.pravatar.cc/150?img=4"
+            },
+            "quote": {
+                "quoteId": 2,
+                "title": "Sample quote",
+                "amount": "31.74",
+                "plumber": null,
+                "plumberRating": null,
+                "status": "QUOTE_SUBMITTED",
+                "date": 1770289965146,
+                "locationName": null,
+                "feedbackCount": null
+            }
+        }
+    ]
+}

@@ -1,0 +1,200 @@
+
+HTTP/1.1 200 OK
+X-Requested-By: Naveen
+Content-Type: application/json
+
+{
+    "jobs": [
+        {
+			"locationName": "Leighwood Lodge, 41 2nd Ave, Parktown North, Randburg",
+			"productNameList": [
+				"Wash Basin Replace and/or  Installation"
+			],
+			"jobId": 637,
+			"jobNumber": 88447316,
+			"description": "Hi Testing Description",
+			"status": "New",
+			"jobVisitDate": 1677573038000,
+			"jobExecutionDate": 1677573038000,
+			"jobCreationDate": 1677045790636,
+			"jobCompletionDate": 1677045790636,
+			"owner": {
+				"ratings": "1.9545454545454546",
+				"reviews": "4",
+				"feedbackCount": "11",
+				"firstname": "Soujanya",
+				"distance": "2.5",
+                "phone": "9876543210",
+				"profilePicture": "https://i.pravatar.cc/150?img=1"
+			},
+			"quote": {
+            "status": "QUOTE_APPROVED",
+            "amount": 500
+            }
+		},
+		{
+			"locationName": "Leighwood Lodge, 41 2nd Ave, Parktown North, Randburg",
+			"productNameList": [
+				"Wash Basin Replace and/or  Installation"
+			],
+			"jobId": 637,
+			"jobNumber": 88447316,
+			"description": "Hi Testing Description",
+			"status": "New",
+			"jobVisitDate": 1677573038000,
+			"jobExecutionDate": 1677573038000,
+			"jobCreationDate": 1677045790636,
+			"jobCompletionDate": 1677045790636,
+			"owner": {
+				"ratings": "1.9545454545454546",
+				"reviews": "4",
+				"feedbackCount": "11",
+				"firstname": "Soujanya",
+				"distance": "2.5",
+                "phone": "9876543210",
+				"profilePicture": "https://i.pravatar.cc/150?img=4"
+			},
+			"quote": {
+            "status": "QUOTE_APPROVED",
+            "amount": 1200
+            }
+		},
+		{
+			"locationName": "Mokwakwaila bolbedu 0862",
+			"productNameList": [
+				"Wash Basin Replace and/or  Installation"
+			],
+			"jobId": 648,
+			"jobNumber": 69561250,
+			"description": null,
+			"status": "New",
+			"jobVisitDate": 1677321157000,
+			"jobExecutionDate": 1677486600000,
+			"jobCreationDate": 1677148405758,
+			"jobCompletionDate": 1677148405758,
+			"owner": {
+				"ratings": "1.9545454545454546",
+				"reviews": "4",
+				"feedbackCount": "11",
+				"firstname": "Soujanya",
+				"distance": "2.5",
+                "phone": "9876543210",
+                "profilePicture": "https://i.pravatar.cc/150?img=2"
+			},
+			"quote": {
+            "status": "QUOTE_SUBMITTED",
+            "amount": 800
+            }
+		},
+		{
+			"locationName": "Mokwakwaila bolbedu 0862",
+			"productNameList": [
+				"Wash Basin Replace and/or  Installation"
+			],
+			"jobId": 639,
+			"jobNumber": 65021218,
+			"description": null,
+			"status": "New",
+			"jobVisitDate": 1677062296000,
+			"jobExecutionDate": 1677062296000,
+			"jobCreationDate": 1677051512785,
+			"jobCompletionDate": 1677051512785,
+			"owner": {
+				"ratings": "1.9545454545454546",
+				"reviews": "4",
+				"feedbackCount": "11",
+				"firstname": "Raj",
+				"distance": "2.5",
+                "phone": "9876543210",
+				"profilePicture": "https://i.pravatar.cc/150?img=3"
+            },
+			"quote": {
+            "status": "QUOTE_REJECTED",
+            "amount": 2100
+            }
+		},
+		{
+			"locationName": "Mokwakwaila bolbedu 0862",
+			"productNameList": [
+				"Wash Basin Replace and/or  Installation"
+			],
+			"jobId": 638,
+			"jobNumber": 88174800,
+			"description": "test",
+			"status": "New",
+			"jobVisitDate": 1677056031000,
+			"jobExecutionDate": 1677574431000,
+			"jobCreationDate": 1677045839012,
+			"jobCompletionDate": 1677045839012,
+			"owner": {
+				"ratings": "1.9545454545454546",
+				"reviews": "4",
+				"feedbackCount": "11",
+				"firstname": "Kevin",
+				"distance": "2.5",
+                "phone": "9876543210",
+				"profilePicture": "https://i.pravatar.cc/150?img=7"
+                },
+			"quote": {
+            "status": "QUOTE_REJECTED",
+            "amount": 2100
+            }
+		},
+		{
+			"locationName": "3147 Prince Alfred St_1412.2",
+			"productNameList": [
+				"Wash Basin Replace and/or  Installation"
+			],
+			"jobId": 498,
+			"jobNumber": 48931889,
+			"description": "-tve 2",
+			"status": "New",
+			"jobVisitDate": 1675411513000,
+			"jobExecutionDate": 1675411513000,
+			"jobCreationDate": 1675408691099,
+			"jobCompletionDate": 1675408691099,
+			"owner": {
+				"ratings": "4.0",
+				"reviews": "5",
+				"feedbackCount": "7",
+				"firstname": "Suraksha",
+				"phone": 9876543210,
+				"distance": 1412.2,
+				"profilePicture": "https://i.pravatar.cc/150?img=5"
+                },
+			"quote": {
+            "status": "QUOTE_REVISED",
+            "amount": 1400
+            }
+		},
+		{
+			"locationName": "Northern Parkway and Gold Reef Road",
+			"productNameList": [
+				"Wash Basin Replace and/or  Installation"
+			],
+			"jobId": 527,
+			"jobNumber": 19710481,
+			"description": null,
+			"status": "New",
+			"jobVisitDate": 1675769826000,
+			"jobExecutionDate": 1675769826000,
+			"jobCreationDate": 1675766224009,
+			"jobCompletionDate": 1675766224009,
+			"owner": {
+				"ratings": "4.0",
+				"reviews": "5",
+				"feedbackCount": "7",
+				"firstname": "Suraksha",
+				"distance": "2.5",
+                "phone": "9876543210",
+				"profilePicture": "https://i.pravatar.cc/150?img=6"
+            },
+			"quote": {
+            "status": "QUOTE_REVISED",
+            "amount": 2500
+            }
+		}
+
+	]
+  
+}

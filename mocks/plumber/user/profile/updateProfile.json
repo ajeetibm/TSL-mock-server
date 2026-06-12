@@ -1,0 +1,40 @@
+{
+    "firstName": "Gary",
+    "lastName": "Kirsten",
+    "email": "gkirsten@gmail.com",
+    "sex": "M",
+    "userType": "P",
+    "address": {
+        "name": "Home",
+        "address1": "1476 Bad St",
+        "address2": null,
+        "address3": null,
+        "city": "Ceres",
+        "state": "Western Cape",
+        "country": "South Africa",
+        "zip": "6840",
+        "phone": "+27836673944"
+    },
+    "startTime": "10:00",
+    "endTime": "18:00",
+    "skills": [
+        1,
+        2,
+        3
+    ],
+    "qualificationDocUrl": "http://sample.qualificationDocUrl.com/11220323",
+    "isQualified": false,
+    "qualification": "ITI",
+    "nationalId": "3874823478247",
+    "nationalDocUrl": "http://sample.nationalDocUrl.com/11220323",
+    "profilePicUrl": "http://sample.profilePicUrl.com/11220323",
+    "payment": {
+        "acountType": "Checking",
+        "acountNumber": "1234567890",
+        "acountName": "Aiden Markram",
+        "bankcode": "SA1234",
+        "branchName": "Umkomaas",
+        "bankName": "South African Bank"
+    },
+    "profileStatus": "Draft"
+}

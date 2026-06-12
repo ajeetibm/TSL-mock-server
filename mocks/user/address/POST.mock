@@ -1,0 +1,19 @@
+HTTP/1.1 200 OK
+X-Requested-By: Dinkar Chavhan
+Content-Type: application/json
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS
+Access-Control-Allow-Headers: Content-Type, Authorization
+
+{
+    "name": "Office Address",
+    "firstname": "Temba",
+    "lastname": "Bevuma",
+    "address": "Philerene Road",
+    "address1": "Raslouw, farm, Swartkop 383-Jr",
+    "address2": "Centurion",
+    "city": "Centurion",
+    "state": "Centurion",
+    "country": "South Africa",
+    "zip": "0157"
+}

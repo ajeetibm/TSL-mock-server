@@ -1,0 +1,625 @@
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+	"appData": {
+		"HO": {
+			"iOS": null,
+			"Android": null,
+			"Web": {
+				"forceUpdate": false,
+				"Version": "a.b.c.d"
+			}
+		},
+		"PL": {
+			"iOS": {
+				"forceUpdate": false,
+				"Version": "0.0.1.0 "
+			},
+			"Android": {
+				"forceUpdate": false,
+				"Version": "0.0.1.0 "
+			},
+			"Web": {
+				"forceUpdate": false,
+				"Version": "0.0.1.0 "
+			}
+		},
+		"AD": {
+			"iOS": null,
+			"Android": null,
+			"Web": {
+				"forceUpdate": false,
+				"Version": "0.0.1.0 "
+			}
+		}
+	},
+	"bannerUrls": [
+		"https://s3.eu-de.cloud-object-storage.appdomain.cloud/whc-dev-object-storage/common/sliderImage1.png?AWSAccessKeyId=4ccef7ae412043f48ffbe66b3466b251&Expires=4830733560&Signature=ugTCT6lC%2BHy8N1gJGFHkTQu1NEs%3D",
+		"https://s3.eu-de.cloud-object-storage.appdomain.cloud/whc-dev-object-storage/common/sliderImage2.png?AWSAccessKeyId=4ccef7ae412043f48ffbe66b3466b251&Expires=4830733658&Signature=6ticL1oLvXCsqwE4q194yH1lSGE%3D",
+		"https://s3.eu-de.cloud-object-storage.appdomain.cloud/whc-dev-object-storage/common/sliderImage3.png?AWSAccessKeyId=4ccef7ae412043f48ffbe66b3466b251&Expires=4830733708&Signature=RM3d9pV8jo3%2Ff7K65CrZMDxIt0M%3D",
+		"https://s3.eu-de.cloud-object-storage.appdomain.cloud/whc-dev-object-storage/common/sliderImage4.png?AWSAccessKeyId=4ccef7ae412043f48ffbe66b3466b251&Expires=4830733778&Signature=IbZNNiUjiZDcev0zmBXsgO7OlTw%3D",
+		"https://s3.eu-de.cloud-object-storage.appdomain.cloud/whc-dev-object-storage/common/sliderImage5.png?AWSAccessKeyId=4ccef7ae412043f48ffbe66b3466b251&Expires=4830733822&Signature=jOLExDeLjVA7rkgnWnhTF8sXefw%3D"
+	],
+	"quote": {
+		"serviceChargeFactor": "0.20",
+		"taxFactor": "0.15"
+	},
+	"skills": [
+		{
+			"id": 1,
+			"name": "Leak-Less Valve / Bofa Valve Installer"
+		},
+		{
+			"id": 2,
+			"name": "Product Installations (Taps, Toilets, Showers, Filters)"
+		},
+		{
+			"id": 3,
+			"name": "Leak Detection"
+		},
+		{
+			"id": 4,
+			"name": "Blocked Drain"
+		},
+		{
+			"id": 5,
+			"name": "Drain Cleaning"
+		},
+		{
+			"id": 6,
+			"name": "Electrical Geyser"
+		},
+		{
+			"id": 7,
+			"name": "Stormwater"
+		},
+		{
+			"id": 8,
+			"name": "Gas Geyser"
+		},
+		{
+			"id": 9,
+			"name": "Emergency Repairs"
+		},
+		{
+			"id": 10,
+			"name": "CCTV Drain Inspection"
+		},
+		{
+			"id": 11,
+			"name": "Septic Tanks"
+		},
+		{
+			"id": 12,
+			"name": "Solar Geyser Installation"
+		},
+		{
+			"id": 13,
+			"name": "Solar Geyser Repairs"
+		},
+		{
+			"id": 14,
+			"name": "Building Construction plumbing"
+		},
+		{
+			"id": 15,
+			"name": "Meter Installation"
+		},
+		{
+			"id": 16,
+			"name": "Irrigation Systems"
+		},
+		{
+			"id": 17,
+			"name": "Leaking Roof"
+		},
+		{
+			"id": 18,
+			"name": "BOREHOLE"
+		},
+		{
+			"id": 19,
+			"name": "WATERPROOFING"
+		},
+		{
+			"id": 20,
+			"name": "LEAK DETECTION"
+		},
+		{
+			"id": 21,
+			"name": "WATER EFFICIENCY"
+		},
+		{
+			"id": 22,
+			"name": "Rain water harvesting"
+		},
+		{
+			"id": 23,
+			"name": "Gray water treatment systems"
+		},
+		{
+			"id": 24,
+			"name": "Water infrastructure inspection"
+		},
+		{
+			"id": 25,
+			"name": "Water bill reduction recommendations"
+		},
+		{
+			"id": 26,
+			"name": "POOL Services"
+		},
+		{
+			"id": 27,
+			"name": "Electrical Geyser Installation"
+		},
+		{
+			"id": 28,
+			"name": "Electrical Geyser burst"
+		},
+		{
+			"id": 29,
+			"name": "Electrical Geyser leakage"
+		},
+		{
+			"id": 30,
+			"name": "Solar Geyser Installation"
+		},
+		{
+			"id": 31,
+			"name": "Solar Geyser burst"
+		},
+		{
+			"id": 32,
+			"name": "Solar Geyser leakage"
+		},
+		{
+			"id": 33,
+			"name": "Gas Geyser Installation"
+		},
+		{
+			"id": 34,
+			"name": "Gas Geyser burst"
+		},
+		{
+			"id": 35,
+			"name": "Gas Geyser leakage"
+		},
+		{
+			"id": 36,
+			"name": "Water quality testing"
+		},
+		{
+			"id": 37,
+			"name": "Water purification"
+		},
+		{
+			"id": 38,
+			"name": "Boiler Geyser Installation"
+		},
+		{
+			"id": 39,
+			"name": "Boiler Geyser burst"
+		},
+		{
+			"id": 40,
+			"name": "Boiler Geyser leakage"
+		},
+		{
+			"id": 41,
+			"name": "Boiler Geyser Repairs"
+		},
+		{
+			"id": 42,
+			"name": "Storm water pipe inspection"
+		},
+		{
+			"id": 43,
+			"name": "Storm water pipe leakage"
+		},
+		{
+			"id": 44,
+			"name": "Storm water pipe installation"
+		},
+		{
+			"id": 45,
+			"name": "Storm water pipe fixing"
+		},
+		{
+			"id": 46,
+			"name": "Storm water chamber installation and fixing"
+		},
+		{
+			"id": 47,
+			"name": "General water testing"
+		},
+		{
+			"id": 48,
+			"name": "Water testing"
+		},
+		{
+			"id": 49,
+			"name": "Blue Drop"
+		},
+		{
+			"id": 50,
+			"name": "Green Drop"
+		}
+	],
+	"demography": {
+		"country": "South Africa",
+		"countryPhoneCode": "27",
+		"states": [
+			{
+				"name": "Eastern Cape",
+				"cities": [
+					"Adelaide",
+					"Alfred Nzo District Municipality",
+					"Alice",
+					"Aliwal North",
+					"Amathole District Municipality",
+					"Bhisho",
+					"Buffalo City Metropolitan Municipality",
+					"Burgersdorp",
+					"Butterworth",
+					"Cacadu District Municipality",
+					"Chris Hani District Municipality",
+					"Cradock",
+					"Dordrecht",
+					"East London",
+					"Elliot",
+					"Fort Beaufort",
+					"Graaff-Reinet",
+					"Grahamstown",
+					"Ilinge",
+					"Joe Gqabi District Municipality",
+					"Kirkwood",
+					"Kruisfontein",
+					"Lady Frere",
+					"Middelburg",
+					"Molteno",
+					"Mthatha",
+					"Nelson Mandela Bay Metropolitan Municipality",
+					"OR Tambo District Municipality",
+					"Port Alfred",
+					"Port Elizabeth",
+					"Port Saint John’s",
+					"Queensdale",
+					"Queenstown",
+					"Somerset East",
+					"Stutterheim",
+					"Uitenhage",
+					"Whittlesea",
+					"Willowmore"
+				]
+			},
+			{
+				"name": "Free State",
+				"cities": [
+					"Allanridge",
+					"Bethlehem",
+					"Bloemfontein",
+					"Bothaville",
+					"Botshabelo",
+					"Brandfort",
+					"Clocolan",
+					"Deneysville",
+					"Fezile Dabi District Municipality",
+					"Frankfort",
+					"Harrismith",
+					"Heilbron",
+					"Hennenman",
+					"Hoopstad",
+					"Koppies",
+					"Kroonstad",
+					"Kutloanong",
+					"Ladybrand",
+					"Lejweleputswa District Municipality",
+					"Lindley",
+					"Mangaung Metropolitan Municipality",
+					"Marquard",
+					"Parys",
+					"Phuthaditjhaba",
+					"Reitz",
+					"Sasolburg",
+					"Senekal",
+					"Thaba Nchu",
+					"Thabo Mofutsanyana District Municipality",
+					"Theunissen",
+					"Ventersburg",
+					"Viljoenskroon",
+					"Villiers",
+					"Virginia",
+					"Vrede",
+					"Vredefort",
+					"Welkom",
+					"Wesselsbron",
+					"Winburg",
+					"Xhariep District Municipality",
+					"Zastron"
+				]
+			},
+			{
+				"name": "Gauteng",
+				"cities": [
+					"Alberton",
+					"Benoni",
+					"Boksburg",
+					"Brakpan",
+					"Bronkhorstspruit",
+					"Carletonville",
+					"Centurion",
+					"City of Johannesburg Metropolitan Municipality",
+					"City of Tshwane Metropolitan Municipality",
+					"Cullinan",
+					"Diepsloot",
+					"Eastleigh",
+					"Eden Glen",
+					"Eden Glen Ext 60",
+					"Edenvale",
+					"Ekangala",
+					"Ekurhuleni Metropolitan Municipality",
+					"Heidelberg",
+					"Johannesburg",
+					"Krugersdorp",
+					"Mabopane",
+					"Midrand",
+					"Midstream",
+					"Modderfontein",
+					"Muldersdriseloop",
+					"Nigel",
+					"Orange Farm",
+					"Pretoria",
+					"Randburg",
+					"Randfontein",
+					"Roodepoort",
+					"Sedibeng District Municipality",
+					"Soweto",
+					"Springs",
+					"Tembisa",
+					"Vanderbijlpark",
+					"Vereeniging",
+					"West Rand District Municipality",
+					"Westonaria"
+				]
+			},
+			{
+				"name": "KwaZulu-Natal",
+				"cities": [
+					"Amajuba District Municipality",
+					"Ballito",
+					"Berea",
+					"Dundee",
+					"Durban",
+					"Ekuvukeni",
+					"eMkhomazi",
+					"Empangeni",
+					"Eshowe",
+					"eSikhaleni",
+					"eThekwini Metropolitan Municipality",
+					"Glencoe",
+					"Greytown",
+					"Hluhluwe",
+					"Howick",
+					"iLembe District Municipality",
+					"Kokstad",
+					"KwaDukuza",
+					"Margate",
+					"Mondlo",
+					"Mooirivier",
+					"Mpophomeni",
+					"Mpumalanga",
+					"Mtubatuba",
+					"Ndwedwe",
+					"Newcastle",
+					"Pietermaritzburg",
+					"Port Shepstone",
+					"Richards Bay",
+					"Richmond",
+					"Scottburgh",
+					"Sisonke District Municipality",
+					"Sundumbili",
+					"Ugu District Municipality",
+					"Ulundi",
+					"uMgungundlovu District Municipality",
+					"uMkhanyakude District Municipality",
+					"uMzinyathi District Municipality",
+					"uThukela District Municipality",
+					"uThungulu District Municipality",
+					"Utrecht",
+					"Vryheid",
+					"Zululand District Municipality"
+				]
+			},
+			{
+				"name": "Limpopo",
+				"cities": [
+					"Bochum",
+					"Capricorn District Municipality",
+					"Duiwelskloof",
+					"Ga-Kgapane",
+					"Giyani",
+					"Lebowakgomo",
+					"Louis Trichardt",
+					"Mankoeng",
+					"Modimolle",
+					"Mokopane",
+					"Mopani District Municipality",
+					"Musina",
+					"Nkowakowa",
+					"Phalaborwa",
+					"Polokwane",
+					"Sekhukhune District Municipality",
+					"Thabazimbi",
+					"Thohoyandou",
+					"Thulamahashi",
+					"Tzaneen",
+					"Vhembe District Municipality",
+					"Warmbaths",
+					"Waterberg District Municipality"
+				]
+			},
+			{
+				"name": "Mpumalanga",
+				"cities": [
+					"Balfour",
+					"Barberton",
+					"Belfast",
+					"Bethal",
+					"Breyten",
+					"Carolina",
+					"Delmas",
+					"Driefontein",
+					"Ehlanzeni District",
+					"eMbalenhle",
+					"Ermelo",
+					"Gert Sibande District Municipality",
+					"Hendrina",
+					"Komatipoort",
+					"Kriel",
+					"Lydenburg",
+					"Middelburg",
+					"Nelspruit",
+					"Nkangala District Municipality",
+					"Piet Retief",
+					"Secunda",
+					"Siyabuswa",
+					"Standerton",
+					"Volksrust",
+					"White River",
+					"Witbank"
+				]
+			},
+			{
+				"name": "North West",
+				"cities": [
+					"Bloemhof",
+					"Bojanala Platinum District Municipality",
+					"Brits",
+					"Christiana",
+					"Dr Kenneth Kaunda District Municipality",
+					"Dr Ruth Segomotsi Mompati District Municipality",
+					"Fochville",
+					"Ga-Rankuwa",
+					"Jan Kempdorp",
+					"Klerksdorp",
+					"Koster",
+					"Lichtenburg",
+					"Mahikeng",
+					"Maile",
+					"Mmabatho",
+					"Ngaka Modiri Molema District Municipality",
+					"Orkney",
+					"Potchefstroom",
+					"Rustenburg",
+					"Schweizer-Reneke",
+					"Stilfontein",
+					"Vryburg",
+					"Wolmaransstad",
+					"Zeerust"
+				]
+			},
+			{
+				"name": "Northern Cape",
+				"cities": [
+					"Barkly West",
+					"Brandvlei",
+					"Calvinia",
+					"Carnarvon",
+					"Colesberg",
+					"Daniëlskuil",
+					"De Aar",
+					"Frances Baard District Municipality",
+					"Fraserburg",
+					"John Taolo Gaetsewe District Municipality",
+					"Kathu",
+					"Kenhardt",
+					"Kimberley",
+					"Kuruman",
+					"Namakwa District Municipality",
+					"Noupoort",
+					"Orania",
+					"Pampierstad",
+					"Pixley ka Seme District Municipality",
+					"Pofadder",
+					"Postmasburg",
+					"Prieska",
+					"Ritchie",
+					"Siyanda District Municipality",
+					"Springbok",
+					"Upington",
+					"Van Wyksvlei",
+					"Warrenton"
+				]
+			},
+			{
+				"name": "Western Cape",
+				"cities": [
+					"Albertina",
+					"Arniston",
+					"Atlantis",
+					"Beaufort West",
+					"Bergvliet",
+					"Bredasdorp",
+					"Caledon",
+					"Calitzdorp",
+					"Cape Town",
+					"Cape Winelands District Municipality",
+					"Central Karoo District Municipality",
+					"Ceres",
+					"City of Cape Town",
+					"Clanwilliam",
+					"Claremont",
+					"Constantia",
+					"De Rust",
+					"Eden District Municipality",
+					"George",
+					"Grabouw",
+					"Hardys Memories of Africa",
+					"Hermanus",
+					"Knysna",
+					"Kraaifontein",
+					"Ladismith",
+					"Lansdowne",
+					"Malmesbury",
+					"Montagu",
+					"Moorreesburg",
+					"Mossel Bay",
+					"Newlands",
+					"Oudtshoorn",
+					"Overberg District Municipality",
+					"Paarl",
+					"Piketberg",
+					"Plettenberg Bay",
+					"Prince Albert",
+					"Retreat",
+					"Riversdale",
+					"Robertson",
+					"Rondebosch",
+					"Rosebank",
+					"Saldanha",
+					"Stellenbosch",
+					"Sunset Beach",
+					"Swellendam",
+					"Vredenburg",
+					"Vredendal",
+					"Wellington",
+					"West Coast District Municipality",
+					"Worcester",
+					"Zoar"
+				]
+			}
+		]
+	},
+	"termCondUrlHO": "https://s3.eu-de.cloud-object-storage.appdomain.cloud/whc-dev-object-storage/common/HO_Terms%26Cond.html?AWSAccessKeyId=4ccef7ae412043f48ffbe66b3466b251&Expires=4830743080&Signature=1ACbR2%2B0ysDl7ixz3ac2645b1MI%3D",
+	"termCondUrlPL": "https://s3.eu-de.cloud-object-storage.appdomain.cloud/whc-dev-object-storage/common/plumberTerms.html?AWSAccessKeyId=4ccef7ae412043f48ffbe66b3466b251&Expires=4830743145&Signature=S1IIepRPegoRunXVs0GkcpHKh8w%3D",
+	"aboutUsUrl": "https://s3.eu-de.cloud-object-storage.appdomain.cloud/whc-dev-object-storage/common/aboutUs.html?AWSAccessKeyId=4ccef7ae412043f48ffbe66b3466b251&Expires=4830742879&Signature=WoHM8X%2Bs3pjAfaEp6TdT8lVQ4N8%3D",
+	"privacyPolicyUrl": "https://s3.eu-de.cloud-object-storage.appdomain.cloud/whc-dev-object-storage/common/HO_Privacy.html?AWSAccessKeyId=4ccef7ae412043f48ffbe66b3466b251&Expires=4830742924&Signature=b%2Fe%2FzgqTzNFfzZDeidw%2BkFyjsIQ%3D",
+	"partsVendorUrl": "",
+	"contactUs": {
+		"email": "admin@whc.com",
+        "call": "+27 987 654 321",
+        "whatsApp": "+27 987 654 321"
+	}
+}

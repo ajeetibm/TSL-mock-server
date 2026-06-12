@@ -1,0 +1,46 @@
+HTTP/1.1 200 OK
+X-Requested-By: Sushma Prasad
+Content-Type: application/json
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS
+Access-Control-Allow-Headers: Content-Type, Authorization
+
+{
+"firstName":"1209",
+"lastName":"120912",
+"sex":"M",
+"email":"hc4rtest@gmail.com",
+"phone":"+271209120912",
+"userType":"P",
+"address":{
+           "addressId":1398,
+           "name":"Home",
+           "addressType":null,
+           "firstname":null,
+           "lastname":null,
+           "address":"21",
+           "address1":null,
+           "address2":"barnato st, berea",
+           "city":"Johannesburg",
+           "state":"Gauteng",
+           "country":"South Africa",
+           "zip":"2001",
+           "area":null,
+           "latitude":null,
+           "longitude":null,
+           "phone":null,
+           "preffered":true
+         },
+ "startTime":"1677173400000",
+ "endTime":"1677169800000",
+ "skills":[5,2],
+ "notes":[{"description":"testing","name":"1209 120912","date":null}],
+ "qualificationDocUrl":"https://s3.eu-de.cloud-object-storage.appdomain.cloud/whc-dev-object-storage/profile/Screenshot%202023-02-22%20104128.png?AWSAccessKeyId=4ccef7ae412043f48ffbe66b3466b251&Expires=4830755995&Signature=HWPuwt4P5Mk2u%2FmXG%2FOvE0qzL%2Fw%3D",
+ "isQualified":true,
+ "qualification":"ITES",
+ "nationalId":"1527288222",
+ "nationalDocUrl":"https://s3.eu-de.cloud-object-storage.appdomain.cloud/whc-dev-object-storage/profile/Screenshot%202023-02-23%20at%2011.17.23%20AM.png?AWSAccessKeyId=4ccef7ae412043f48ffbe66b3466b251&Expires=4830756010&Signature=iMQ0rlPrQkP7vlI0P3F2IlQUCaI%3D",
+ "profilePicUrl":null,
+ "payment":{"acountType":null,"acountNumber":"Tes","acountName":"Xhxgxh","bankcode":null,"branchName":"Hxhxh","bankName":null},
+ "feedBack":{"feedbacks":[]}
+}

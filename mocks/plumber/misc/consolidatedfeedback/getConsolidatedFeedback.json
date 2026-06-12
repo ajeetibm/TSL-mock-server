@@ -1,0 +1,43 @@
+{
+    "feedbacks": [
+        {
+            "issuer": null,
+            "date": null,
+            "waittime": "3.0",
+            "professionalism": "3.7857142857142856",
+            "comfortness": "3.7",
+            "cleanliness": "4",
+            "communication": "4",
+            "qualityOfWork": "4.1",
+            "overallRating": "4.0",
+            "reviews": [
+                {
+                    "comments": "excellent !",
+                    "datetime": 1674554386265,
+                    "issuer": "Adminlalit002 Adminsarode1",
+                    "image": "https://i.pravatar.cc/150?img=12"
+                },
+               
+                {
+                    "comments": "Good work",
+                    "datetime": 1674637604788,
+                    "issuer": "Raksha Agrawal",
+                    "image": "https://i.pravatar.cc/150?img=15"
+                },
+                {
+                    "comments": "cooperating while execution",
+                    "datetime": 1674828544066,
+                    "issuer": "Raksha Agrawal",
+                    "image": "https://i.pravatar.cc/150?img=15"
+                },
+
+                {
+                    "comments": "seven time testing",
+                    "datetime": 1677485254987,
+                    "issuer": "Raksha Agrawal",
+                   "image": "https://i.pravatar.cc/150?img=13"
+                }
+            ]
+        }
+    ]
+}

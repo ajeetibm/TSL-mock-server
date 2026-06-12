@@ -1,0 +1,19 @@
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+  "feedbacks": [
+    {
+      "overallRating": 4,
+      "waittime": 5,
+      "professionalism": 4,
+      "comfortness": 4,
+      "reviews": [
+        {
+          "comments": "Very professional and polite"
+        }
+      ]
+    }
+  ]
+}
+
