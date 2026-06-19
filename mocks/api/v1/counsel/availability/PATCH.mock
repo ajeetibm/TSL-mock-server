@@ -1,0 +1,15 @@
+HTTP/1.1 200 OK Availability updated
+Content-Type: application/json
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS
+Access-Control-Allow-Headers: Content-Type, Authorization
+
+{
+  "success": true,
+  "data": {
+    "counselId": "con_002",
+    "availability": "unavailable",
+    "message": "You are currently unavailable. New requests will not be assigned to you.",
+    "updatedAt": "2026-06-10T10:30:00Z"
+  }
+}

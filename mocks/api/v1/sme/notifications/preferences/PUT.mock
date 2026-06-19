@@ -1,4 +1,4 @@
-HTTP/1.1 200 OK Existing account authenticated
+HTTP/1.1 200 OK Preferences saved
 Content-Type: application/json
 Access-Control-Allow-Origin: *
 Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS
@@ -6,10 +6,12 @@ Access-Control-Allow-Headers: Content-Type, Authorization
 
 {
   "success": true,
-  "isNewUser": false,
+  "message": "Notification preferences updated.",
   "data": {
-    "userId": "usr_8f3k2m9x",
-    "email": "thabo@company.co.za",
-    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+    "documentUpdates": true,
+    "signatureRequests": true,
+    "teamActivity": false,
+    "billingUpdates": true,
+    "productUpdates": false
   }
 }

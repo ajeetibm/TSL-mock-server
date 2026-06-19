@@ -1,0 +1,34 @@
+HTTP/1.1 200 OK Counsel directory returned
+Content-Type: application/json
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS
+Access-Control-Allow-Headers: Content-Type, Authorization
+
+{
+  "success": true,
+  "data": {
+    "stats": {
+      "totalCounsel": 6,
+      "activeCases": 61,
+      "completedCases": 1618,
+      "available": 4,
+      "unavailable": 2
+    },
+    "counsel": [
+      {
+        "counselId": "con_001",
+        "name": "Adv. Zanele Dlamini",
+        "specialty": "Corporate Law",
+        "areaOfExpertise": "Mergers & Acquisitions",
+        "yearsExperience": 12,
+        "city": "Johannesburg",
+        "email": "z.dlamini@tsl.co.za",
+        "phone": "+27 11 000 1111",
+        "completedCases": 312,
+        "availability": "available",
+        "successRate": "94%",
+        "workload": "light"
+      }
+    ]
+  }
+}

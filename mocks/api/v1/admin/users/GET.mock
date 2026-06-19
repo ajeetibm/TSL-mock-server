@@ -1,0 +1,33 @@
+HTTP/1.1 200 OK User list returned
+Content-Type: application/json
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS
+Access-Control-Allow-Headers: Content-Type, Authorization
+
+{
+  "success": true,
+  "data": {
+    "stats": {
+      "actionsToday": 2847,
+      "activeNow": 234,
+      "workflowsStarted": 87
+    },
+    "users": [
+      {
+        "userId": "usr_8f3k2m9x",
+        "fullName": "Thabo Molefe",
+        "email": "thabo@company.co.za",
+        "companyName": "FibreGents (Pty) Ltd",
+        "plan": "operator",
+        "status": "active",
+        "joinedAt": "2025-09-15"
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "perPage": 20,
+      "total": 2847,
+      "totalPages": 143
+    }
+  }
+}

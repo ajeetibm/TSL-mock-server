@@ -1,4 +1,4 @@
-HTTP/1.1 200 OK Reset email sent
+HTTP/1.1 200 OK Step saved successfully
 Content-Type: application/json
 Access-Control-Allow-Origin: *
 Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS
@@ -6,5 +6,11 @@ Access-Control-Allow-Headers: Content-Type, Authorization
 
 {
   "success": true,
-  "message": "Password reset instructions have been sent to thabo@company.co.za."
+  "data": {
+    "workflowId": "wf_009",
+    "savedStep": 1,
+    "nextStep": 2,
+    "totalSteps": 5,
+    "percentComplete": 20
+  }
 }

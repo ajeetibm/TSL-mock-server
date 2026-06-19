@@ -1,4 +1,4 @@
-HTTP/1.1 200 OK
+HTTP/1.1 200 OK Password changed successfully
 Content-Type: application/json
 Access-Control-Allow-Origin: *
 Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS

@@ -1,4 +1,4 @@
-HTTP/1.1 200 OK Login successful
+HTTP/1.1 200 OK User updated
 Content-Type: application/json
 Access-Control-Allow-Origin: *
 Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS
@@ -6,13 +6,11 @@ Access-Control-Allow-Headers: Content-Type, Authorization
 
 {
   "success": true,
+  "message": "User updated successfully.",
   "data": {
     "userId": "usr_8f3k2m9x",
-    "fullName": "Thabo Molefe",
-    "email": "thabo@company.co.za",
-    "role": "sme",
-    "plan": "operator",
-    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-    "tokenExpiry": "2026-06-11T08:00:00Z"
+    "plan": "boardroom",
+    "status": "active",
+    "updatedAt": "2026-06-10T10:00:00Z"
   }
 }

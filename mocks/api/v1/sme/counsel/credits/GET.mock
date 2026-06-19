@@ -1,4 +1,4 @@
-HTTP/1.1 200 OK Login successful
+HTTP/1.1 200 OK Credits returned
 Content-Type: application/json
 Access-Control-Allow-Origin: *
 Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS
@@ -7,12 +7,13 @@ Access-Control-Allow-Headers: Content-Type, Authorization
 {
   "success": true,
   "data": {
-    "userId": "usr_8f3k2m9x",
-    "fullName": "Thabo Molefe",
-    "email": "thabo@company.co.za",
-    "role": "sme",
     "plan": "operator",
-    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-    "tokenExpiry": "2026-06-11T08:00:00Z"
+    "creditsTotal": 2,
+    "creditsUsed": 1,
+    "creditsRemaining": 1,
+    "usageThisMonth": 1,
+    "topUpRate": 500,
+    "currency": "ZAR",
+    "resetDate": "2026-07-10"
   }
 }

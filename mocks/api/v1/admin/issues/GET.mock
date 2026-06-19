@@ -1,0 +1,37 @@
+HTTP/1.1 200 OK Issues returned
+Content-Type: application/json
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS
+Access-Control-Allow-Headers: Content-Type, Authorization
+
+{
+  "success": true,
+  "data": {
+    "summary": {
+      "critical": 3,
+      "high": 12,
+      "medium": 11,
+      "resolvedToday": 8
+    },
+    "categoryBreakdown": {
+      "authentication": 8,
+      "database": 4,
+      "notification": 3,
+      "wizard": 7,
+      "payment": 5,
+      "other": 6
+    },
+    "issues": [
+      {
+        "issueId": "ISS-0041",
+        "title": "Login OTP not delivered via SMS",
+        "category": "authentication",
+        "severity": "critical",
+        "reportedAt": "2026-06-10T07:45:00Z",
+        "reporter": "User: Sipho Dube",
+        "affectedUsers": 38,
+        "status": "open"
+      }
+    ]
+  }
+}

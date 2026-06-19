@@ -1,0 +1,17 @@
+HTTP/1.1 201 Created Counsel created and email sent
+Content-Type: application/json
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS
+Access-Control-Allow-Headers: Content-Type, Authorization
+
+{
+  "success": true,
+  "message": "Counsel profile created. Temporary password sent to s.nkosi@tsl.co.za.",
+  "data": {
+    "counselId": "con_007",
+    "fullName": "Adv. Sipho Nkosi",
+    "email": "s.nkosi@tsl.co.za",
+    "status": "active",
+    "createdAt": "2026-06-10T10:20:00Z"
+  }
+}

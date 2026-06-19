@@ -1,0 +1,32 @@
+HTTP/1.1 200 OK Wizard list returned
+Content-Type: application/json
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS
+Access-Control-Allow-Headers: Content-Type, Authorization
+
+{
+  "success": true,
+  "data": [
+    {
+      "wizardId": "wiz_nda",
+      "name": "NDA Generator",
+      "description": "Non-Disclosure Agreement for SA entrepreneurs",
+      "completionTime": 10,
+      "runsPerWizard": 1,
+      "targetAudience": "All Businesses",
+      "isPopular": true,
+      "includedIn": [
+        "launchpad",
+        "operator",
+        "boardroom"
+      ],
+      "whatsIncluded": [
+        "SA-compliant NDA",
+        "Plain language preview",
+        "E-signature ready",
+        "QR-verified evidence pack"
+      ]
+    }
+  ],
+  "total": 12
+}

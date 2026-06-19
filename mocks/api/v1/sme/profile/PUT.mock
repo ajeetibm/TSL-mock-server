@@ -1,0 +1,16 @@
+HTTP/1.1 200 OK Profile updated
+Content-Type: application/json
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS
+Access-Control-Allow-Headers: Content-Type, Authorization
+
+{
+  "success": true,
+  "message": "Profile updated successfully.",
+  "data": {
+    "companyName": "FibreGents (Pty) Ltd",
+    "contactPerson": "Thabo Molefe",
+    "phone": "+27 82 123 4567",
+    "updatedAt": "2026-06-10T09:30:00Z"
+  }
+}

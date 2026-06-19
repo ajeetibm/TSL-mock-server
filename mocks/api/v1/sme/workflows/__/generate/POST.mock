@@ -1,0 +1,16 @@
+HTTP/1.1 202 Accepted Generation job queued
+Content-Type: application/json
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS
+Access-Control-Allow-Headers: Content-Type, Authorization
+
+{
+  "success": true,
+  "message": "Document generation has started.",
+  "data": {
+    "jobId": "job_gen_44x",
+    "workflowId": "wf_009",
+    "estimatedSeconds": 30,
+    "statusUrl": "/api/v1/sme/workflows/wf_009/status"
+  }
+}

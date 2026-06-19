@@ -41,13 +41,17 @@ app.use((req, res, next) => {
   next();
 });
 
-// CORS middleware: allow origins configured in config.yml (or allow all if none configured)
+function isLocalDevOrigin(origin) {
+  return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin || '');
+}
+
+// CORS middleware: allow origins configured in config.yml, plus localhost dev ports.
 const allowedOrigins = (config.origins && Array.isArray(config.origins)) ? config.origins : [];
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   if (allowedOrigins.length === 0) {
     res.setHeader('Access-Control-Allow-Origin', '*');
-  } else if (origin && allowedOrigins.includes(origin)) {
+  } else if (origin && (allowedOrigins.includes(origin) || isLocalDevOrigin(origin))) {
     res.setHeader('Access-Control-Allow-Origin', origin);
     res.setHeader('Vary', 'Origin');
   }
@@ -79,17 +83,39 @@ Handlebars.registerHelper('randomValue', function (opts) {
   return '';
 });
 
+function buildMockCandidates(relPath, method) {
+  const segments = relPath.split('/').filter(Boolean);
+  const pathVariants = new Set([relPath]);
+  const dynamicIndexes = segments
+    .map((segment, index) => ({ segment, index }))
+    .filter(({ segment }) => segment && segment !== 'api' && segment !== 'v1')
+    .map(({ index }) => index);
+
+  for (let mask = 1; mask < (1 << dynamicIndexes.length); mask += 1) {
+    const variant = [...segments];
+    dynamicIndexes.forEach((segmentIndex, bitIndex) => {
+      if (mask & (1 << bitIndex)) {
+        variant[segmentIndex] = '__';
+      }
+    });
+    pathVariants.add(variant.join('/'));
+  }
+
+  return [...pathVariants].flatMap((variantPath) => [
+    path.join(mocksDir, variantPath, `${method}.mock`),
+    path.join(mocksDir, variantPath, `${method.toLowerCase()}.mock`),
+  ]);
+}
+
 // Try to serve method-specific mock files (e.g. mocks/user/login/POST.mock)
 app.use(async (req, res, next) => {
   try {
     const relPath = req.path.replace(/^\/+/, '');
     const overrideHeader = req.get('X-HTTP-Method-Override') || req.get('X-HTTP-Method') || '';
     console.log(`[mock] incoming ${req.method} ${req.path} relPath='${relPath}' override='${overrideHeader}'`);
-    // try multiple candidates for method-specific responses so real PATCH calls work
-    const candidates = [
-      path.join(mocksDir, relPath, `${req.method}.mock`),
-      path.join(mocksDir, relPath, `${req.method.toLowerCase()}.mock`),
-    ];
+    // try multiple candidates for method-specific responses so real PATCH calls and
+    // dynamic route segments represented by "__" folders work.
+    const candidates = buildMockCandidates(relPath, req.method);
 
     console.log('[mock] candidate mock paths:', candidates);
 

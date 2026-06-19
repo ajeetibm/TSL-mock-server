@@ -1,0 +1,17 @@
+HTTP/1.1 201 Created Invitation sent
+Content-Type: application/json
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS
+Access-Control-Allow-Headers: Content-Type, Authorization
+
+{
+  "success": true,
+  "message": "Invitation sent to lerato@tsl.co.za.",
+  "data": {
+    "adminId": "adm_003",
+    "fullName": "Lerato Khumalo",
+    "email": "lerato@tsl.co.za",
+    "status": "pending",
+    "invitedAt": "2026-06-10T10:05:00Z"
+  }
+}

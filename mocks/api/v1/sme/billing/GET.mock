@@ -1,0 +1,35 @@
+HTTP/1.1 200 OK Billing data returned
+Content-Type: application/json
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS
+Access-Control-Allow-Headers: Content-Type, Authorization
+
+{
+  "success": true,
+  "data": {
+    "plan": {
+      "name": "Operator",
+      "price": 999,
+      "currency": "ZAR",
+      "nextBillingDate": "2026-07-10",
+      "runsUsed": 9,
+      "runsTotal": 12,
+      "teamMembers": 2
+    },
+    "nextInvoice": {
+      "subscription": 999.0,
+      "tax": 149.85,
+      "total": 1148.85
+    },
+    "invoices": [
+      {
+        "invoiceId": "INV-2026-006",
+        "date": "2026-06-01",
+        "subscription": 999.0,
+        "tax": 149.85,
+        "total": 1148.85,
+        "downloadUrl": "/api/v1/sme/billing/invoices/INV-2026-006/download"
+      }
+    ]
+  }
+}

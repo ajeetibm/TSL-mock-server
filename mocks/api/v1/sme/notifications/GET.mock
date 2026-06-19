@@ -1,0 +1,30 @@
+HTTP/1.1 200 OK Notifications returned
+Content-Type: application/json
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS
+Access-Control-Allow-Headers: Content-Type, Authorization
+
+{
+  "success": true,
+  "data": {
+    "unreadCount": 3,
+    "notifications": [
+      {
+        "notificationId": "ntf_001",
+        "type": "signature_required",
+        "title": "Signature Required",
+        "message": "Your NDA requires a signature from the counterparty.",
+        "isRead": false,
+        "createdAt": "2026-06-10T08:30:00Z"
+      },
+      {
+        "notificationId": "ntf_002",
+        "type": "document_completed",
+        "title": "Document Completed",
+        "message": "Your Employment Offer Letter is ready to download.",
+        "isRead": true,
+        "createdAt": "2026-06-05T10:00:00Z"
+      }
+    ]
+  }
+}

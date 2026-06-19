@@ -1,0 +1,28 @@
+HTTP/1.1 200 OK Request history returned
+Content-Type: application/json
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS
+Access-Control-Allow-Headers: Content-Type, Authorization
+
+{
+  "success": true,
+  "data": [
+    {
+      "requestId": "req_77b2",
+      "subject": "Review of SaaS Service Agreement",
+      "status": "in_progress",
+      "assignedCounsel": "Advocate Sipho Nkosi",
+      "submittedAt": "2026-06-10T09:15:00Z",
+      "responseUrl": null
+    },
+    {
+      "requestId": "req_66a1",
+      "subject": "NDA Clause Clarification",
+      "status": "completed",
+      "assignedCounsel": "Adv. Zanele Dlamini",
+      "submittedAt": "2026-05-20T11:00:00Z",
+      "responseUrl": "/api/v1/sme/counsel/requests/req_66a1/response"
+    }
+  ],
+  "total": 2
+}

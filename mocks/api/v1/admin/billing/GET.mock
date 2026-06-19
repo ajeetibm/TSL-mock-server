@@ -1,0 +1,30 @@
+HTTP/1.1 200 OK Billing data returned
+Content-Type: application/json
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS
+Access-Control-Allow-Headers: Content-Type, Authorization
+
+{
+  "success": true,
+  "data": {
+    "kpis": {
+      "totalRevenue": 485740,
+      "outstandingInvoices": 23450,
+      "failedPayments": 8920,
+      "currency": "ZAR"
+    },
+    "hasFailedPayments": true,
+    "invoices": [
+      {
+        "invoiceId": "INV-2026-1122",
+        "client": "FibreGents (Pty) Ltd",
+        "plan": "Operator",
+        "issueDate": "2026-06-01",
+        "dueDate": "2026-06-10",
+        "amount": 1148.85,
+        "status": "paid",
+        "downloadUrl": "/api/v1/admin/billing/invoices/INV-2026-1122/download"
+      }
+    ]
+  }
+}

@@ -1,0 +1,44 @@
+HTTP/1.1 200 OK Playbooks returned
+Content-Type: application/json
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS
+Access-Control-Allow-Headers: Content-Type, Authorization
+
+{
+  "success": true,
+  "data": {
+    "categories": [
+      {
+        "category": "hiring",
+        "playbooks": [
+          {
+            "playbookId": "plb_001",
+            "title": "Hiring Your First Employee",
+            "steps": 8,
+            "estimatedTime": 15,
+            "description": "Step-by-step guide for SA-compliant first hire.",
+            "relatedWizards": [
+              "wiz_employment_offer"
+            ],
+            "accessTier": "launchpad",
+            "consumesRuns": false
+          }
+        ]
+      }
+    ],
+    "samples": [
+      {
+        "title": "Investing in South Africa",
+        "fileSize": "2.1MB",
+        "pages": 18,
+        "downloadUrl": "/api/v1/playbooks/samples/investing-in-sa.pdf"
+      },
+      {
+        "title": "Founders Guide",
+        "fileSize": "3.2MB",
+        "pages": 32,
+        "downloadUrl": "/api/v1/playbooks/samples/founders-guide.pdf"
+      }
+    ]
+  }
+}

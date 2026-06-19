@@ -1,0 +1,43 @@
+HTTP/1.1 200 OK Dashboard data returned
+Content-Type: application/json
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS
+Access-Control-Allow-Headers: Content-Type, Authorization
+
+{
+  "success": true,
+  "data": {
+    "user": {
+      "userId": "usr_8f3k2m9x",
+      "companyName": "FibreGents (Pty) Ltd",
+      "plan": "operator",
+      "runsUsed": 9,
+      "runsTotal": 12,
+      "runsRemaining": 3,
+      "nextBillingDate": "2026-07-10",
+      "counselCreditsUsed": 1,
+      "counselCreditsTotal": 2
+    },
+    "inProgress": [
+      {
+        "workflowId": "wf_001",
+        "wizardName": "NDA Generator",
+        "status": "awaiting_signature",
+        "progress": 80,
+        "lastUpdated": "2026-06-09T14:30:00Z"
+      }
+    ],
+    "completed": [
+      {
+        "workflowId": "wf_002",
+        "wizardName": "Employment Offer Letter",
+        "completedAt": "2026-06-05T10:00:00Z",
+        "downloads": [
+          "pdf",
+          "docx",
+          "evidence_pack"
+        ]
+      }
+    ]
+  }
+}

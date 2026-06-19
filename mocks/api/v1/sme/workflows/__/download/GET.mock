@@ -1,4 +1,4 @@
-HTTP/1.1 200 OK Existing account authenticated
+HTTP/1.1 200 OK File download initiated
 Content-Type: application/json
 Access-Control-Allow-Origin: *
 Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS
@@ -6,10 +6,10 @@ Access-Control-Allow-Headers: Content-Type, Authorization
 
 {
   "success": true,
-  "isNewUser": false,
   "data": {
-    "userId": "usr_8f3k2m9x",
-    "email": "thabo@company.co.za",
-    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+    "downloadUrl": "https://cdn.tsl.co.za/docs/wf_002/nda_final.pdf",
+    "fileType": "pdf",
+    "fileName": "NDA_FibreGents_2026-06-05.pdf",
+    "expiresAt": "2026-06-10T09:00:00Z"
   }
 }

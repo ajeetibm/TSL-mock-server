@@ -1,4 +1,4 @@
-HTTP/1.1 200 OK Reset email sent
+HTTP/1.1 201 Created Payment method added
 Content-Type: application/json
 Access-Control-Allow-Origin: *
 Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS
@@ -6,5 +6,12 @@ Access-Control-Allow-Headers: Content-Type, Authorization
 
 {
   "success": true,
-  "message": "Password reset instructions have been sent to thabo@company.co.za."
+  "data": {
+    "methodId": "pm_003",
+    "type": "card",
+    "brand": "Mastercard",
+    "last4": "5353",
+    "expiry": "09/29",
+    "isDefault": false
+  }
 }

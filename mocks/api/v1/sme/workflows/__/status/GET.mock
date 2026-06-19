@@ -1,0 +1,37 @@
+HTTP/1.1 200 OK Status returned
+Content-Type: application/json
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS
+Access-Control-Allow-Headers: Content-Type, Authorization
+
+{
+  "success": true,
+  "data": {
+    "workflowId": "wf_009",
+    "stage": "quality_check",
+    "stages": [
+      {
+        "name": "ai_review",
+        "status": "completed"
+      },
+      {
+        "name": "plain_language",
+        "status": "completed"
+      },
+      {
+        "name": "legal_drafting",
+        "status": "completed"
+      },
+      {
+        "name": "quality_check",
+        "status": "in_progress"
+      },
+      {
+        "name": "evidence_pack",
+        "status": "pending"
+      }
+    ],
+    "percentComplete": 80,
+    "isComplete": false
+  }
+}

@@ -1,0 +1,6 @@
+node_modules/
+.DS_Store
+camouflage.log
+*.log
+.env
+.env.local

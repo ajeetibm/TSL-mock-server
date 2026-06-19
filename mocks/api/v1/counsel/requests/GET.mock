@@ -1,0 +1,25 @@
+HTTP/1.1 200 OK Requests list returned
+Content-Type: application/json
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS
+Access-Control-Allow-Headers: Content-Type, Authorization
+
+{
+  "success": true,
+  "data": {
+    "total": 57,
+    "requests": [
+      {
+        "requestId": "req_77b2",
+        "subject": "Review of SaaS Service Agreement",
+        "fromUser": "Thabo Molefe",
+        "userEmail": "thabo@company.co.za",
+        "earnings": 500,
+        "currency": "ZAR",
+        "status": "accepted",
+        "assignedBy": "Admin: Lerato Khumalo",
+        "date": "2026-06-10"
+      }
+    ]
+  }
+}
