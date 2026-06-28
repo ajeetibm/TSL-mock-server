@@ -83,6 +83,58 @@ Handlebars.registerHelper('randomValue', function (opts) {
   return '';
 });
 
+function buildLoginResponse(payload = {}) {
+  const portal = String(payload.portal || '').toLowerCase()
+  const email = String(payload.email || '').toLowerCase()
+  const isCounsel = portal === 'counsel' || email.includes('counsel') || email.includes('nkosi')
+  const isAdmin = portal === 'admin' || email.includes('admin') || email.includes('thestartuplegal')
+
+  if (isCounsel) {
+    return {
+      success: true,
+      data: {
+        userId: 'con_002',
+        fullName: 'Adv. Sipho Nkosi',
+        email: payload.email || 's.nkosi@tsl.co.za',
+        role: 'counsel',
+        portal: 'counsel',
+        token: 'mock_counsel_token',
+        tokenExpiry: '2026-06-11T08:00:00Z',
+        mustResetPassword: false,
+      },
+    }
+  }
+
+  if (isAdmin) {
+    return {
+      success: true,
+      data: {
+        userId: 'adm_001',
+        fullName: 'Given Kibanza',
+        email: payload.email || 'given@thestartuplegal.co.za',
+        role: 'admin',
+        portal: 'admin',
+        token: 'mock_admin_token',
+        tokenExpiry: '2026-06-11T08:00:00Z',
+      },
+    }
+  }
+
+  return {
+    success: true,
+    data: {
+      userId: 'usr_8f3k2m9x',
+      fullName: 'Thabo Molefe',
+      email: payload.email || 'thabo@company.co.za',
+      role: 'sme',
+      portal: 'sme',
+      plan: 'operator',
+      token: 'mock_sme_token',
+      tokenExpiry: '2026-06-11T08:00:00Z',
+    },
+  }
+}
+
 function buildMockCandidates(relPath, method) {
   const segments = relPath.split('/').filter(Boolean);
   const pathVariants = new Set([relPath]);
@@ -112,6 +164,11 @@ app.use(async (req, res, next) => {
   try {
     const relPath = req.path.replace(/^\/+/, '');
     const overrideHeader = req.get('X-HTTP-Method-Override') || req.get('X-HTTP-Method') || '';
+    if (req.method === 'POST' && relPath === 'api/v1/auth/login') {
+      res.setHeader('Content-Type', 'application/json')
+      res.setHeader('Access-Control-Allow-Origin', '*')
+      return res.status(200).json(buildLoginResponse(req.body))
+    }
     console.log(`[mock] incoming ${req.method} ${req.path} relPath='${relPath}' override='${overrideHeader}'`);
     // try multiple candidates for method-specific responses so real PATCH calls and
     // dynamic route segments represented by "__" folders work.

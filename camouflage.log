@@ -8689,3 +8689,385 @@ HTTP ERROR 404
 2026-06-18 08:09:42 [31merror[39m: No suitable mock file found: /Users/ibm/Documents/Github-Mock-server/mock-server-main/mocks/__/GET.mock 
 2026-06-18 08:09:42 [34mdebug[39m: No custom global override for default response. Sending default Camouflage response. 
 2026-06-18 08:09:42 [33mwarn[39m: HTTP GET /favicon.ico :: Query Parameters: {} | Request Headers {"host":"localhost:8080","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:151.0) Gecko/20100101 Firefox/151.0","accept":"image/avif,image/webp,image/png,image/svg+xml,image/*;q=0.8,*/*;q=0.5","accept-language":"en-US,en;q=0.9","accept-encoding":"gzip, deflate, br, zstd","sec-fetch-storage-access":"none","connection":"keep-alive","referer":"http://localhost:8080/api/v1/auth/login","sec-fetch-dest":"image","sec-fetch-mode":"no-cors","sec-fetch-site":"cross-site","priority":"u=6"} | Request Body {} 
+2026-06-21 07:11:24 [32minfo[39m: [39897] Master Started 
+2026-06-21 07:11:24 [32minfo[39m: Cluster metrics server listening to 5555, metrics exposed on http://localhost:5555/metrics . Set a negative value for config.monitoring.port to enable monitoring  
+2026-06-21 07:11:24 [34mdebug[39m: {
+  "loglevel": "debug",
+  "cpus": 1,
+  "monitoring": {
+    "port": 5555
+  },
+  "ssl": {
+    "cert": "./certs/server.cert",
+    "key": "./certs/server.key",
+    "root_cert": "./certs/root.cert"
+  },
+  "protocols": {
+    "http": {
+      "enable": true,
+      "mocks_dir": "./mocks",
+      "port": 8080
+    },
+    "https": {
+      "enable": false,
+      "port": 8443
+    },
+    "http2": {
+      "enable": false,
+      "port": 8081
+    },
+    "ws": {
+      "enable": false,
+      "mocks_dir": "./ws_mocks",
+      "port": 8082
+    },
+    "grpc": {
+      "enable": false,
+      "host": "0.0.0.0",
+      "port": 4312,
+      "mocks_dir": "./grpc/mocks",
+      "protos_dir": "./grpc/protos",
+      "grpc_tls": false
+    },
+    "thrift": {
+      "enable": false,
+      "mocks_dir": "./thrift/mocks",
+      "services": [
+        {
+          "port": 9999,
+          "service": "/opt/gen-nodejs/Calculator",
+          "handlers": [
+            "add",
+            "substract",
+            "ping"
+          ]
+        }
+      ]
+    },
+    "soap": {
+      "enable": false,
+      "mocks_dir": "./soap/mocks",
+      "port": 8100,
+      "services": [
+        {
+          "wsdl": "./soap/countryservice.wsdl",
+          "path": "/countryinfo"
+        }
+      ]
+    }
+  },
+  "backup": {
+    "enable": false,
+    "cron": "0 * * * *"
+  },
+  "cache": {
+    "enable": false,
+    "ttl_seconds": 300
+  },
+  "injection": {
+    "enable": true
+  },
+  "origins": [
+    "http://localhost:3000",
+    "http://localhost:3001",
+    "http://localhost:5000"
+  ],
+  "validation": {
+    "enable": false
+  },
+  "ext_helpers": null
+} 
+2026-06-21 07:11:24 [32minfo[39m: CORS enabled for http://localhost:3000, http://localhost:3001, http://localhost:5000 
+2026-06-21 07:11:24 [32minfo[39m: [39902] Worker started 
+2026-06-21 07:11:24 [32minfo[39m: Handlebar helpers registration started 
+2026-06-21 07:11:24 [33mwarn[39m: Code Injection is enabled. 
+2026-06-21 07:11:24 [32minfo[39m: Handlebar helpers registration completed 
+2026-06-21 07:11:24 [32minfo[39m: No middleware injection. 
+2026-06-21 07:11:24 [32minfo[39m: Worker sharing HTTP server at http://localhost:8080 ⛳ 
+2026-06-21 07:17:53 [34mdebug[39m: HTTP OPTIONS /api/v1/auth/login :: Query Parameters: {} | Request Headers {"host":"localhost:8080","connection":"keep-alive","accept":"*/*","access-control-request-method":"POST","access-control-request-headers":"content-type","origin":"http://localhost:5174","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36","sec-fetch-mode":"cors","sec-fetch-site":"same-site","sec-fetch-dest":"empty","referer":"http://localhost:5174/","accept-encoding":"gzip, deflate, br, zstd","accept-language":"en-US,en;q=0.9"} | Request Body {} 
+2026-06-21 07:17:59 [34mdebug[39m: HTTP OPTIONS /api/v1/auth/login :: Query Parameters: {} | Request Headers {"host":"localhost:8080","connection":"keep-alive","accept":"*/*","access-control-request-method":"POST","access-control-request-headers":"content-type","origin":"http://localhost:5174","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36","sec-fetch-mode":"cors","sec-fetch-site":"same-site","sec-fetch-dest":"empty","referer":"http://localhost:5174/","accept-encoding":"gzip, deflate, br, zstd","accept-language":"en-US,en;q=0.9"} | Request Body {} 
+2026-06-21 07:19:02 [32minfo[39m: [43479] Master Started 
+2026-06-21 07:19:02 [32minfo[39m: Cluster metrics server listening to 5555, metrics exposed on http://localhost:5555/metrics . Set a negative value for config.monitoring.port to enable monitoring  
+2026-06-21 07:19:02 [34mdebug[39m: {
+  "loglevel": "debug",
+  "cpus": 1,
+  "monitoring": {
+    "port": 5555
+  },
+  "ssl": {
+    "cert": "./certs/server.cert",
+    "key": "./certs/server.key",
+    "root_cert": "./certs/root.cert"
+  },
+  "protocols": {
+    "http": {
+      "enable": true,
+      "mocks_dir": "./mocks",
+      "port": 8080
+    },
+    "https": {
+      "enable": false,
+      "port": 8443
+    },
+    "http2": {
+      "enable": false,
+      "port": 8081
+    },
+    "ws": {
+      "enable": false,
+      "mocks_dir": "./ws_mocks",
+      "port": 8082
+    },
+    "grpc": {
+      "enable": false,
+      "host": "0.0.0.0",
+      "port": 4312,
+      "mocks_dir": "./grpc/mocks",
+      "protos_dir": "./grpc/protos",
+      "grpc_tls": false
+    },
+    "thrift": {
+      "enable": false,
+      "mocks_dir": "./thrift/mocks",
+      "services": [
+        {
+          "port": 9999,
+          "service": "/opt/gen-nodejs/Calculator",
+          "handlers": [
+            "add",
+            "substract",
+            "ping"
+          ]
+        }
+      ]
+    },
+    "soap": {
+      "enable": false,
+      "mocks_dir": "./soap/mocks",
+      "port": 8100,
+      "services": [
+        {
+          "wsdl": "./soap/countryservice.wsdl",
+          "path": "/countryinfo"
+        }
+      ]
+    }
+  },
+  "backup": {
+    "enable": false,
+    "cron": "0 * * * *"
+  },
+  "cache": {
+    "enable": false,
+    "ttl_seconds": 300
+  },
+  "injection": {
+    "enable": true
+  },
+  "origins": [
+    "http://localhost:3000",
+    "http://localhost:3001",
+    "http://localhost:5000"
+  ],
+  "validation": {
+    "enable": false
+  },
+  "ext_helpers": null
+} 
+2026-06-21 07:19:02 [32minfo[39m: CORS enabled for http://localhost:3000, http://localhost:3001, http://localhost:5000 
+2026-06-21 07:19:02 [32minfo[39m: [43481] Worker started 
+2026-06-21 07:19:02 [32minfo[39m: Handlebar helpers registration started 
+2026-06-21 07:19:02 [33mwarn[39m: Code Injection is enabled. 
+2026-06-21 07:19:02 [32minfo[39m: Handlebar helpers registration completed 
+2026-06-21 07:19:02 [32minfo[39m: No middleware injection. 
+2026-06-21 07:19:02 [32minfo[39m: Worker sharing HTTP server at http://localhost:8080 ⛳ 
+2026-06-21 07:19:10 [33mwarn[39m: Validation is disabled. Request and responses are not validated. 
+2026-06-21 07:19:10 [31merror[39m: No suitable mock file found: /Users/ibm/Documents/Github-Mock-server/mock-server-main/mocks/GET.mock 
+2026-06-21 07:19:10 [34mdebug[39m: No custom global override for default response. Sending default Camouflage response. 
+2026-06-21 07:19:10 [33mwarn[39m: HTTP GET / :: Query Parameters: {} | Request Headers {"host":"localhost:8080","connection":"keep-alive","sec-ch-ua":"\"Google Chrome\";v=\"149\", \"Chromium\";v=\"149\", \"Not)A;Brand\";v=\"24\"","sec-ch-ua-mobile":"?0","sec-ch-ua-platform":"\"macOS\"","upgrade-insecure-requests":"1","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36","sec-purpose":"prefetch;prerender","accept":"text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7","sec-fetch-site":"none","sec-fetch-mode":"navigate","sec-fetch-user":"?1","sec-fetch-dest":"document","accept-encoding":"gzip, deflate, br, zstd","accept-language":"en-US,en;q=0.9"} | Request Body {} 
+2026-06-21 07:19:10 [31merror[39m: No suitable mock file found: /Users/ibm/Documents/Github-Mock-server/mock-server-main/mocks/GET.mock 
+2026-06-21 07:19:10 [34mdebug[39m: No custom global override for default response. Sending default Camouflage response. 
+2026-06-21 07:19:10 [33mwarn[39m: HTTP GET / :: Query Parameters: {} | Request Headers {"host":"localhost:8080","connection":"keep-alive","sec-ch-ua":"\"Google Chrome\";v=\"149\", \"Chromium\";v=\"149\", \"Not)A;Brand\";v=\"24\"","sec-ch-ua-mobile":"?0","sec-ch-ua-platform":"\"macOS\"","upgrade-insecure-requests":"1","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36","accept":"text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7","sec-fetch-site":"none","sec-fetch-mode":"navigate","sec-fetch-user":"?1","sec-fetch-dest":"document","accept-encoding":"gzip, deflate, br, zstd","accept-language":"en-US,en;q=0.9"} | Request Body {} 
+2026-06-21 07:19:10 [31merror[39m: No suitable mock file found: /Users/ibm/Documents/Github-Mock-server/mock-server-main/mocks/__/GET.mock 
+2026-06-21 07:19:10 [34mdebug[39m: No custom global override for default response. Sending default Camouflage response. 
+2026-06-21 07:19:10 [33mwarn[39m: HTTP GET /favicon.ico :: Query Parameters: {} | Request Headers {"host":"localhost:8080","connection":"keep-alive","sec-ch-ua-platform":"\"macOS\"","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36","sec-ch-ua":"\"Google Chrome\";v=\"149\", \"Chromium\";v=\"149\", \"Not)A;Brand\";v=\"24\"","sec-ch-ua-mobile":"?0","accept":"image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8","sec-fetch-site":"same-origin","sec-fetch-mode":"no-cors","sec-fetch-dest":"image","referer":"http://localhost:8080/","accept-encoding":"gzip, deflate, br, zstd","accept-language":"en-US,en;q=0.9"} | Request Body {} 
+2026-06-21 07:19:13 [34mdebug[39m: HTTP OPTIONS /api/v1/auth/login :: Query Parameters: {} | Request Headers {"host":"localhost:8080","connection":"keep-alive","accept":"*/*","access-control-request-method":"POST","access-control-request-headers":"content-type","origin":"http://localhost:5174","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36","sec-fetch-mode":"cors","sec-fetch-site":"same-site","sec-fetch-dest":"empty","referer":"http://localhost:5174/","accept-encoding":"gzip, deflate, br, zstd","accept-language":"en-US,en;q=0.9"} | Request Body {} 
+2026-06-21 07:19:14 [34mdebug[39m: HTTP OPTIONS /api/v1/auth/login :: Query Parameters: {} | Request Headers {"host":"localhost:8080","connection":"keep-alive","accept":"*/*","access-control-request-method":"POST","access-control-request-headers":"content-type","origin":"http://localhost:5174","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36","sec-fetch-mode":"cors","sec-fetch-site":"same-site","sec-fetch-dest":"empty","referer":"http://localhost:5174/","accept-encoding":"gzip, deflate, br, zstd","accept-language":"en-US,en;q=0.9"} | Request Body {} 
+2026-06-21 07:19:46 [34mdebug[39m: HTTP OPTIONS /api/v1/auth/login :: Query Parameters: {} | Request Headers {"host":"localhost:8080","connection":"keep-alive","accept":"*/*","access-control-request-method":"POST","access-control-request-headers":"content-type","origin":"http://localhost:5174","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36","sec-fetch-mode":"cors","sec-fetch-site":"same-site","sec-fetch-dest":"empty","referer":"http://localhost:5174/","accept-encoding":"gzip, deflate, br, zstd","accept-language":"en-US,en;q=0.9"} | Request Body {} 
+2026-06-21 07:20:44 [31merror[39m: No suitable mock file found: /Users/ibm/Documents/Github-Mock-server/mock-server-main/mocks/GET.mock 
+2026-06-21 07:20:44 [34mdebug[39m: No custom global override for default response. Sending default Camouflage response. 
+2026-06-21 07:20:44 [33mwarn[39m: HTTP GET / :: Query Parameters: {} | Request Headers {"host":"localhost:8080","connection":"keep-alive","sec-ch-ua":"\"Google Chrome\";v=\"149\", \"Chromium\";v=\"149\", \"Not)A;Brand\";v=\"24\"","sec-ch-ua-mobile":"?0","sec-ch-ua-platform":"\"macOS\"","upgrade-insecure-requests":"1","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36","accept":"text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7","sec-fetch-site":"none","sec-fetch-mode":"navigate","sec-fetch-user":"?1","sec-fetch-dest":"document","accept-encoding":"gzip, deflate, br, zstd","accept-language":"en-US,en;q=0.9"} | Request Body {} 
+2026-06-21 07:20:52 [34mdebug[39m: Using new line as \n 
+2026-06-21 07:20:52 [34mdebug[39m: Response Status set to 200 
+2026-06-21 07:20:52 [34mdebug[39m: Headers Set X-Requested-By:  Shubhendu Madhukar 
+2026-06-21 07:20:52 [34mdebug[39m: Headers Set Content-Type:  application/json 
+2026-06-21 07:20:52 [34mdebug[39m: Generated Response {
+ "name": "jack sparrow",
+ "profilePicUrl": null,
+ "banner": null,
+ "jobId": null,
+ "products": null,
+ "onBoardingStatus": "APPROVED",
+ "onBoardingnotes": [
+ "approving the user"
+ ],
+ "jobCount": {
+ "newJob": 3,
+ "inProgress": 0,
+ "completed": 0,
+ "cancelled": 0,
+ "rejected": 0,
+ "settled": 0,
+ "jobsNeedToBeSettled": 0
+ },
+ "incidentCount": {
+ "newIncident": 3,
+ "inProgress": 0,
+ "completed": 0,
+ "declined": 0,
+ "rejected": 0
+ },
+ "jobsInvited": 9,
+ "yearlyEarning": null,
+ "monthlyEarning": null
+} 
+2026-06-21 07:20:52 [34mdebug[39m: HTTP GET /user/dashboard :: Query Parameters: {} | Request Headers {"host":"localhost:8080","connection":"keep-alive","sec-ch-ua":"\"Google Chrome\";v=\"149\", \"Chromium\";v=\"149\", \"Not)A;Brand\";v=\"24\"","sec-ch-ua-mobile":"?0","sec-ch-ua-platform":"\"macOS\"","upgrade-insecure-requests":"1","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36","accept":"text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7","sec-fetch-site":"none","sec-fetch-mode":"navigate","sec-fetch-user":"?1","sec-fetch-dest":"document","accept-encoding":"gzip, deflate, br, zstd","accept-language":"en-US,en;q=0.9","if-none-match":"W/\"1f7-F/KwOVeuzB3fgxFR/yGHK23+wdw\""} | Request Body {} 
+2026-06-21 07:22:04 [31merror[39m: No suitable mock file found: /Users/ibm/Documents/Github-Mock-server/mock-server-main/mocks/api/v1/auth/login/GET.mock 
+2026-06-21 07:22:04 [34mdebug[39m: No custom global override for default response. Sending default Camouflage response. 
+2026-06-21 07:22:04 [33mwarn[39m: HTTP GET /api/v1/auth/login :: Query Parameters: {} | Request Headers {"host":"localhost:8080","user-agent":"curl/8.7.1","accept":"*/*"} | Request Body {} 
+2026-06-21 07:22:19 [34mdebug[39m: Using new line as \n 
+2026-06-21 07:22:19 [34mdebug[39m: Response Status set to 200 
+2026-06-21 07:22:19 [34mdebug[39m: Headers Set Content-Type:  application/json 
+2026-06-21 07:22:19 [34mdebug[39m: Headers Set Access-Control-Allow-Origin:  * 
+2026-06-21 07:22:19 [34mdebug[39m: Headers Set Access-Control-Allow-Methods:  GET, POST, PUT, PATCH, DELETE, OPTIONS 
+2026-06-21 07:22:19 [34mdebug[39m: Headers Set Access-Control-Allow-Headers:  Content-Type, Authorization 
+2026-06-21 07:22:19 [34mdebug[39m: Generated Response {
+ "success": true,
+ "data": {
+ "userId": "usr_8f3k2m9x",
+ "fullName": "Thabo Molefe",
+ "email": "thabo@company.co.za",
+ "role": "sme",
+ "plan": "operator",
+ "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+ "tokenExpiry": "2026-06-11T08:00:00Z"
+ }
+} 
+2026-06-21 07:22:19 [34mdebug[39m: HTTP POST /api/v1/auth/login :: Query Parameters: {} | Request Headers {"host":"localhost:8080","user-agent":"curl/8.7.1","accept":"*/*","content-type":"application/json","content-length":"53"} | Request Body {"email":"thabo@company.co.za","password":"password"} 
+2026-06-21 07:23:42 [34mdebug[39m: Using new line as \n 
+2026-06-21 07:23:42 [34mdebug[39m: Response Status set to 200 
+2026-06-21 07:23:42 [34mdebug[39m: Headers Set Content-Type:  application/json 
+2026-06-21 07:23:42 [34mdebug[39m: Headers Set Access-Control-Allow-Origin:  * 
+2026-06-21 07:23:42 [34mdebug[39m: Headers Set Access-Control-Allow-Methods:  GET, POST, PUT, PATCH, DELETE, OPTIONS 
+2026-06-21 07:23:42 [34mdebug[39m: Headers Set Access-Control-Allow-Headers:  Content-Type, Authorization 
+2026-06-21 07:23:42 [34mdebug[39m: Generated Response {
+ "success": true,
+ "data": {
+ "userId": "usr_8f3k2m9x",
+ "fullName": "Thabo Molefe",
+ "email": "thabo@company.co.za",
+ "role": "sme",
+ "plan": "operator",
+ "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+ "tokenExpiry": "2026-06-11T08:00:00Z"
+ }
+} 
+2026-06-21 07:23:42 [34mdebug[39m: HTTP POST /api/v1/auth/login :: Query Parameters: {} | Request Headers {"host":"localhost:8080","user-agent":"curl/8.7.1","accept":"*/*","content-type":"application/json","content-length":"53"} | Request Body {"email":"thabo@company.co.za","password":"password"} 
+2026-06-21 07:24:11 [34mdebug[39m: HTTP OPTIONS /api/v1/auth/login :: Query Parameters: {} | Request Headers {"host":"localhost:8080","connection":"keep-alive","accept":"*/*","access-control-request-method":"POST","access-control-request-headers":"content-type","origin":"http://localhost:5176","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36","sec-fetch-mode":"cors","sec-fetch-site":"same-site","sec-fetch-dest":"empty","referer":"http://localhost:5176/","accept-encoding":"gzip, deflate, br, zstd","accept-language":"en-US,en;q=0.9"} | Request Body {} 
+2026-06-21 07:26:00 [34mdebug[39m: HTTP OPTIONS /api/v1/auth/login :: Query Parameters: {} | Request Headers {"host":"localhost:8080","user-agent":"curl/8.7.1","accept":"*/*","origin":"http://localhost:5176","access-control-request-method":"POST","access-control-request-headers":"content-type"} | Request Body {} 
+2026-06-24 13:49:39 [32minfo[39m: [24387] Master Started 
+2026-06-24 13:49:39 [32minfo[39m: Cluster metrics server listening to 5555, metrics exposed on http://localhost:5555/metrics . Set a negative value for config.monitoring.port to enable monitoring  
+2026-06-24 13:49:39 [34mdebug[39m: {
+  "loglevel": "debug",
+  "cpus": 1,
+  "monitoring": {
+    "port": 5555
+  },
+  "ssl": {
+    "cert": "./certs/server.cert",
+    "key": "./certs/server.key",
+    "root_cert": "./certs/root.cert"
+  },
+  "protocols": {
+    "http": {
+      "enable": true,
+      "mocks_dir": "./mocks",
+      "port": 8080
+    },
+    "https": {
+      "enable": false,
+      "port": 8443
+    },
+    "http2": {
+      "enable": false,
+      "port": 8081
+    },
+    "ws": {
+      "enable": false,
+      "mocks_dir": "./ws_mocks",
+      "port": 8082
+    },
+    "grpc": {
+      "enable": false,
+      "host": "0.0.0.0",
+      "port": 4312,
+      "mocks_dir": "./grpc/mocks",
+      "protos_dir": "./grpc/protos",
+      "grpc_tls": false
+    },
+    "thrift": {
+      "enable": false,
+      "mocks_dir": "./thrift/mocks",
+      "services": [
+        {
+          "port": 9999,
+          "service": "/opt/gen-nodejs/Calculator",
+          "handlers": [
+            "add",
+            "substract",
+            "ping"
+          ]
+        }
+      ]
+    },
+    "soap": {
+      "enable": false,
+      "mocks_dir": "./soap/mocks",
+      "port": 8100,
+      "services": [
+        {
+          "wsdl": "./soap/countryservice.wsdl",
+          "path": "/countryinfo"
+        }
+      ]
+    }
+  },
+  "backup": {
+    "enable": false,
+    "cron": "0 * * * *"
+  },
+  "cache": {
+    "enable": false,
+    "ttl_seconds": 300
+  },
+  "injection": {
+    "enable": true
+  },
+  "origins": [
+    "http://localhost:3000",
+    "http://localhost:3001",
+    "http://localhost:5000"
+  ],
+  "validation": {
+    "enable": false
+  },
+  "ext_helpers": null
+} 
+2026-06-24 13:49:39 [32minfo[39m: CORS enabled for http://localhost:3000, http://localhost:3001, http://localhost:5000 
+2026-06-24 13:49:39 [32minfo[39m: [24424] Worker started 
+2026-06-24 13:49:39 [32minfo[39m: Handlebar helpers registration started 
+2026-06-24 13:49:39 [33mwarn[39m: Code Injection is enabled. 
+2026-06-24 13:49:39 [32minfo[39m: Handlebar helpers registration completed 
+2026-06-24 13:49:39 [32minfo[39m: No middleware injection. 
+2026-06-24 13:49:39 [32minfo[39m: Worker sharing HTTP server at http://localhost:8080 ⛳ 
+2026-06-24 13:50:05 [34mdebug[39m: HTTP OPTIONS /api/v1/auth/login :: Query Parameters: {} | Request Headers {"host":"localhost:8080","connection":"keep-alive","accept":"*/*","access-control-request-method":"POST","access-control-request-headers":"content-type","origin":"http://localhost:5201","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36","sec-fetch-mode":"cors","sec-fetch-site":"same-site","sec-fetch-dest":"empty","referer":"http://localhost:5201/","accept-encoding":"gzip, deflate, br, zstd","accept-language":"en-US,en;q=0.9"} | Request Body {} 

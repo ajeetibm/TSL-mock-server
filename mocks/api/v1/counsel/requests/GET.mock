@@ -7,18 +7,95 @@ Access-Control-Allow-Headers: Content-Type, Authorization
 {
   "success": true,
   "data": {
-    "total": 57,
+    "total": 8,
     "requests": [
       {
         "requestId": "req_77b2",
-        "subject": "Review of SaaS Service Agreement",
-        "fromUser": "Thabo Molefe",
-        "userEmail": "thabo@company.co.za",
+        "subject": "Contract Review for SaaS Agreement",
+        "fromUser": "Michael Chen",
+        "userEmail": "michael.chen@company.com",
+        "earnings": 550,
+        "currency": "ZAR",
+        "status": "pending",
+        "assignedBy": "Admin Sarah",
+        "date": "2026-01-12"
+      },
+      {
+        "requestId": "req_77b3",
+        "subject": "Employment Contract Consultation",
+        "fromUser": "Jessica Williams",
+        "userEmail": "jessica.w@startup.co.za",
+        "earnings": 450,
+        "currency": "ZAR",
+        "status": "pending",
+        "assignedBy": "Admin Sarah",
+        "date": "2026-01-12"
+      },
+      {
+        "requestId": "req_77b4",
+        "subject": "Shareholder Agreement Review",
+        "fromUser": "David Brown",
+        "userEmail": "david.brown@tech.com",
+        "earnings": 550,
+        "currency": "ZAR",
+        "status": "accepted",
+        "assignedBy": "Admin John",
+        "date": "2026-01-11"
+      },
+      {
+        "requestId": "req_77b5",
+        "subject": "NDA Review & Modification",
+        "fromUser": "Sarah Johnson",
+        "userEmail": "sarah.j@business.co.za",
         "earnings": 500,
         "currency": "ZAR",
         "status": "accepted",
-        "assignedBy": "Admin: Lerato Khumalo",
-        "date": "2026-06-10"
+        "assignedBy": "Admin Sarah",
+        "date": "2026-01-10"
+      },
+      {
+        "requestId": "req_77b6",
+        "subject": "Partnership Agreement Draft",
+        "fromUser": "Robert Smith",
+        "userEmail": "robert.s@ventures.com",
+        "earnings": 500,
+        "currency": "ZAR",
+        "status": "accepted",
+        "assignedBy": "Admin John",
+        "date": "2026-01-10"
+      },
+      {
+        "requestId": "req_77b7",
+        "subject": "Intellectual Property Review",
+        "fromUser": "Emily Davis",
+        "userEmail": "emily.d@innovation.co.za",
+        "earnings": 450,
+        "currency": "ZAR",
+        "status": "rejected",
+        "assignedBy": "Admin Sarah",
+        "date": "2026-01-09"
+      },
+      {
+        "requestId": "req_77b8",
+        "subject": "Franchise Agreement Analysis",
+        "fromUser": "Thomas Wilson",
+        "userEmail": "thomas.w@franchise.com",
+        "earnings": 550,
+        "currency": "ZAR",
+        "status": "accepted",
+        "assignedBy": "Admin John",
+        "date": "2026-01-08"
+      },
+      {
+        "requestId": "req_77b9",
+        "subject": "Director Appointment Documents",
+        "fromUser": "Linda Martinez",
+        "userEmail": "linda.m@corporate.co.za",
+        "earnings": 550,
+        "currency": "ZAR",
+        "status": "accepted",
+        "assignedBy": "Admin Sarah",
+        "date": "2026-01-08"
       }
     ]
   }

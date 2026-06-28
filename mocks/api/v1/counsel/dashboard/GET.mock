@@ -7,9 +7,14 @@ Access-Control-Allow-Headers: Content-Type, Authorization
 {
   "success": true,
   "data": {
+    "counsel": {
+      "counselId": "con_002",
+      "fullName": "Adv. Sipho Nkosi",
+      "email": "s.nkosi@tsl.co.za"
+    },
     "kpis": {
-      "totalRequests": 57,
-      "accepted": 39,
+      "totalRequests": 39,
+      "accepted": 32,
       "acceptedRate": "68%",
       "rejected": 7,
       "rejectedRate": "15%",
@@ -20,31 +25,74 @@ Access-Control-Allow-Headers: Content-Type, Authorization
     "pendingRequests": [
       {
         "requestId": "req_77b2",
-        "subject": "Review of SaaS Service Agreement",
-        "fromUser": "Thabo Molefe",
-        "userEmail": "thabo@company.co.za",
+        "subject": "Contract Review for SaaS Agreement",
+        "fromUser": "Michael Chen",
+        "userEmail": "michael.chen@company.com",
         "company": "FibreGents (Pty) Ltd",
-        "assignedBy": "Admin: Lerato Khumalo",
-        "assignedAt": "2026-06-10T10:10:00Z"
+        "assignedBy": "Admin Sarah",
+        "assignedAt": "2026-01-12T10:10:00Z",
+        "timeAgo": "12 min ago",
+        "earnings": 550,
+        "currency": "ZAR"
+      },
+      {
+        "requestId": "req_77b3",
+        "subject": "Employment Contract Consultation",
+        "fromUser": "Jessica Williams",
+        "userEmail": "jessica.w@startup.co.za",
+        "company": "Growth Ventures",
+        "assignedBy": "Admin Sarah",
+        "assignedAt": "2026-01-12T09:57:00Z",
+        "timeAgo": "25 min ago",
+        "earnings": 450,
+        "currency": "ZAR"
+      }
+    ],
+    "acceptedRequests": [
+      {
+        "requestId": "req_acc_1",
+        "subject": "NDA Review",
+        "company": "TechStart Inc.",
+        "date": "2026-01-10",
+        "earnings": 500,
+        "currency": "ZAR"
+      },
+      {
+        "requestId": "req_acc_2",
+        "subject": "Employment Contract",
+        "company": "Growth Ventures",
+        "date": "2026-01-09",
+        "earnings": 500,
+        "currency": "ZAR"
+      },
+      {
+        "requestId": "req_acc_3",
+        "subject": "Shareholder Review",
+        "company": "Digital Solutions",
+        "date": "2026-01-07",
+        "earnings": 500,
+        "currency": "ZAR"
       }
     ],
     "earningsChart": {
-      "year": 2026,
+      "year": 2025,
       "months": [
-        {
-          "month": "Jan",
-          "earnings": 2100,
-          "target": 2500
-        },
-        {
-          "month": "Jun",
-          "earnings": 3900,
-          "target": 3500
-        }
+        { "month": "Jan", "earnings": 1800, "target": 2000 },
+        { "month": "Feb", "earnings": 2100, "target": 2200 },
+        { "month": "Mar", "earnings": 1950, "target": 2100 },
+        { "month": "Apr", "earnings": 2300, "target": 2300 },
+        { "month": "May", "earnings": 2200, "target": 2400 },
+        { "month": "Jun", "earnings": 2500, "target": 2500 },
+        { "month": "Jul", "earnings": 2700, "target": 2700 },
+        { "month": "Aug", "earnings": 2850, "target": 2850 },
+        { "month": "Sep", "earnings": 3000, "target": 3000 },
+        { "month": "Oct", "earnings": 3400, "target": 3300 },
+        { "month": "Nov", "earnings": 3650, "target": 3600 },
+        { "month": "Dec", "earnings": 3900, "target": 3800 }
       ],
       "summary": {
         "totalEarnings": 32800,
-        "avgMonthly": 2733,
+        "avgMonthly": 2700,
         "bestMonth": 3900,
         "growthRate": "108.1%"
       }
