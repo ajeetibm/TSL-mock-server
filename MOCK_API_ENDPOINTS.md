@@ -48,4 +48,5 @@ Dynamic path params from the API spec are stored as `__` folders. Example: `/api
 | CON-004 | POST | `/api/v1/counsel/requests/:requestId/reject` | `mocks/api/v1/counsel/requests/__/reject/POST.mock` | 200 OK Request rejected |
 | CON-005 | GET | `/api/v1/counsel/requests` | `mocks/api/v1/counsel/requests/GET.mock` | 200 OK Requests list returned |
 | CON-006 | PUT | `/api/v1/counsel/profile` | `mocks/api/v1/counsel/profile/PUT.mock` | 200 OK Profile updated |
+| CON-007 | POST | `/api/v1/counsel/reset-password` | `mocks/api/v1/counsel/reset-password/POST.mock` | 200 OK Counsel password reset successful |
 | PLY-001 | GET | `/api/v1/playbooks` | `mocks/api/v1/playbooks/GET.mock` | 200 OK Playbooks returned |

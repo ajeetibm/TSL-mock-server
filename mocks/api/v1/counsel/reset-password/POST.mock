@@ -1,0 +1,20 @@
+HTTP/1.1 200 OK Counsel password reset successful
+Content-Type: application/json
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS
+Access-Control-Allow-Headers: Content-Type, Authorization
+
+{
+  "success": true,
+  "message": "Counsel password has been reset successfully.",
+  "data": {
+    "userId": "con_002",
+    "fullName": "Adv. Sipho Nkosi",
+    "email": "s.nkosi@tsl.co.za",
+    "role": "counsel",
+    "portal": "counsel",
+    "token": "mock_counsel_reset_token",
+    "tokenExpiry": "2026-06-11T08:00:00Z",
+    "mustResetPassword": false
+  }
+}

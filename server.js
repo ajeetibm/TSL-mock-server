@@ -100,7 +100,7 @@ function buildLoginResponse(payload = {}) {
         portal: 'counsel',
         token: 'mock_counsel_token',
         tokenExpiry: '2026-06-11T08:00:00Z',
-        mustResetPassword: false,
+        mustResetPassword: String(payload.password || '').trim().toLowerCase() === 'temporary',
       },
     }
   }
