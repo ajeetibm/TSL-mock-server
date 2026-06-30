@@ -1,8 +1,0 @@
-HTTP/1.1 200 OK
-X-Requested-By: Dinkar Chavhan
-Content-Type: application/json
-
-{
-	"phone": "+919827094794",
-	"otp": "12345"
-}

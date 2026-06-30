@@ -1,7 +1,0 @@
-HTTP/1.1 200 OK
-Content-Type: application/json
-
-{
-  "status": "OTP_SENT",
-  "message": "OTP sent successfully"
-}

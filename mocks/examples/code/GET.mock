@@ -1,8 +1,0 @@
-HTTP/1.1 200 OK
-Content-Type: application/json
-
-{
-  "message": "This response demonstrates using the {{#code}} helper to fetch external data",
-  "externalData": {{#code url="https://jsonplaceholder.typicode.com/todos/1"}}{{/code}},
-  "note": "If `config.yml` has injection.enable=false, the {{#code}} block will be skipped or return empty."
-}
