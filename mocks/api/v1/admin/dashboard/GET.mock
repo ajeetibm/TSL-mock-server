@@ -51,27 +51,24 @@ Access-Control-Allow-Headers: Content-Type, Authorization
     "revenueChart": {
       "year": 2026,
       "months": [
-        {
-          "month": "Jan",
-          "actual": 38200,
-          "target": 40000
-        },
-        {
-          "month": "Feb",
-          "actual": 41500,
-          "target": 40000
-        },
-        {
-          "month": "Jun",
-          "actual": 48574,
-          "target": 52000
-        }
+        { "month": "Jan", "actual": 38200, "target": 40000 },
+        { "month": "Feb", "actual": 41500, "target": 40000 },
+        { "month": "Mar", "actual": 30000, "target": 31000 },
+        { "month": "Apr", "actual": 35500, "target": 32000 },
+        { "month": "May", "actual": 39000, "target": 35000 },
+        { "month": "Jun", "actual": 48574, "target": 52000 },
+        { "month": "Jul", "actual": 40500, "target": 39000 },
+        { "month": "Aug", "actual": 44500, "target": 42000 },
+        { "month": "Sep", "actual": 47000, "target": 45000 },
+        { "month": "Oct", "actual": 45000, "target": 46000 },
+        { "month": "Nov", "actual": 50500, "target": 48000 },
+        { "month": "Dec", "actual": 52400, "target": 50000 }
       ],
       "summary": {
-        "totalRevenue": 504100,
-        "avgMonthly": 42008,
+        "totalRevenue": 512674,
+        "avgMonthly": 42723,
         "bestMonth": 52400,
-        "growthRate": "48.7%"
+        "growthRate": "37.2%"
       }
     }
   }

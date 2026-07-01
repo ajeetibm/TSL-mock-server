@@ -1,6 +1,36 @@
 const { mockState } = require('../mock-state')
 const { getCounselByEmail, normalizeEmail, sendJson } = require('./helpers')
 
+const REVENUE_MONTHS = [
+  { month: 'Jan', actual: 38200, target: 40000 },
+  { month: 'Feb', actual: 41500, target: 40000 },
+  { month: 'Mar', actual: 30000, target: 31000 },
+  { month: 'Apr', actual: 35500, target: 32000 },
+  { month: 'May', actual: 39000, target: 35000 },
+  { month: 'Jun', actual: 48574, target: 52000 },
+  { month: 'Jul', actual: 40500, target: 39000 },
+  { month: 'Aug', actual: 44500, target: 42000 },
+  { month: 'Sep', actual: 47000, target: 45000 },
+  { month: 'Oct', actual: 45000, target: 46000 },
+  { month: 'Nov', actual: 50500, target: 48000 },
+  { month: 'Dec', actual: 52400, target: 50000 },
+]
+
+function buildRevenueSummary(months) {
+  const actuals = months.map((item) => item.actual)
+  const totalRevenue = actuals.reduce((sum, value) => sum + value, 0)
+  const avgMonthly = Math.round(totalRevenue / months.length)
+  const bestMonth = Math.max(...actuals)
+  const firstActual = actuals[0] ?? 0
+  const lastActual = actuals[actuals.length - 1] ?? 0
+  const growthRate =
+    firstActual > 0
+      ? `${(((lastActual - firstActual) / firstActual) * 100).toFixed(1)}%`
+      : '0%'
+
+  return { totalRevenue, avgMonthly, bestMonth, growthRate }
+}
+
 function buildAdminDashboard() {
   return {
     success: true,
@@ -33,16 +63,13 @@ function buildAdminDashboard() {
         })),
       revenueChart: {
         year: 2026,
-        months: [
-          { month: 'Jan', actual: 38200, target: 40000 },
-          { month: 'Feb', actual: 41500, target: 40000 },
-          { month: 'Jun', actual: 48574, target: 52000 },
-        ],
-        summary: {
-          totalRevenue: 504100,
-          avgMonthly: 42008,
-          bestMonth: 52400,
-          growthRate: '48.7%',
+        months: REVENUE_MONTHS,
+        summary: buildRevenueSummary(REVENUE_MONTHS),
+        axis: {
+          yMax: 60000,
+          ticks: [60000, 45000, 30000, 15000, 0],
+          tickLabels: ['R99k', 'R45k', 'R30k', 'R15k', 'R0k'],
+          format: 'ZAR',
         },
       },
     },
