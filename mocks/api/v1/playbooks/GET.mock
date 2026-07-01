@@ -1,43 +1,111 @@
-HTTP/1.1 200 OK Playbooks returned
+HTTP/1.1 200 OK
 Content-Type: application/json
 Access-Control-Allow-Origin: *
-Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS
+Access-Control-Allow-Methods: GET, OPTIONS
 Access-Control-Allow-Headers: Content-Type, Authorization
 
 {
   "success": true,
   "data": {
-    "categories": [
+    "playbookSections": [
       {
-        "category": "hiring",
-        "playbooks": [
+        "title": "Hiring",
+        "icon": "UsersRound",
+        "cards": [
           {
-            "playbookId": "plb_001",
             "title": "Hiring Your First Employee",
-            "steps": 8,
-            "estimatedTime": 15,
-            "description": "Step-by-step guide for SA-compliant first hire.",
-            "relatedWizards": [
-              "wiz_employment_offer"
-            ],
-            "accessTier": "launchpad",
-            "consumesRuns": false
+            "steps": "8 steps",
+            "time": "15 min",
+            "description": "A comprehensive guide to compliant employee onboarding in South Africa, including BCEA requirements, contracts, and payroll setup.",
+            "icon": "UsersRound",
+            "wizards": ["Employment Contract (BCEA)", "Employee Handbook"],
+            "pdfUrl": "https://www.w3.org/WAI/WCAG21/Techniques/pdf/sample.pdf"
+          },
+          {
+            "title": "Contractor vs Employee Classification",
+            "steps": "5 steps",
+            "time": "10 min",
+            "description": "Understand the legal differences between contractors and employees, and ensure proper classification under South African labour law.",
+            "icon": "UsersRound",
+            "wizards": ["Independent Contractor Agreement"],
+            "pdfUrl": "https://www.w3.org/WAI/WCAG21/Techniques/pdf/sample.pdf"
+          },
+          {
+            "title": "Building an Employee Handbook",
+            "steps": "12 steps",
+            "time": "20 min",
+            "description": "Create a comprehensive employee handbook that covers policies, procedures, and workplace expectations while ensuring legal compliance.",
+            "icon": "FileText",
+            "wizards": ["Employee Handbook Generator"],
+            "pdfUrl": "https://www.w3.org/WAI/WCAG21/Techniques/pdf/sample.pdf"
           }
         ]
-      }
-    ],
-    "samples": [
-      {
-        "title": "Investing in South Africa",
-        "fileSize": "2.1MB",
-        "pages": 18,
-        "downloadUrl": "/api/v1/playbooks/samples/investing-in-sa.pdf"
       },
       {
-        "title": "Founders Guide",
-        "fileSize": "3.2MB",
-        "pages": 32,
-        "downloadUrl": "/api/v1/playbooks/samples/founders-guide.pdf"
+        "title": "Compliance",
+        "icon": "Shield",
+        "cards": [
+          {
+            "title": "POPIA Compliance Basics",
+            "steps": "7 steps",
+            "time": "12 min",
+            "description": "Set up practical privacy controls, consent language, and data handling processes for South African businesses.",
+            "icon": "Shield",
+            "wizards": ["Privacy Policy (POPIA Compliant)", "Data Processing Agreement"],
+            "pdfUrl": "https://www.w3.org/WAI/WCAG21/Techniques/pdf/sample.pdf"
+          },
+          {
+            "title": "Document Retention Checklist",
+            "steps": "6 steps",
+            "time": "9 min",
+            "description": "Know which company, employment, tax, and customer records to keep, and how long to retain them.",
+            "icon": "FileText",
+            "wizards": ["Records Retention Policy"],
+            "pdfUrl": "https://www.w3.org/WAI/WCAG21/Techniques/pdf/sample.pdf"
+          },
+          {
+            "title": "Website Legal Readiness",
+            "steps": "9 steps",
+            "time": "14 min",
+            "description": "Prepare a legally sound website with terms, privacy disclosures, cookies, and customer-facing notices.",
+            "icon": "WandSparkles",
+            "wizards": ["Terms of Service", "Privacy Policy"],
+            "pdfUrl": "https://www.w3.org/WAI/WCAG21/Techniques/pdf/sample.pdf"
+          }
+        ]
+      },
+      {
+        "title": "Fundraising",
+        "icon": "TrendingUp",
+        "cards": [
+          {
+            "title": "Investor Meeting Prep",
+            "steps": "6 steps",
+            "time": "11 min",
+            "description": "Prepare the core legal documents and confidentiality steps needed before sharing sensitive startup materials.",
+            "icon": "TrendingUp",
+            "wizards": ["Non-Disclosure Agreement (NDA)", "Founder Agreement"],
+            "pdfUrl": "https://www.w3.org/WAI/WCAG21/Techniques/pdf/sample.pdf"
+          },
+          {
+            "title": "Founder Equity Readiness",
+            "steps": "8 steps",
+            "time": "16 min",
+            "description": "Review founder roles, equity splits, vesting expectations, and decision-making before funding conversations.",
+            "icon": "UsersRound",
+            "wizards": ["Founder Agreement", "Shareholder Resolutions"],
+            "pdfUrl": "https://www.w3.org/WAI/WCAG21/Techniques/pdf/sample.pdf"
+          },
+          {
+            "title": "Due Diligence Pack",
+            "steps": "10 steps",
+            "time": "18 min",
+            "description": "Organise contracts, policies, resolutions, and employment records into a cleaner investor review package.",
+            "icon": "BookOpen",
+            "wizards": ["Board Resolution", "Service Agreement"],
+            "pdfUrl": "https://www.w3.org/WAI/WCAG21/Techniques/pdf/sample.pdf"
+          }
+        ]
       }
     ]
   }
