@@ -1,5 +1,6 @@
 const mockState = {
   nextCounselId: 8,
+  nextSmeId: 2,
   nextRequestId: 7800,
   availability: 'available',
   smeCredits: {

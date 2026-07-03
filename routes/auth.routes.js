@@ -1,6 +1,37 @@
 const { mockState } = require('../mock-state')
 const { createAuthUser, getCounselByEmail, getSmeByEmail, normalizeEmail, sendJson } = require('./helpers')
 
+function titleCaseFromEmail(email) {
+  const localPart = normalizeEmail(email).split('@')[0] || 'user'
+  return localPart
+    .split(/[._-]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ') || 'User'
+}
+
+function createSmeUser(email, payload = {}) {
+  const fullName = String(payload.fullName || titleCaseFromEmail(email))
+  const user = {
+    userId: 'usr_' + String(mockState.nextSmeId++).padStart(4, '0'),
+    fullName,
+    email,
+    role: 'sme',
+    portal: 'sme',
+    plan: 'Operator',
+    status: 'Active',
+    joinedAt: new Date().toISOString().slice(0, 10),
+    companyName: '',
+    registrationNumber: '',
+    phone: '',
+    physicalAddress: '',
+    contactPerson: fullName,
+    updatedAt: new Date().toISOString(),
+  }
+  mockState.smeUsers.set(email, user)
+  return user
+}
+
 function buildLoginResponse(payload = {}) {
   const portal = String(payload.portal || '').toLowerCase()
   const email = normalizeEmail(payload.email)
@@ -54,7 +85,8 @@ function buildLoginResponse(payload = {}) {
     }
   }
 
-  const sme = getSmeByEmail(email) || getSmeByEmail('thabo@company.co.za')
+  const smeEmail = email || 'thabo@company.co.za'
+  const sme = getSmeByEmail(smeEmail) || createSmeUser(smeEmail, payload)
 
   return {
     success: true,

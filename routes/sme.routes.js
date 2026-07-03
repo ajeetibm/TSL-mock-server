@@ -1,6 +1,35 @@
 const { mockState } = require('../mock-state')
 const { getFirstSmeUser, getSmeByEmail, normalizeEmail, sendJson } = require('./helpers')
 
+function titleCaseFromEmail(email) {
+  const localPart = normalizeEmail(email).split('@')[0] || 'user'
+  return localPart
+    .split(/[._-]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ') || 'User'
+}
+
+function createDefaultSmeUser(email) {
+  const fullName = titleCaseFromEmail(email)
+  return {
+    userId: 'usr_' + String(mockState.nextSmeId++).padStart(4, '0'),
+    fullName,
+    email,
+    role: 'sme',
+    portal: 'sme',
+    plan: 'Operator',
+    status: 'Active',
+    joinedAt: new Date().toISOString().slice(0, 10),
+    companyName: '',
+    registrationNumber: '',
+    phone: '',
+    physicalAddress: '',
+    contactPerson: fullName,
+    updatedAt: new Date().toISOString(),
+  }
+}
+
 function normalizeSmeProfilePayload(payload, existingUser) {
   const nextEmail = normalizeEmail(payload.email || existingUser?.email || 'thabo@company.co.za')
   const contactPerson = String(payload.contactPerson || existingUser?.contactPerson || existingUser?.fullName || '').trim()
@@ -47,7 +76,11 @@ function publicSmeProfile(user) {
 function handleSmeRoutes(req, res, relPath) {
   if (req.method === 'GET' && relPath === 'api/v1/sme/profile') {
     const email = normalizeEmail(req.query.email || req.body.email || 'thabo@company.co.za')
-    const profile = getSmeByEmail(email) || getFirstSmeUser()
+    let profile = getSmeByEmail(email)
+    if (!profile) {
+      profile = createDefaultSmeUser(email)
+      mockState.smeUsers.set(email, profile)
+    }
 
     return sendJson(res, 200, {
       success: true,
@@ -57,7 +90,7 @@ function handleSmeRoutes(req, res, relPath) {
 
   if (req.method === 'PUT' && relPath === 'api/v1/sme/profile') {
     const incomingEmail = normalizeEmail(req.body.email || 'thabo@company.co.za')
-    const existingUser = getSmeByEmail(incomingEmail) || getSmeByEmail('thabo@company.co.za') || getFirstSmeUser()
+    const existingUser = getSmeByEmail(incomingEmail) || createDefaultSmeUser(incomingEmail)
     const previousEmail = normalizeEmail(existingUser?.email)
     const updatedUser = normalizeSmeProfilePayload(req.body, existingUser)
 
