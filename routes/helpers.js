@@ -27,9 +27,19 @@ function getCounselByEmail(email) {
   return mockState.counselUsers.get(normalizeEmail(email))
 }
 
+function getSmeByEmail(email) {
+  return mockState.smeUsers.get(normalizeEmail(email))
+}
+
+function getFirstSmeUser() {
+  return Array.from(mockState.smeUsers.values())[0]
+}
+
 module.exports = {
   sendJson,
   normalizeEmail,
   createAuthUser,
   getCounselByEmail,
+  getSmeByEmail,
+  getFirstSmeUser,
 }

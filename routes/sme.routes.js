@@ -1,7 +1,78 @@
 const { mockState } = require('../mock-state')
-const { normalizeEmail, sendJson } = require('./helpers')
+const { getFirstSmeUser, getSmeByEmail, normalizeEmail, sendJson } = require('./helpers')
+
+function normalizeSmeProfilePayload(payload, existingUser) {
+  const nextEmail = normalizeEmail(payload.email || existingUser?.email || 'thabo@company.co.za')
+  const contactPerson = String(payload.contactPerson || existingUser?.contactPerson || existingUser?.fullName || '').trim()
+  const companyName = String(payload.companyName || existingUser?.companyName || '').trim()
+
+  return {
+    ...(existingUser || {}),
+    userId: existingUser?.userId || 'usr_8f3k2m9x',
+    role: 'sme',
+    portal: 'sme',
+    fullName: contactPerson || existingUser?.fullName || companyName || 'Thabo Molefe',
+    email: nextEmail,
+    plan: existingUser?.plan || 'Operator',
+    status: existingUser?.status || 'Active',
+    joinedAt: existingUser?.joinedAt || '2025-09-15',
+    companyName,
+    registrationNumber: String(payload.registrationNumber || existingUser?.registrationNumber || '').trim(),
+    phone: String(payload.phone || existingUser?.phone || '').trim(),
+    physicalAddress: String(payload.physicalAddress || existingUser?.physicalAddress || '').trim(),
+    contactPerson,
+    updatedAt: new Date().toISOString(),
+  }
+}
+
+function publicSmeProfile(user) {
+  return {
+    userId: user.userId,
+    fullName: user.fullName,
+    email: user.email,
+    role: user.role,
+    portal: user.portal,
+    plan: user.plan,
+    status: user.status,
+    joinedAt: user.joinedAt,
+    companyName: user.companyName,
+    registrationNumber: user.registrationNumber,
+    phone: user.phone,
+    physicalAddress: user.physicalAddress,
+    contactPerson: user.contactPerson,
+    updatedAt: user.updatedAt,
+  }
+}
 
 function handleSmeRoutes(req, res, relPath) {
+  if (req.method === 'GET' && relPath === 'api/v1/sme/profile') {
+    const email = normalizeEmail(req.query.email || req.body.email || 'thabo@company.co.za')
+    const profile = getSmeByEmail(email) || getFirstSmeUser()
+
+    return sendJson(res, 200, {
+      success: true,
+      data: publicSmeProfile(profile),
+    })
+  }
+
+  if (req.method === 'PUT' && relPath === 'api/v1/sme/profile') {
+    const incomingEmail = normalizeEmail(req.body.email || 'thabo@company.co.za')
+    const existingUser = getSmeByEmail(incomingEmail) || getSmeByEmail('thabo@company.co.za') || getFirstSmeUser()
+    const previousEmail = normalizeEmail(existingUser?.email)
+    const updatedUser = normalizeSmeProfilePayload(req.body, existingUser)
+
+    if (previousEmail && previousEmail !== updatedUser.email) {
+      mockState.smeUsers.delete(previousEmail)
+    }
+    mockState.smeUsers.set(updatedUser.email, updatedUser)
+
+    return sendJson(res, 200, {
+      success: true,
+      message: 'Profile updated successfully.',
+      data: publicSmeProfile(updatedUser),
+    })
+  }
+
   if (req.method === 'GET' && relPath === 'api/v1/sme/counsel/credits') {
     return sendJson(res, 200, {
       success: true,

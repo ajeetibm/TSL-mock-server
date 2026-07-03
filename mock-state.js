@@ -12,6 +12,24 @@ const mockState = {
     currency: 'ZAR',
     resetDate: '2026-07-10',
   },
+  smeUsers: new Map([
+    ['thabo@company.co.za', {
+      userId: 'usr_8f3k2m9x',
+      fullName: 'Thabo Molefe',
+      email: 'thabo@company.co.za',
+      role: 'sme',
+      portal: 'sme',
+      plan: 'Operator',
+      status: 'Active',
+      joinedAt: '2025-09-15',
+      companyName: 'FibreGents (Pty) Ltd',
+      registrationNumber: '2025/123456/07',
+      phone: '+27 82 123 4567',
+      physicalAddress: '123 Main Street, Sandton, Johannesburg, 2196',
+      contactPerson: 'Thabo Molefe',
+      updatedAt: '2026-06-10T09:30:00Z',
+    }],
+  ]),
   counselUsers: new Map([
     ['s.nkosi@tsl.co.za', {
       userId: 'con_002',

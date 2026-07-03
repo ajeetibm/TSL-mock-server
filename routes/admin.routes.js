@@ -76,7 +76,87 @@ function buildAdminDashboard() {
   }
 }
 
+function toAdminUser(user) {
+  return {
+    userId: user.userId,
+    fullName: user.fullName || user.contactPerson || user.companyName,
+    email: user.email,
+    role: user.role || 'sme',
+    portal: user.portal || 'sme',
+    companyName: user.companyName,
+    contactPerson: user.contactPerson,
+    phone: user.phone,
+    registrationNumber: user.registrationNumber,
+    physicalAddress: user.physicalAddress,
+    plan: user.plan || 'Operator',
+    status: user.status || 'Active',
+    joinedAt: user.joinedAt || '2025-09-15',
+    updatedAt: user.updatedAt,
+  }
+}
+
 function handleAdminRoutes(req, res, relPath) {
+  if (req.method === 'GET' && relPath === 'api/v1/admin/users') {
+    const users = Array.from(mockState.smeUsers.values()).map(toAdminUser)
+
+    return sendJson(res, 200, {
+      success: true,
+      data: {
+        stats: {
+          actionsToday: 2847,
+          activeNow: 234,
+          workflowsStarted: 87,
+        },
+        users,
+        pagination: {
+          page: 1,
+          perPage: 20,
+          total: users.length,
+          totalPages: 1,
+        },
+      },
+    })
+  }
+
+  const userMatch = relPath.match(/^api\/v1\/admin\/users\/([^/]+)$/)
+  if (req.method === 'PUT' && userMatch) {
+    const userId = userMatch[1]
+    const existingUser = Array.from(mockState.smeUsers.values()).find((user) => user.userId === userId)
+
+    if (!existingUser) {
+      return sendJson(res, 404, {
+        success: false,
+        message: 'User not found.',
+        error: 'USER_NOT_FOUND',
+      })
+    }
+
+    const previousEmail = normalizeEmail(existingUser.email)
+    const updatedEmail = normalizeEmail(req.body.email || existingUser.email)
+    const updatedUser = {
+      ...existingUser,
+      fullName: req.body.fullName || req.body.contactPerson || existingUser.fullName,
+      email: updatedEmail,
+      companyName: req.body.companyName ?? existingUser.companyName,
+      contactPerson: req.body.contactPerson ?? existingUser.contactPerson,
+      phone: req.body.phone ?? existingUser.phone,
+      registrationNumber: req.body.registrationNumber ?? existingUser.registrationNumber,
+      physicalAddress: req.body.physicalAddress ?? existingUser.physicalAddress,
+      plan: req.body.plan ?? existingUser.plan,
+      status: req.body.status ?? existingUser.status,
+      updatedAt: new Date().toISOString(),
+    }
+
+    if (previousEmail !== updatedEmail) mockState.smeUsers.delete(previousEmail)
+    mockState.smeUsers.set(updatedEmail, updatedUser)
+
+    return sendJson(res, 200, {
+      success: true,
+      message: 'User updated successfully.',
+      data: toAdminUser(updatedUser),
+    })
+  }
+
   if (req.method === 'POST' && relPath === 'api/v1/admin/counsel') {
     const email = normalizeEmail(req.body.email || 's.nkosi@tsl.co.za')
     const fullName = String(req.body.fullName || req.body.name || 'Adv. Sipho Nkosi')

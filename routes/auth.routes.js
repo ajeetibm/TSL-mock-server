@@ -1,5 +1,5 @@
 const { mockState } = require('../mock-state')
-const { createAuthUser, getCounselByEmail, normalizeEmail, sendJson } = require('./helpers')
+const { createAuthUser, getCounselByEmail, getSmeByEmail, normalizeEmail, sendJson } = require('./helpers')
 
 function buildLoginResponse(payload = {}) {
   const portal = String(payload.portal || '').toLowerCase()
@@ -54,15 +54,17 @@ function buildLoginResponse(payload = {}) {
     }
   }
 
+  const sme = getSmeByEmail(email) || getSmeByEmail('thabo@company.co.za')
+
   return {
     success: true,
     data: {
-      userId: 'usr_8f3k2m9x',
-      fullName: 'Thabo Molefe',
-      email: payload.email || 'thabo@company.co.za',
+      userId: sme?.userId || 'usr_8f3k2m9x',
+      fullName: sme?.fullName || sme?.contactPerson || 'Thabo Molefe',
+      email: sme?.email || payload.email || 'thabo@company.co.za',
       role: 'sme',
       portal: 'sme',
-      plan: 'operator',
+      plan: String(sme?.plan || 'operator').toLowerCase(),
       token: 'mock_sme_token',
       tokenExpiry: '2026-06-11T08:00:00Z',
     },
