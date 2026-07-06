@@ -23,6 +23,7 @@ function createSmeUser(email, payload = {}) {
     joinedAt: new Date().toISOString().slice(0, 10),
     companyName: '',
     registrationNumber: '',
+    password: '',
     phone: '',
     physicalAddress: '',
     contactPerson: fullName,
@@ -88,6 +89,14 @@ function buildLoginResponse(payload = {}) {
   const smeEmail = email || 'thabo@company.co.za'
   const sme = getSmeByEmail(smeEmail) || createSmeUser(smeEmail, payload)
 
+  if (sme.password && String(payload.password || '') !== sme.password) {
+    return {
+      success: false,
+      message: 'Invalid SME credentials.',
+      error: 'INVALID_CREDENTIALS',
+    }
+  }
+
   return {
     success: true,
     data: {
@@ -104,6 +113,62 @@ function buildLoginResponse(payload = {}) {
 }
 
 function handleAuthRoutes(req, res, relPath) {
+  if (req.method === 'PUT' && relPath === 'api/v1/auth/change-password') {
+    const email = normalizeEmail(req.body.email || 'thabo@company.co.za')
+    const currentPassword = String(req.body.currentPassword || '')
+    const newPassword = String(req.body.newPassword || '')
+    const confirmPassword = String(req.body.confirmPassword || '')
+    const sme = getSmeByEmail(email) || createSmeUser(email, req.body)
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      return sendJson(res, 400, {
+        success: false,
+        message: 'Current password, new password, and confirmation are required.',
+        error: 'PASSWORD_FIELDS_REQUIRED',
+      })
+    }
+
+    if (newPassword !== confirmPassword) {
+      return sendJson(res, 400, {
+        success: false,
+        message: 'New password and confirm password must match.',
+        error: 'PASSWORD_MISMATCH',
+      })
+    }
+
+    if (newPassword.length < 6) {
+      return sendJson(res, 400, {
+        success: false,
+        message: 'New password must be at least 6 characters.',
+        error: 'PASSWORD_TOO_SHORT',
+      })
+    }
+
+    if (sme.password && currentPassword !== sme.password) {
+      return sendJson(res, 400, {
+        success: false,
+        message: 'Current password is incorrect.',
+        error: 'INVALID_CURRENT_PASSWORD',
+      })
+    }
+
+    sme.password = newPassword
+    sme.updatedAt = new Date().toISOString()
+    mockState.smeUsers.set(email, sme)
+
+    return sendJson(res, 200, {
+      success: true,
+      message: 'Password changed successfully.',
+      data: {
+        userId: sme.userId,
+        email: sme.email,
+        role: sme.role,
+        portal: sme.portal,
+        passwordUpdatedAt: sme.updatedAt,
+      },
+    })
+  }
+
   if (req.method === 'POST' && relPath === 'api/v1/auth/login') {
     return sendJson(res, 200, buildLoginResponse(req.body))
   }
