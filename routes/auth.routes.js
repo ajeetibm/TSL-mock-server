@@ -1,5 +1,5 @@
 const { mockState } = require('../mock-state')
-const { createAuthUser, getCounselByEmail, getSmeByEmail, normalizeEmail, sendJson } = require('./helpers')
+const { createAuthUser, getAdminByEmail, getCounselByEmail, getSmeByEmail, normalizeEmail, sendJson } = require('./helpers')
 
 function titleCaseFromEmail(email) {
   const localPart = normalizeEmail(email).split('@')[0] || 'user'
@@ -8,6 +8,30 @@ function titleCaseFromEmail(email) {
     .filter(Boolean)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(' ') || 'User'
+}
+
+function createAdminUser(email, payload = {}) {
+  const fullName = String(payload.fullName || 'Given Kibanza')
+  const [firstName, ...lastNameParts] = fullName.split(' ').filter(Boolean)
+  const user = {
+    userId: 'adm_001',
+    fullName,
+    firstName: firstName || 'Given',
+    lastName: lastNameParts.join(' ') || 'Kibanza',
+    email: email || 'given@thestartuplegal.co.za',
+    password: '',
+    role: 'admin',
+    portal: 'admin',
+    phone: '+27 11 234 5678',
+    location: '123 Main Street, Sandton, Johannesburg, 2196',
+    jobTitle: 'Platform Administrator',
+    status: 'active',
+    joinedAt: '2025-12-01',
+    lastLogin: 'January 9, 2026 - 14:23',
+    updatedAt: new Date().toISOString(),
+  }
+  mockState.adminUsers.set(user.email, user)
+  return user
 }
 
 function createSmeUser(email, payload = {}) {
@@ -72,12 +96,23 @@ function buildLoginResponse(payload = {}) {
   }
 
   if (isAdmin) {
+    const adminEmail = email || 'given@thestartuplegal.co.za'
+    const admin = getAdminByEmail(adminEmail) || createAdminUser(adminEmail, payload)
+
+    if (admin.password && String(payload.password || '') !== admin.password) {
+      return {
+        success: false,
+        message: 'Invalid admin credentials.',
+        error: 'INVALID_CREDENTIALS',
+      }
+    }
+
     return {
       success: true,
       data: {
-        userId: 'adm_001',
-        fullName: 'Given Kibanza',
-        email: payload.email || 'given@thestartuplegal.co.za',
+        userId: admin.userId,
+        fullName: admin.fullName,
+        email: admin.email,
         role: 'admin',
         portal: 'admin',
         token: 'mock_admin_token',

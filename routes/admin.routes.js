@@ -1,5 +1,5 @@
 const { mockState } = require('../mock-state')
-const { getCounselByEmail, normalizeEmail, sendJson } = require('./helpers')
+const { getAdminByEmail, getCounselByEmail, normalizeEmail, sendJson } = require('./helpers')
 
 const REVENUE_MONTHS = [
   { month: 'Jan', actual: 38200, target: 40000 },
@@ -76,6 +76,30 @@ function buildAdminDashboard() {
   }
 }
 
+function getPrimaryAdmin(email = 'given@thestartuplegal.co.za') {
+  const normalizedEmail = normalizeEmail(email)
+  return getAdminByEmail(normalizedEmail) || Array.from(mockState.adminUsers.values())[0]
+}
+
+function toAdminProfile(admin) {
+  return {
+    userId: admin.userId,
+    fullName: admin.fullName,
+    firstName: admin.firstName,
+    lastName: admin.lastName,
+    email: admin.email,
+    role: admin.role,
+    portal: admin.portal,
+    phone: admin.phone,
+    location: admin.location,
+    jobTitle: admin.jobTitle,
+    status: admin.status,
+    joinedAt: admin.joinedAt,
+    lastLogin: admin.lastLogin,
+    updatedAt: admin.updatedAt,
+  }
+}
+
 function toAdminUser(user) {
   return {
     userId: user.userId,
@@ -96,6 +120,96 @@ function toAdminUser(user) {
 }
 
 function handleAdminRoutes(req, res, relPath) {
+  if (req.method === 'GET' && relPath === 'api/v1/admin/profile') {
+    return sendJson(res, 200, {
+      success: true,
+      data: toAdminProfile(getPrimaryAdmin(req.query?.email)),
+    })
+  }
+
+  if (req.method === 'PUT' && relPath === 'api/v1/admin/profile') {
+    const currentAdmin = getPrimaryAdmin(req.body.email)
+    const previousEmail = normalizeEmail(currentAdmin.email)
+    const nextEmail = normalizeEmail(req.body.email || currentAdmin.email)
+    const firstName = String(req.body.firstName ?? currentAdmin.firstName)
+    const lastName = String(req.body.lastName ?? currentAdmin.lastName)
+    const updatedAdmin = {
+      ...currentAdmin,
+      firstName,
+      lastName,
+      fullName: `${firstName} ${lastName}`.trim(),
+      email: nextEmail,
+      phone: req.body.phone ?? currentAdmin.phone,
+      location: req.body.location ?? currentAdmin.location,
+      jobTitle: req.body.jobTitle ?? currentAdmin.jobTitle,
+      updatedAt: new Date().toISOString(),
+    }
+
+    if (previousEmail !== nextEmail) mockState.adminUsers.delete(previousEmail)
+    mockState.adminUsers.set(nextEmail, updatedAdmin)
+
+    return sendJson(res, 200, {
+      success: true,
+      message: 'Profile saved successfully.',
+      data: toAdminProfile(updatedAdmin),
+    })
+  }
+
+  if (req.method === 'PUT' && relPath === 'api/v1/admin/change-password') {
+    const admin = getPrimaryAdmin(req.body.email)
+    const currentPassword = String(req.body.currentPassword || '')
+    const newPassword = String(req.body.newPassword || '')
+    const confirmPassword = String(req.body.confirmPassword || '')
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      return sendJson(res, 400, {
+        success: false,
+        message: 'Current password, new password, and confirmation are required.',
+        error: 'PASSWORD_FIELDS_REQUIRED',
+      })
+    }
+
+    if (newPassword !== confirmPassword) {
+      return sendJson(res, 400, {
+        success: false,
+        message: 'New password and confirm password must match.',
+        error: 'PASSWORD_MISMATCH',
+      })
+    }
+
+    if (newPassword.length < 6) {
+      return sendJson(res, 400, {
+        success: false,
+        message: 'New password must be at least 6 characters.',
+        error: 'PASSWORD_TOO_SHORT',
+      })
+    }
+
+    if (admin.password && currentPassword !== admin.password) {
+      return sendJson(res, 400, {
+        success: false,
+        message: 'Current password is incorrect.',
+        error: 'INVALID_CURRENT_PASSWORD',
+      })
+    }
+
+    admin.password = newPassword
+    admin.updatedAt = new Date().toISOString()
+    mockState.adminUsers.set(normalizeEmail(admin.email), admin)
+
+    return sendJson(res, 200, {
+      success: true,
+      message: 'Password changed successfully.',
+      data: {
+        userId: admin.userId,
+        email: admin.email,
+        role: admin.role,
+        portal: admin.portal,
+        passwordUpdatedAt: admin.updatedAt,
+      },
+    })
+  }
+
   if (req.method === 'GET' && relPath === 'api/v1/admin/users') {
     const users = Array.from(mockState.smeUsers.values()).map(toAdminUser)
 

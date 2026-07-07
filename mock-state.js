@@ -31,6 +31,25 @@ const mockState = {
       updatedAt: '2026-06-10T09:30:00Z',
     }],
   ]),
+  adminUsers: new Map([
+    ['given@thestartuplegal.co.za', {
+      userId: 'adm_001',
+      fullName: 'Given Kibanza',
+      firstName: 'Given',
+      lastName: 'Kibanza',
+      email: 'given@thestartuplegal.co.za',
+      password: '',
+      role: 'admin',
+      portal: 'admin',
+      phone: '+27 11 234 5678',
+      location: '123 Main Street, Sandton, Johannesburg, 2196',
+      jobTitle: 'Platform Administrator',
+      status: 'active',
+      joinedAt: '2025-12-01',
+      lastLogin: 'January 9, 2026 - 14:23',
+      updatedAt: '2026-06-10T09:30:00Z',
+    }],
+  ]),
   counselUsers: new Map([
     ['s.nkosi@tsl.co.za', {
       userId: 'con_002',

@@ -67,6 +67,27 @@ function buildCounselDashboard() {
   }
 }
 
+function toCounselProfile(user) {
+  const nameParts = String(user.fullName || '').replace(/^Adv\.\s*/i, '').split(' ').filter(Boolean)
+  return {
+    userId: user.userId,
+    fullName: user.fullName,
+    firstName: user.firstName || nameParts[0] || 'Sipho',
+    lastName: user.lastName || nameParts.slice(1).join(' ') || 'Nkosi',
+    email: user.email,
+    phone: user.phone || '+27 11 234 5678',
+    specialty: user.specialty || 'Multiple Choice',
+    expertise: user.expertise || 'Multiple Choice',
+    location: user.location || 'Johannesburg, Gauteng',
+    experience: user.experience || '15',
+    education: user.education || 'Placeholder',
+    meetingId: user.meetingId || 'snawaz@calendly.com',
+    joinedDate: user.joinedDate || 'December 2025',
+    lastLogin: user.lastLogin || 'January 9, 2026 - 14:23',
+    updatedAt: user.updatedAt,
+  }
+}
+
 function buildMailPayload(request) {
   return {
     to: request.userEmail,
@@ -98,6 +119,143 @@ function handleCounselRoutes(req, res, relPath) {
       success: true,
       message: 'Counsel password has been reset successfully.',
       data: createAuthUser(user, 'reset_token'),
+    })
+  }
+
+  if (req.method === 'GET' && relPath === 'api/v1/counsel/profile') {
+    const email = normalizeEmail(req.query?.email || 's.nkosi@tsl.co.za')
+    const user = getCounselByEmail(email)
+
+    if (!user) {
+      return sendJson(res, 404, {
+        success: false,
+        message: 'Counsel account not found.',
+        error: 'COUNSEL_NOT_FOUND',
+      })
+    }
+
+    return sendJson(res, 200, {
+      success: true,
+      data: toCounselProfile(user),
+    })
+  }
+
+  if (req.method === 'PUT' && relPath === 'api/v1/counsel/profile') {
+    const currentEmail = normalizeEmail(req.body.currentEmail || req.body.originalEmail || req.body.email || 's.nkosi@tsl.co.za')
+    const nextEmail = normalizeEmail(req.body.email || currentEmail)
+    const user = getCounselByEmail(currentEmail)
+
+    if (!user) {
+      return sendJson(res, 404, {
+        success: false,
+        message: 'Counsel account not found.',
+        error: 'COUNSEL_NOT_FOUND',
+      })
+    }
+
+    const currentProfile = toCounselProfile(user)
+    const firstName = String(req.body.firstName ?? currentProfile.firstName)
+    const lastName = String(req.body.lastName ?? currentProfile.lastName)
+    Object.assign(user, {
+      firstName,
+      lastName,
+      fullName: `Adv. ${firstName} ${lastName}`.trim(),
+      email: nextEmail,
+      phone: req.body.phone ?? user.phone,
+      specialty: req.body.specialty ?? user.specialty,
+      expertise: req.body.expertise ?? user.expertise,
+      location: req.body.location ?? user.location,
+      experience: req.body.experience ?? user.experience,
+      education: req.body.education ?? user.education,
+      meetingId: req.body.meetingId ?? user.meetingId,
+      joinedDate: req.body.joinedDate ?? user.joinedDate,
+      lastLogin: req.body.lastLogin ?? user.lastLogin,
+      updatedAt: new Date().toISOString(),
+    })
+    if (currentEmail !== nextEmail) mockState.counselUsers.delete(currentEmail)
+    mockState.counselUsers.set(nextEmail, user)
+
+    const directoryEntry = mockState.counselDirectory.find((entry) => normalizeEmail(entry.email) === currentEmail)
+    if (directoryEntry) {
+      directoryEntry.fullName = user.fullName
+      directoryEntry.name = user.fullName
+      directoryEntry.email = user.email
+      directoryEntry.phone = user.phone
+      directoryEntry.specialty = user.specialty
+      directoryEntry.expertise = user.expertise
+      directoryEntry.location = user.location
+      directoryEntry.experience = String(user.experience || directoryEntry.experience)
+    }
+
+    return sendJson(res, 200, {
+      success: true,
+      message: 'Profile saved successfully.',
+      data: toCounselProfile(user),
+    })
+  }
+
+  if (req.method === 'PUT' && relPath === 'api/v1/counsel/change-password') {
+    const email = normalizeEmail(req.body.email || 's.nkosi@tsl.co.za')
+    const user = getCounselByEmail(email)
+    const currentPassword = String(req.body.currentPassword || '')
+    const newPassword = String(req.body.newPassword || '')
+    const confirmPassword = String(req.body.confirmPassword || '')
+
+    if (!user) {
+      return sendJson(res, 404, {
+        success: false,
+        message: 'Counsel account not found.',
+        error: 'COUNSEL_NOT_FOUND',
+      })
+    }
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      return sendJson(res, 400, {
+        success: false,
+        message: 'Current password, new password, and confirmation are required.',
+        error: 'PASSWORD_FIELDS_REQUIRED',
+      })
+    }
+
+    if (newPassword !== confirmPassword) {
+      return sendJson(res, 400, {
+        success: false,
+        message: 'New password and confirm password must match.',
+        error: 'PASSWORD_MISMATCH',
+      })
+    }
+
+    if (newPassword.length < 6) {
+      return sendJson(res, 400, {
+        success: false,
+        message: 'New password must be at least 6 characters.',
+        error: 'PASSWORD_TOO_SHORT',
+      })
+    }
+
+    if (user.password && currentPassword !== user.password) {
+      return sendJson(res, 400, {
+        success: false,
+        message: 'Current password is incorrect.',
+        error: 'INVALID_CURRENT_PASSWORD',
+      })
+    }
+
+    user.password = newPassword
+    user.mustResetPassword = false
+    user.updatedAt = new Date().toISOString()
+    mockState.counselUsers.set(email, user)
+
+    return sendJson(res, 200, {
+      success: true,
+      message: 'Password changed successfully.',
+      data: {
+        userId: user.userId,
+        email: user.email,
+        role: user.role,
+        portal: user.portal,
+        passwordUpdatedAt: user.updatedAt,
+      },
     })
   }
 

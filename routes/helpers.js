@@ -23,6 +23,10 @@ function createAuthUser(user, tokenSuffix = 'token') {
   }
 }
 
+function getAdminByEmail(email) {
+  return mockState.adminUsers.get(normalizeEmail(email))
+}
+
 function getCounselByEmail(email) {
   return mockState.counselUsers.get(normalizeEmail(email))
 }
@@ -39,6 +43,7 @@ module.exports = {
   sendJson,
   normalizeEmail,
   createAuthUser,
+  getAdminByEmail,
   getCounselByEmail,
   getSmeByEmail,
   getFirstSmeUser,
