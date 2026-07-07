@@ -18,6 +18,7 @@ const mockState = {
       userId: 'usr_8f3k2m9x',
       fullName: 'Thabo Molefe',
       email: 'thabo@company.co.za',
+      password: '',
       role: 'sme',
       portal: 'sme',
       plan: 'Operator',

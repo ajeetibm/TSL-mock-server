@@ -98,13 +98,20 @@ function buildLoginResponse(payload = {}) {
   if (isAdmin) {
     const adminEmail = email || 'given@thestartuplegal.co.za'
     const admin = getAdminByEmail(adminEmail) || createAdminUser(adminEmail, payload)
+    const incomingAdminPassword = String(payload.password || '')
 
-    if (admin.password && String(payload.password || '') !== admin.password) {
+    if (admin.password && incomingAdminPassword !== admin.password) {
       return {
         success: false,
         message: 'Invalid admin credentials.',
         error: 'INVALID_CREDENTIALS',
       }
+    }
+
+    // Persist the password used at login so change-password can validate against it
+    if (!admin.password && incomingAdminPassword) {
+      admin.password = incomingAdminPassword
+      mockState.adminUsers.set(adminEmail, admin)
     }
 
     return {
@@ -123,13 +130,20 @@ function buildLoginResponse(payload = {}) {
 
   const smeEmail = email || 'thabo@company.co.za'
   const sme = getSmeByEmail(smeEmail) || createSmeUser(smeEmail, payload)
+  const incomingPassword = String(payload.password || '')
 
-  if (sme.password && String(payload.password || '') !== sme.password) {
+  if (sme.password && incomingPassword !== sme.password) {
     return {
       success: false,
       message: 'Invalid SME credentials.',
       error: 'INVALID_CREDENTIALS',
     }
+  }
+
+  // Persist the password used at login so change-password can validate against it
+  if (!sme.password && incomingPassword) {
+    sme.password = incomingPassword
+    mockState.smeUsers.set(smeEmail, sme)
   }
 
   return {
@@ -179,7 +193,7 @@ function handleAuthRoutes(req, res, relPath) {
       })
     }
 
-    if (sme.password && currentPassword !== sme.password) {
+    if (currentPassword !== sme.password) {
       return sendJson(res, 400, {
         success: false,
         message: 'Current password is incorrect.',

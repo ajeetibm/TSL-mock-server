@@ -185,7 +185,7 @@ function handleAdminRoutes(req, res, relPath) {
       })
     }
 
-    if (admin.password && currentPassword !== admin.password) {
+    if (currentPassword !== admin.password) {
       return sendJson(res, 400, {
         success: false,
         message: 'Current password is incorrect.',
