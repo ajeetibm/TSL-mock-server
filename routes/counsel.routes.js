@@ -1,12 +1,18 @@
 const { mockState } = require('../mock-state')
 const { createAuthUser, getCounselByEmail, normalizeEmail, sendJson } = require('./helpers')
 
-function getCounselRequests() {
-  return mockState.counselRequests
+function getCounselRequests(email) {
+  const normalizedEmail = normalizeEmail(email)
+  if (!normalizedEmail) return mockState.counselRequests
+
+  return mockState.counselRequests.filter((request) => (
+    normalizeEmail(request.assignedCounselEmail) === normalizedEmail
+  ))
 }
 
-function buildCounselDashboard() {
-  const requests = getCounselRequests()
+function buildCounselDashboard(email) {
+  const requests = getCounselRequests(email)
+  const counselUser = getCounselByEmail(email) || getCounselByEmail('s.nkosi@tsl.co.za')
   const accepted = requests.filter((request) => request.status === 'accepted')
   const rejected = requests.filter((request) => request.status === 'rejected')
   const pending = requests.filter((request) => request.status === 'pending')
@@ -17,9 +23,9 @@ function buildCounselDashboard() {
     success: true,
     data: {
       counsel: {
-        counselId: 'con_002',
-        fullName: 'Adv. Sipho Nkosi',
-        email: 's.nkosi@tsl.co.za',
+        counselId: counselUser?.userId || 'con_002',
+        fullName: counselUser?.fullName || 'Adv. Sipho Nkosi',
+        email: counselUser?.email || 's.nkosi@tsl.co.za',
       },
       kpis: {
         totalRequests: requests.length,
@@ -260,15 +266,16 @@ function handleCounselRoutes(req, res, relPath) {
   }
 
   if (req.method === 'GET' && relPath === 'api/v1/counsel/dashboard') {
-    return sendJson(res, 200, buildCounselDashboard())
+    return sendJson(res, 200, buildCounselDashboard(req.query?.email))
   }
 
   if (req.method === 'GET' && relPath === 'api/v1/counsel/requests') {
+    const requests = getCounselRequests(req.query?.email)
     return sendJson(res, 200, {
       success: true,
       data: {
-        total: mockState.counselRequests.length,
-        requests: mockState.counselRequests,
+        total: requests.length,
+        requests,
       },
     })
   }
@@ -303,7 +310,7 @@ function handleCounselRoutes(req, res, relPath) {
     if (adminRequest) {
       adminRequest.status = 'accepted'
       adminRequest.acceptedAt = request.acceptedAt
-      adminRequest.assignedCounselName = request.assignedCounsel
+      adminRequest.assignedCounselName = request.assignedCounselName || request.assignedCounsel || request.assignedCounselEmail
       adminRequest.responseUrl = request.responseUrl || null
     }
     const mail = buildMailPayload(request)

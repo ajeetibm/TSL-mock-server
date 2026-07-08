@@ -60,7 +60,8 @@ function createSmeUser(email, payload = {}) {
 function buildLoginResponse(payload = {}) {
   const portal = String(payload.portal || '').toLowerCase()
   const email = normalizeEmail(payload.email)
-  const isCounsel = portal === 'counsel' || email.includes('counsel') || email.includes('nkosi')
+  const isKnownCounsel = Boolean(getCounselByEmail(email))
+  const isCounsel = portal === 'counsel' || isKnownCounsel || email.includes('counsel') || email.includes('nkosi')
   const isAdmin = portal === 'admin' || email.includes('admin') || email.includes('thestartuplegal')
 
   if (isCounsel) {

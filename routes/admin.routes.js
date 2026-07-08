@@ -342,7 +342,24 @@ function handleAdminRoutes(req, res, relPath) {
     const requestId = assignMatch[1]
     const request = mockState.adminRequests.find((item) => item.requestId === requestId)
     const selectedEmail = normalizeEmail(req.body.counselEmail || req.body.email || req.body.assignedCounselEmail || 's.nkosi@tsl.co.za')
-    const counselUser = getCounselByEmail(selectedEmail) || getCounselByEmail('s.nkosi@tsl.co.za')
+    const directoryEntry = mockState.counselDirectory.find((entry) => normalizeEmail(entry.email) === selectedEmail)
+    let counselUser = getCounselByEmail(selectedEmail)
+
+    if (!counselUser && directoryEntry) {
+      counselUser = {
+        userId: directoryEntry.counselId,
+        fullName: directoryEntry.fullName || directoryEntry.name,
+        email: normalizeEmail(directoryEntry.email),
+        password: 'temporary',
+        role: 'counsel',
+        portal: 'counsel',
+        mustResetPassword: true,
+        status: 'active',
+      }
+      mockState.counselUsers.set(counselUser.email, counselUser)
+    }
+
+    counselUser = counselUser || getCounselByEmail('s.nkosi@tsl.co.za')
 
     if (!request) {
       return sendJson(res, 404, {
@@ -370,6 +387,8 @@ function handleAdminRoutes(req, res, relPath) {
       assignedBy: 'Admin Sarah',
       assignedCounselId: counselUser.userId,
       assignedCounselEmail: counselUser.email,
+      assignedCounselName: counselUser.fullName,
+      assignedCounsel: counselUser.fullName,
       date: new Date().toISOString().slice(0, 10),
       assignedAt: request.assignedAt,
       timeAgo: 'just now',
