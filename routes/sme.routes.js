@@ -73,6 +73,15 @@ function publicSmeProfile(user) {
   }
 }
 
+function createPaystackReference() {
+  return `TSL_PAYSTACK_${Date.now()}_${String(mockState.nextPaymentId++).padStart(4, '0')}`
+}
+
+function normalizePaymentAmount(value) {
+  const amount = Number(value)
+  return Number.isFinite(amount) && amount > 0 ? amount : 999
+}
+
 function handleSmeRoutes(req, res, relPath) {
   if (req.method === 'GET' && relPath === 'api/v1/sme/profile') {
     const email = normalizeEmail(req.query.email || req.body.email || 'thabo@company.co.za')
@@ -103,6 +112,84 @@ function handleSmeRoutes(req, res, relPath) {
       success: true,
       message: 'Profile updated successfully.',
       data: publicSmeProfile(updatedUser),
+    })
+  }
+
+  if (req.method === 'POST' && relPath === 'api/v1/sme/payments/paystack/initialize') {
+    const amount = normalizePaymentAmount(req.body.amount)
+    const currency = String(req.body.currency || 'ZAR').toUpperCase()
+    const email = normalizeEmail(req.body.email || 'thabo@company.co.za')
+    const reference = createPaystackReference()
+    const transaction = {
+      reference,
+      amount,
+      currency,
+      email,
+      plan: req.body.plan || 'Operator',
+      paymentMethod: req.body.paymentMethod || 'Credit/Debit Cards',
+      selectedWizards: Array.isArray(req.body.selectedWizards) ? req.body.selectedWizards : [],
+      status: 'initialized',
+      createdAt: new Date().toISOString(),
+    }
+
+    mockState.paymentTransactions.set(reference, transaction)
+
+    return sendJson(res, 200, {
+      success: true,
+      message: 'Paystack transaction initialized in sandbox mode.',
+      data: {
+        provider: 'paystack',
+        mode: 'test',
+        reference,
+        accessCode: `mock_access_code_${reference}`,
+        authorizationUrl: `https://checkout.paystack.com/mock_${reference}`,
+        publicKey: 'pk_test_mock_tsl_paystack',
+        amount,
+        amountInKobo: Math.round(amount * 100),
+        currency,
+        email,
+        plan: transaction.plan,
+      },
+    })
+  }
+
+  if (req.method === 'POST' && relPath === 'api/v1/sme/payments/paystack/verify') {
+    const reference = String(req.body.reference || '')
+    const outcome = String(req.body.outcome || 'success').toLowerCase()
+    const transaction = mockState.paymentTransactions.get(reference)
+
+    if (!transaction) {
+      return sendJson(res, 404, {
+        success: false,
+        message: 'Payment reference not found.',
+        error: 'PAYMENT_NOT_FOUND',
+      })
+    }
+
+    const status = outcome === 'cancelled' ? 'cancelled' : outcome === 'failed' ? 'failed' : 'success'
+    const gatewayResponse = {
+      success: 'Approved by Paystack sandbox.',
+      failed: 'Declined by Paystack sandbox.',
+      cancelled: 'Cancelled by customer.',
+    }[status]
+
+    transaction.status = status
+    transaction.verifiedAt = new Date().toISOString()
+    if (status === 'success') {
+      transaction.paidAt = transaction.verifiedAt
+    }
+    mockState.paymentTransactions.set(reference, transaction)
+
+    return sendJson(res, 200, {
+      success: true,
+      message: gatewayResponse,
+      data: {
+        provider: 'paystack',
+        reference,
+        status,
+        gatewayResponse,
+        paidAt: transaction.paidAt,
+      },
     })
   }
 

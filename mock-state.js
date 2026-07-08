@@ -2,6 +2,7 @@ const mockState = {
   nextCounselId: 8,
   nextSmeId: 2,
   nextRequestId: 7800,
+  nextPaymentId: 1,
   availability: 'available',
   smeCredits: {
     plan: 'operator',
@@ -94,6 +95,7 @@ const mockState = {
       currency: 'ZAR',
     },
   ],
+  paymentTransactions: new Map(),
   counselRequests: [
     {
       requestId: 'req_77b2',
