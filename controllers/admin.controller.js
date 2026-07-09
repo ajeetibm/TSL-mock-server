@@ -157,7 +157,58 @@ async function getIssues(req, res, next) {
 }
 
 async function getBilling(req, res, next) {
-  try { res.json({ success: true, data: { totalRevenue: 485740, outstandingInvoices: 23450, failedPayments: 8920, invoices: [] } }) }
+  try {
+    // PRODUCTION: query invoices from real DB filtered by req.query (client, plan, month, search)
+    const { search = '', client = '', plan = '', month = '' } = req.query
+
+    const mockInvoices = [
+      { invoiceId: 'INV-2025-001', client: 'Acme Corp',        plan: 'Operator',  paymentType: 'subscription', amount: 4999,  currency: 'ZAR', status: 'paid',    issueDate: '2026-01-03', dueDate: '2026-01-17', month: 'Jan', paidAt: '2026-01-04', reference: 'ref_acme_001',      email: 'billing@acmecorp.co.za' },
+      { invoiceId: 'INV-2025-002', client: 'TechStart Ltd',    plan: 'Launchpad', paymentType: 'subscription', amount: 1999,  currency: 'ZAR', status: 'paid',    issueDate: '2026-01-02', dueDate: '2026-01-16', month: 'Jan', paidAt: '2026-01-03', reference: 'ref_tech_002',      email: 'accounts@techstart.co.za' },
+      { invoiceId: 'INV-2025-003', client: 'Digital Co',       plan: 'Operator',  paymentType: 'top-up',       amount: 500,   currency: 'ZAR', status: 'pending', issueDate: '2025-12-25', dueDate: '2026-01-08', month: 'Dec', paidAt: null,          reference: 'ref_digital_003',   email: 'finance@digitalco.io' },
+      { invoiceId: 'INV-2024-004', client: 'Cloud Systems',    plan: 'Boardroom', paymentType: 'subscription', amount: 12999, currency: 'ZAR', status: 'paid',    issueDate: '2026-01-03', dueDate: '2026-01-17', month: 'Jan', paidAt: '2026-01-05', reference: 'ref_cloud_004',     email: 'cfo@cloudsystems.co.za' },
+      { invoiceId: 'INV-2024-005', client: 'Smart Solutions',  plan: 'Operator',  paymentType: 'subscription', amount: 4999,  currency: 'ZAR', status: 'failed',  issueDate: '2025-12-20', dueDate: '2026-01-03', month: 'Dec', paidAt: null,          reference: 'ref_smart_005',     email: 'admin@smartsolutions.co.za' },
+      { invoiceId: 'INV-2024-006', client: 'Nexus Labs',       plan: 'Launchpad', paymentType: 'one-time',     amount: 2499,  currency: 'ZAR', status: 'paid',    issueDate: '2025-12-15', dueDate: '2025-12-29', month: 'Dec', paidAt: '2025-12-16', reference: 'ref_nexus_006',     email: 'ops@nexuslabs.co.za' },
+      { invoiceId: 'INV-2024-007', client: 'Pinnacle Group',   plan: 'Boardroom', paymentType: 'subscription', amount: 12999, currency: 'ZAR', status: 'failed',  issueDate: '2025-12-10', dueDate: '2025-12-24', month: 'Dec', paidAt: null,          reference: 'ref_pinnacle_007',  email: 'billing@pinnaclegroup.co.za' },
+      { invoiceId: 'INV-2024-008', client: 'Vortex Ventures',  plan: 'Operator',  paymentType: 'top-up',       amount: 1000,  currency: 'ZAR', status: 'paid',    issueDate: '2026-01-07', dueDate: '2026-01-21', month: 'Jan', paidAt: '2026-01-08', reference: 'ref_vortex_008',    email: 'finance@vortexvc.co.za' },
+      { invoiceId: 'INV-2024-009', client: 'BrightPath Inc',   plan: 'Launchpad', paymentType: 'subscription', amount: 1999,  currency: 'ZAR', status: 'pending', issueDate: '2026-01-01', dueDate: '2026-01-15', month: 'Jan', paidAt: null,          reference: 'ref_bright_009',    email: 'accounts@brightpath.co.za' },
+      { invoiceId: 'INV-2024-010', client: 'Meridian Co',      plan: 'Boardroom', paymentType: 'subscription', amount: 12999, currency: 'ZAR', status: 'failed',  issueDate: '2025-11-25', dueDate: '2025-12-09', month: 'Nov', paidAt: null,          reference: 'ref_meridian_010',  email: 'ceo@meridian.co.za' },
+    ]
+
+    // Apply filters
+    const q = search.toLowerCase()
+    const filtered = mockInvoices.filter(inv => {
+      const matchSearch = !q || inv.invoiceId.toLowerCase().includes(q) || inv.client.toLowerCase().includes(q) || inv.plan.toLowerCase().includes(q)
+      const matchClient = !client || client === 'All Clients' || inv.client === client
+      const matchPlan   = !plan   || plan   === 'All Plans'   || inv.plan === plan
+      const matchMonth  = !month  || month  === 'All Months'  || inv.month === month
+      return matchSearch && matchClient && matchPlan && matchMonth
+    })
+
+    // KPI aggregates (always from full dataset)
+    const totalRevenue        = mockInvoices.filter(i => i.status === 'paid').reduce((s, i) => s + i.amount, 0)
+    const outstandingAmount   = mockInvoices.filter(i => i.status === 'pending').reduce((s, i) => s + i.amount, 0)
+    const outstandingCount    = mockInvoices.filter(i => i.status === 'pending').length
+    const failedAmount        = mockInvoices.filter(i => i.status === 'failed').reduce((s, i) => s + i.amount, 0)
+    const failedCount         = mockInvoices.filter(i => i.status === 'failed').length
+
+    res.json({
+      success: true,
+      data: {
+        kpis: {
+          totalRevenue,        currency: 'ZAR', period: 'This month',
+          outstandingAmount,   outstandingCount,
+          failedAmount,        failedCount,
+        },
+        reconciliationAlert: failedCount > 0 ? {
+          active: true,
+          message: `${failedCount} payment${failedCount > 1 ? 's have' : ' has'} failed in the last 7 days. Review and retry failed transactions to maintain cash flow.`,
+          failedCount,
+        } : { active: false },
+        invoices: filtered,
+        total: filtered.length,
+      },
+    })
+  }
   catch (e) { next(e) }
 }
 
