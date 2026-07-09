@@ -1,0 +1,21 @@
+HTTP/1.1 200 OK Google authentication successful
+Content-Type: application/json
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS
+Access-Control-Allow-Headers: Content-Type, Authorization
+
+{
+  "success": true,
+  "message": "Google login successful.",
+  "data": {
+    "userId": "usr_0002",
+    "fullName": "TSL User Demo",
+    "email": "tsl.user.demo@gmail.com",
+    "picture": "https://lh3.googleusercontent.com/a/mock-profile-picture",
+    "role": "user",
+    "portal": "sme",
+    "token": "mock_google_user_jwt_token",
+    "tokenExpiry": "2026-06-12T08:00:00Z",
+    "mustResetPassword": false
+  }
+}
