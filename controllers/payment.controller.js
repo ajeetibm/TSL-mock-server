@@ -55,8 +55,30 @@ async function verifyPayment(req, res, next) {
       return res.json({ success: true, message: 'Payment already verified.', data: { provider: 'paystack', reference, status: txn?.status || 'success', paidAt: txn?.paidAt } })
     }
 
-    const txn = paymentTransactions.get(reference)
-    if (!txn) return next(errors.notFound('Payment reference not found.', 'PAYMENT_NOT_FOUND'))
+    let txn = paymentTransactions.get(reference)
+    // If the reference was generated client-side (e.g. Paystack inline checkout), it won't
+    // be in paymentTransactions yet — register it now so verification can proceed.
+    if (!txn) {
+      const type = req.body.type || 'subscription'
+      const plan = req.body.plan || 'operator'
+      const credits = Number(req.body.credits) || 0
+      const email = req.user?.email || req.body.email || 'unknown@tsl.co.za'
+      txn = {
+        reference,
+        email,
+        amount: req.body.amountPaid || 0,
+        amountInKobo: Math.round((req.body.amountPaid || 0) * 100),
+        currency: req.body.currency || 'ZAR',
+        plan,
+        credits,
+        type,
+        status: 'initialized',
+        createdAt: new Date().toISOString(),
+        verifiedAt: null,
+        paidAt: null,
+      }
+      paymentTransactions.set(reference, txn)
+    }
 
     // Call real Paystack Verify API (or mock if key not set)
     const paystackData = await smartVerify(reference, req.body.outcome || 'success')
@@ -72,10 +94,19 @@ async function verifyPayment(req, res, next) {
     verifiedReferences.add(reference) // Prevent duplicate verification
     recordPaymentHistory(txn)
 
-    // Activate subscription on success
+    // Activate subscription on success (skip for counsel top-up — credits handled below)
     let subscription = null
-    if (status === 'success') {
+    const isCounselTopUp = (txn.type || req.body.type) === 'counsel-topup'
+    if (status === 'success' && !isCounselTopUp) {
       subscription = activateUserSubscription(txn.email, txn.plan, req.user?.userId)
+    }
+
+    // Add counsel credits on successful top-up payment
+    if (status === 'success' && isCounselTopUp) {
+      const { mockState } = require('../mock-state')
+      const creditsToAdd = Number(txn.credits || req.body.credits) > 0 ? Number(txn.credits || req.body.credits) : 1
+      mockState.smeCredits.creditsTotal     += creditsToAdd
+      mockState.smeCredits.creditsRemaining += creditsToAdd
     }
 
     addAuditLog({ action: AUDIT_ACTIONS.PAYMENT_VERIFY, userId: req.user?.userId, email: txn.email, ip: req.ip, meta: { reference, status, plan: txn.plan } })

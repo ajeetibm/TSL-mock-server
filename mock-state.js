@@ -290,4 +290,7 @@ defaultAssignableCounsel.forEach((member) => {
   }
 })
 
+// wizardDrafts: Map<userId_wizardType, WizardDraft>
+mockState.wizardDrafts = new Map()
+
 module.exports = { mockState }
