@@ -99,4 +99,39 @@ async function changePassword(req, res, next) {
   } catch (e) { next(e) }
 }
 
-module.exports = { getProfile, updateProfile, getDashboard, getCounselCredits, getCounselRequests, createCounselRequest, changePassword }
+
+async function topUpCredits(req, res, next) {
+  try {
+    const { plan, credits, amountPaid, currency, reference } = req.body
+
+    const PLAN_RATES = { Launchpad: 550, Operator: 500, Boardroom: 450 }
+    const planName = String(plan || 'Operator')
+    const ratePerCredit = PLAN_RATES[planName] ?? 500
+    const creditsToAdd = Number(credits) > 0 ? Number(credits) : 1
+    const totalPaid = Number(amountPaid) || Math.round(ratePerCredit * creditsToAdd * 1.15)
+
+    // Add credits to the mock sme credits state
+    mockState.smeCredits.creditsTotal     += creditsToAdd
+    mockState.smeCredits.creditsRemaining += creditsToAdd
+
+    // Record the payment transaction for auditing
+    const txnId = 'topup_' + Date.now()
+    const txn = {
+      txnId,
+      reference: reference || txnId,
+      plan: planName,
+      creditsAdded: creditsToAdd,
+      amountPaid: totalPaid,
+      currency: currency || 'ZAR',
+      paidAt: new Date().toISOString(),
+      type: 'counsel-topup',
+    }
+    mockState.paymentTransactions.set(txnId, txn)
+
+    addAuditLog({ action: 'COUNSEL_TOPUP', userId: req.user?.userId, email: req.user?.email || 'thabo@company.co.za', ip: req.ip, meta: { plan: planName, creditsAdded: creditsToAdd, amountPaid: totalPaid } })
+
+    res.json({ success: true, message: `${creditsToAdd} credit${creditsToAdd !== 1 ? 's' : ''} added successfully.`, data: { ...mockState.smeCredits } })
+  } catch (e) { next(e) }
+}
+
+module.exports = { getProfile, updateProfile, getDashboard, getCounselCredits, getCounselRequests, createCounselRequest, topUpCredits, changePassword }

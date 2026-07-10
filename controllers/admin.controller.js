@@ -217,4 +217,115 @@ async function getAuditLogsEndpoint(req, res, next) {
   catch (e) { next(e) }
 }
 
-module.exports = { getDashboard, getProfile, updateProfile, changePassword, getUsers, updateUser, getCounsel, addCounsel, assignCounselRequest, inviteAdmin, revokeAdmin, getIssues, getBilling, getAuditLogsEndpoint }
+
+async function exportBillingInvoices(req, res, next) {
+  try {
+    // PRODUCTION: validate request body (format, filters, date range)
+    const { format = 'pdf', filters = {} } = req.body
+
+    // Simulate async export job processing delay (1–2 seconds)
+    // PRODUCTION: replace with real job queue (Bull/SQS) that generates the file,
+    // uploads to S3/Azure Blob, then sends the download link to the admin's email
+    await new Promise((resolve) => setTimeout(resolve, 1200 + Math.random() * 800))
+
+    const jobId = `export_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
+    const adminEmail = req.user?.email ?? 'admin@tsl.com'
+
+    res.json({
+      success: true,
+      message: 'Your invoice export is being prepared. You will receive an email with the download link shortly.',
+      data: {
+        jobId,
+        status: 'queued',
+        // PRODUCTION: this email comes from the authenticated admin's profile
+        notificationEmail: adminEmail,
+        format,
+        estimatedCompletionSeconds: 30,
+        // PRODUCTION: real link will be delivered via email, not inline
+        _mockNote: 'In production, the download link is emailed — never returned inline.',
+      },
+    })
+  } catch (e) { next(e) }
+}
+
+module.exports = { getDashboard, getProfile, updateProfile, changePassword, getUsers, updateUser, getCounsel, addCounsel, assignCounselRequest, inviteAdmin, revokeAdmin, getIssues, getBilling, getAuditLogsEndpoint, exportBillingInvoices, getGeneralSettings, updateGeneralSettings, getNotificationSettings, updateNotificationSettings, getSecuritySettings, updateSecuritySettings }
+
+
+// ── In-memory settings store (PRODUCTION: replace with DB reads/writes) ──────
+const _settingsStore = {
+  general: {
+    platformName: 'The Startup Legal',
+    supportEmail: 'support@startuplegal.com',
+    timezone: 'UTC+02:00 (South Africa)',
+    language: 'English',
+    dateFormat: 'DD/MM/YYYY',
+  },
+  notifications: {
+    emailNotifications: true,
+    newUserAlerts: true,
+    paymentAlerts: true,
+    systemAlerts: false,
+    issueNotifications: true,
+    weeklyReports: false,
+  },
+  security: {
+    twoFactorAuth: false,
+    sessionTimeout: '30 minutes',
+    loginNotifications: true,
+  },
+}
+
+async function getGeneralSettings(req, res, next) {
+  try {
+    await new Promise((r) => setTimeout(r, 300))
+    res.json({ success: true, data: { ..._settingsStore.general } })
+  } catch (e) { next(e) }
+}
+
+async function updateGeneralSettings(req, res, next) {
+  try {
+    await new Promise((r) => setTimeout(r, 1000 + Math.random() * 600))
+    const { platformName, supportEmail, timezone, language, dateFormat } = req.body
+    if (platformName !== undefined) _settingsStore.general.platformName = platformName
+    if (supportEmail !== undefined) _settingsStore.general.supportEmail = supportEmail
+    if (timezone     !== undefined) _settingsStore.general.timezone     = timezone
+    if (language     !== undefined) _settingsStore.general.language     = language
+    if (dateFormat   !== undefined) _settingsStore.general.dateFormat   = dateFormat
+    res.json({ success: true, message: 'Settings saved successfully.', data: { ..._settingsStore.general } })
+  } catch (e) { next(e) }
+}
+
+async function getNotificationSettings(req, res, next) {
+  try {
+    await new Promise((r) => setTimeout(r, 300))
+    res.json({ success: true, data: { ..._settingsStore.notifications } })
+  } catch (e) { next(e) }
+}
+
+async function updateNotificationSettings(req, res, next) {
+  try {
+    await new Promise((r) => setTimeout(r, 1000 + Math.random() * 600))
+    const keys = ['emailNotifications','newUserAlerts','paymentAlerts','systemAlerts','issueNotifications','weeklyReports']
+    for (const k of keys) {
+      if (req.body[k] !== undefined) _settingsStore.notifications[k] = Boolean(req.body[k])
+    }
+    res.json({ success: true, message: 'Notification preferences saved successfully.', data: { ..._settingsStore.notifications } })
+  } catch (e) { next(e) }
+}
+
+async function getSecuritySettings(req, res, next) {
+  try {
+    await new Promise((r) => setTimeout(r, 300))
+    res.json({ success: true, data: { ..._settingsStore.security } })
+  } catch (e) { next(e) }
+}
+
+async function updateSecuritySettings(req, res, next) {
+  try {
+    await new Promise((r) => setTimeout(r, 1000 + Math.random() * 600))
+    if (req.body.twoFactorAuth      !== undefined) _settingsStore.security.twoFactorAuth      = Boolean(req.body.twoFactorAuth)
+    if (req.body.sessionTimeout     !== undefined) _settingsStore.security.sessionTimeout     = req.body.sessionTimeout
+    if (req.body.loginNotifications !== undefined) _settingsStore.security.loginNotifications = Boolean(req.body.loginNotifications)
+    res.json({ success: true, message: 'Security settings updated successfully.', data: { ..._settingsStore.security } })
+  } catch (e) { next(e) }
+}
