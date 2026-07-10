@@ -7,7 +7,7 @@ Access-Control-Allow-Headers: Content-Type, Authorization
 {
   "success": true,
   "data": {
-    "unreadCount": 3,
+    "unreadCount": 5,
     "notifications": [
       {
         "notificationId": "ntf_001",
@@ -15,15 +15,159 @@ Access-Control-Allow-Headers: Content-Type, Authorization
         "title": "Signature Required",
         "message": "Your NDA requires a signature from the counterparty.",
         "isRead": false,
-        "createdAt": "2026-06-10T08:30:00Z"
+        "createdAt": "2025-07-08T08:30:00Z"
       },
       {
         "notificationId": "ntf_002",
         "type": "document_completed",
         "title": "Document Completed",
         "message": "Your Employment Offer Letter is ready to download.",
+        "isRead": false,
+        "createdAt": "2025-07-05T10:00:00Z"
+      },
+      {
+        "notificationId": "ntf_003",
+        "type": "document_expiring",
+        "title": "Document Expiring Soon",
+        "message": "Your Service Agreement will expire in 7 days. Please renew it.",
+        "isRead": false,
+        "createdAt": "2025-07-01T09:15:00Z"
+      },
+      {
+        "notificationId": "ntf_004",
+        "type": "payment_received",
+        "title": "Payment Received",
+        "message": "A payment of $2,500 has been received for Invoice #INV-2025-047.",
         "isRead": true,
-        "createdAt": "2026-06-05T10:00:00Z"
+        "createdAt": "2025-06-28T14:45:00Z"
+      },
+      {
+        "notificationId": "ntf_005",
+        "type": "contract_signed",
+        "title": "Contract Signed",
+        "message": "Your Vendor Agreement has been signed by all parties.",
+        "isRead": false,
+        "createdAt": "2025-06-22T11:00:00Z"
+      },
+      {
+        "notificationId": "ntf_006",
+        "type": "signature_required",
+        "title": "Signature Required",
+        "message": "Your Lease Renewal Agreement is pending your signature.",
+        "isRead": false,
+        "createdAt": "2025-06-18T08:00:00Z"
+      },
+      {
+        "notificationId": "ntf_007",
+        "type": "document_rejected",
+        "title": "Document Rejected",
+        "message": "Your submitted Compliance Report was rejected. Please review and resubmit.",
+        "isRead": true,
+        "createdAt": "2025-06-12T13:30:00Z"
+      },
+      {
+        "notificationId": "ntf_008",
+        "type": "payment_due",
+        "title": "Payment Due",
+        "message": "Invoice #INV-2025-039 of $1,200 is due in 3 days.",
+        "isRead": true,
+        "createdAt": "2025-06-07T09:00:00Z"
+      },
+      {
+        "notificationId": "ntf_009",
+        "type": "document_completed",
+        "title": "Document Completed",
+        "message": "Your Partnership Agreement has been finalised and is ready to download.",
+        "isRead": true,
+        "createdAt": "2025-06-01T10:30:00Z"
+      },
+      {
+        "notificationId": "ntf_010",
+        "type": "contract_signed",
+        "title": "Contract Signed",
+        "message": "Your Software License Agreement has been signed by the vendor.",
+        "isRead": true,
+        "createdAt": "2025-05-27T15:00:00Z"
+      },
+      {
+        "notificationId": "ntf_011",
+        "type": "signature_required",
+        "title": "Signature Required",
+        "message": "Your updated Privacy Policy document requires your acknowledgement.",
+        "isRead": true,
+        "createdAt": "2025-05-20T08:45:00Z"
+      },
+      {
+        "notificationId": "ntf_012",
+        "type": "document_expiring",
+        "title": "Document Expiring Soon",
+        "message": "Your Business Insurance Certificate expires in 14 days.",
+        "isRead": true,
+        "createdAt": "2025-05-15T11:20:00Z"
+      },
+      {
+        "notificationId": "ntf_013",
+        "type": "payment_received",
+        "title": "Payment Received",
+        "message": "A payment of $5,000 has been received for Invoice #INV-2025-031.",
+        "isRead": true,
+        "createdAt": "2025-05-10T16:00:00Z"
+      },
+      {
+        "notificationId": "ntf_014",
+        "type": "document_rejected",
+        "title": "Document Rejected",
+        "message": "Your Tax Declaration form was rejected due to missing fields. Please resubmit.",
+        "isRead": true,
+        "createdAt": "2025-05-05T09:30:00Z"
+      },
+      {
+        "notificationId": "ntf_015",
+        "type": "contract_signed",
+        "title": "Contract Signed",
+        "message": "Your Consultancy Agreement has been countersigned and is now active.",
+        "isRead": true,
+        "createdAt": "2025-04-28T14:00:00Z"
+      },
+      {
+        "notificationId": "ntf_016",
+        "type": "payment_due",
+        "title": "Payment Overdue",
+        "message": "Invoice #INV-2025-022 of $3,400 is now overdue. Please settle immediately.",
+        "isRead": true,
+        "createdAt": "2025-04-20T08:00:00Z"
+      },
+      {
+        "notificationId": "ntf_017",
+        "type": "document_completed",
+        "title": "Document Completed",
+        "message": "Your Shareholders Agreement has been completed and filed.",
+        "isRead": true,
+        "createdAt": "2025-04-14T12:00:00Z"
+      },
+      {
+        "notificationId": "ntf_018",
+        "type": "signature_required",
+        "title": "Signature Required",
+        "message": "Your amended Terms of Service requires a countersignature.",
+        "isRead": true,
+        "createdAt": "2025-04-08T10:15:00Z"
+      },
+      {
+        "notificationId": "ntf_019",
+        "type": "payment_received",
+        "title": "Payment Received",
+        "message": "A payment of $750 has been received for Invoice #INV-2025-015.",
+        "isRead": true,
+        "createdAt": "2025-04-02T09:00:00Z"
+      },
+      {
+        "notificationId": "ntf_020",
+        "type": "document_expiring",
+        "title": "Document Expiring Soon",
+        "message": "Your Trade License is due for renewal. Expiry date: 2025-04-30.",
+        "isRead": true,
+        "createdAt": "2025-03-10T08:30:00Z"
       }
     ]
   }
