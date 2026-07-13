@@ -232,3 +232,20 @@ async function getQuickAccessLinks(req, res, next) {
 }
 
 module.exports = Object.assign(module.exports, { getQuickAccessLinks })
+
+
+// ── Legal Notices Links ──────────────────────────────────────────────────────
+// PRODUCTION: store these URLs in the DB (admin-configurable). No UI changes needed.
+const _legalLinks = {
+  termsOfServiceUrl:  'https://www.example.com/mock/terms-of-service.pdf',
+  privacyPolicyUrl:   'https://www.example.com/mock/privacy-popia-policy.pdf',
+  legalDisclaimerUrl: 'https://www.example.com/mock/legal-advice-disclaimer.pdf',
+}
+
+async function getLegalLinks(req, res, next) {
+  try {
+    res.json({ success: true, data: { ..._legalLinks } })
+  } catch (e) { next(e) }
+}
+
+module.exports = Object.assign(module.exports, { getLegalLinks })

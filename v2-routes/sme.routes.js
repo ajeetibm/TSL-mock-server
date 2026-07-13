@@ -1,5 +1,11 @@
 const { Router } = require('express')
-const { getProfile, updateProfile, getCounselCredits, getCounselRequests, createCounselRequest, topUpCredits, changePassword, getPaymentMethods, addPaymentMethod, setDefaultPaymentMethod, removePaymentMethod, getQuickAccessLinks } = require('../controllers/sme.controller')
+const {
+  getProfile, updateProfile,
+  getCounselCredits, getCounselRequests, createCounselRequest, topUpCredits, changePassword,
+  getPaymentMethods, addPaymentMethod, setDefaultPaymentMethod, removePaymentMethod,
+  getQuickAccessLinks,
+  getLegalLinks,
+} = require('../controllers/sme.controller')
 const { authenticate } = require('../middleware/auth')
 
 const router = Router()
@@ -9,7 +15,7 @@ router.put('/profile',            authenticate, updateProfile)
 router.get('/counsel/credits',    authenticate, getCounselCredits)
 router.get('/counsel/requests',   authenticate, getCounselRequests)
 router.post('/counsel/requests',  authenticate, createCounselRequest)
-router.post('/counsel/topup',      authenticate, topUpCredits)
+router.post('/counsel/topup',     authenticate, topUpCredits)
 router.put('/change-password',    authenticate, changePassword)
 
 router.get('/billing/payment-methods',                     authenticate, getPaymentMethods)
@@ -18,5 +24,6 @@ router.patch('/billing/payment-methods/:methodId/default', authenticate, setDefa
 router.delete('/billing/payment-methods/:methodId',        authenticate, removePaymentMethod)
 
 router.get('/quick-access-links', authenticate, getQuickAccessLinks)
+router.get('/legal-links',        authenticate, getLegalLinks)
 
 module.exports = router
