@@ -1,0 +1,71 @@
+HTTP/1.1 200 OK
+Content-Type: application/json
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS
+Access-Control-Allow-Headers: Content-Type, Authorization
+
+{
+  "success": true,
+  "data": [
+    {
+      "id": "TXN-1001",
+      "client": "Acme Corp",
+      "invoiceId": "INV-2026-001",
+      "amount": 2499,
+      "currency": "ZAR",
+      "paymentMethod": "Visa ****4242",
+      "failedAt": "2026-07-12T10:15:00Z",
+      "status": "Failed",
+      "errorCode": "CARD_DECLINED",
+      "errorMessage": "Card was declined by issuing bank."
+    },
+    {
+      "id": "TXN-1002",
+      "client": "TechStart Ltd",
+      "invoiceId": "INV-2026-002",
+      "amount": 4999,
+      "currency": "ZAR",
+      "paymentMethod": "Mastercard ****8811",
+      "failedAt": "2026-07-12T14:42:00Z",
+      "status": "Failed",
+      "errorCode": "INSUFFICIENT_FUNDS",
+      "errorMessage": "Transaction declined due to insufficient funds."
+    },
+    {
+      "id": "TXN-1003",
+      "client": "BuildRight Constructions",
+      "invoiceId": "INV-2026-003",
+      "amount": 1299,
+      "currency": "ZAR",
+      "paymentMethod": "Visa ****9901",
+      "failedAt": "2026-07-13T08:30:00Z",
+      "status": "Failed",
+      "errorCode": "EXPIRED_CARD",
+      "errorMessage": "The card has expired. Please update payment details."
+    },
+    {
+      "id": "TXN-1004",
+      "client": "Nova Retail (Pty) Ltd",
+      "invoiceId": "INV-2026-004",
+      "amount": 7499,
+      "currency": "ZAR",
+      "paymentMethod": "Amex ****3344",
+      "failedAt": "2026-07-13T11:05:00Z",
+      "status": "Failed",
+      "errorCode": "DO_NOT_HONOR",
+      "errorMessage": "Bank issued a generic do-not-honor decline."
+    },
+    {
+      "id": "TXN-1005",
+      "client": "Greenleaf Solutions",
+      "invoiceId": "INV-2026-005",
+      "amount": 3199,
+      "currency": "ZAR",
+      "paymentMethod": "Mastercard ****5566",
+      "failedAt": "2026-07-14T09:20:00Z",
+      "status": "Failed",
+      "errorCode": "GATEWAY_TIMEOUT",
+      "errorMessage": "Payment gateway did not respond in time. Please retry."
+    }
+  ]
+}
