@@ -221,7 +221,7 @@ module.exports = Object.assign(module.exports, { setDefaultPaymentMethod, remove
 // PRODUCTION: store these URLs in the DB and expose an admin UI to update them.
 const _quickAccessLinks = {
   gettingStartedGuideUrl: 'https://example.com/mock/getting-started-guide.pdf',
-  videoTutorialUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+  videoTutorialUrl: 'https://www.youtube.com/watch?v=yb2zkxHDWws',
   consultationBookingUrl: 'https://calendly.com/example/legal-consultation',
 }
 
