@@ -249,3 +249,30 @@ async function getLegalLinks(req, res, next) {
 }
 
 module.exports = Object.assign(module.exports, { getLegalLinks })
+
+
+// ── SME Profile Preferences ───────────────────────────────────────────────────
+// PRODUCTION: store per-user in DB keyed by userId.
+const _smeProfilePrefs = {
+  workflowUpdates: true,
+  weeklySummary:   true,
+  productUpdates:  true,
+}
+
+async function getSmeProfilePreferences(req, res, next) {
+  try {
+    res.json({ success: true, data: { ..._smeProfilePrefs } })
+  } catch (e) { next(e) }
+}
+
+async function saveSmeProfilePreferences(req, res, next) {
+  try {
+    const { workflowUpdates, weeklySummary, productUpdates } = req.body
+    if (typeof workflowUpdates === 'boolean') _smeProfilePrefs.workflowUpdates = workflowUpdates
+    if (typeof weeklySummary   === 'boolean') _smeProfilePrefs.weeklySummary   = weeklySummary
+    if (typeof productUpdates  === 'boolean') _smeProfilePrefs.productUpdates  = productUpdates
+    res.json({ success: true, message: 'Preferences saved successfully.', data: { ..._smeProfilePrefs } })
+  } catch (e) { next(e) }
+}
+
+module.exports = Object.assign(module.exports, { getSmeProfilePreferences, saveSmeProfilePreferences })

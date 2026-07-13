@@ -5,6 +5,7 @@ const {
   getPaymentMethods, addPaymentMethod, setDefaultPaymentMethod, removePaymentMethod,
   getQuickAccessLinks,
   getLegalLinks,
+  getSmeProfilePreferences, saveSmeProfilePreferences,
 } = require('../controllers/sme.controller')
 const { authenticate } = require('../middleware/auth')
 
@@ -25,5 +26,8 @@ router.delete('/billing/payment-methods/:methodId',        authenticate, removeP
 
 router.get('/quick-access-links', authenticate, getQuickAccessLinks)
 router.get('/legal-links',        authenticate, getLegalLinks)
+
+router.get('/profile/preferences',  authenticate, getSmeProfilePreferences)
+router.put('/profile/preferences',  authenticate, saveSmeProfilePreferences)
 
 module.exports = router
