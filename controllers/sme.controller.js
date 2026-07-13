@@ -215,3 +215,20 @@ async function removePaymentMethod(req, res, next) {
 }
 
 module.exports = Object.assign(module.exports, { setDefaultPaymentMethod, removePaymentMethod })
+
+
+// ── Quick Access Links ───────────────────────────────────────────────────────
+// PRODUCTION: store these URLs in the DB and expose an admin UI to update them.
+const _quickAccessLinks = {
+  gettingStartedGuideUrl: 'https://example.com/mock/getting-started-guide.pdf',
+  videoTutorialUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+  consultationBookingUrl: 'https://calendly.com/example/legal-consultation',
+}
+
+async function getQuickAccessLinks(req, res, next) {
+  try {
+    res.json({ success: true, data: { ..._quickAccessLinks } })
+  } catch (e) { next(e) }
+}
+
+module.exports = Object.assign(module.exports, { getQuickAccessLinks })
