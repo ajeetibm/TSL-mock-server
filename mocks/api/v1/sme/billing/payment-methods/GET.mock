@@ -14,12 +14,6 @@ Access-Control-Allow-Headers: Content-Type, Authorization
       "last4": "4242",
       "expiry": "12/28",
       "isDefault": true
-    },
-    {
-      "methodId": "pm_002",
-      "type": "ozow",
-      "bank": "FNB",
-      "isDefault": false
     }
   ]
 }
