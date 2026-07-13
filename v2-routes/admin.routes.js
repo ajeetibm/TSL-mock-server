@@ -1,5 +1,5 @@
 const { Router } = require('express')
-const { getDashboard, getProfile, updateProfile, changePassword, getUsers, updateUser, getCounsel, addCounsel, assignCounselRequest, inviteAdmin, revokeAdmin, getIssues, getBilling, getAuditLogsEndpoint, exportBillingInvoices, getGeneralSettings, updateGeneralSettings, getNotificationSettings, updateNotificationSettings, getSecuritySettings, updateSecuritySettings } = require('../controllers/admin.controller')
+const { getDashboard, getProfile, updateProfile, changePassword, getUsers, updateUser, getCounsel, addCounsel, assignCounselRequest, inviteAdmin, revokeAdmin, getIssues, getBilling, getAuditLogsEndpoint, exportBillingInvoices, getGeneralSettings, updateGeneralSettings, getNotificationSettings, updateNotificationSettings, getSecuritySettings, updateSecuritySettings, getPasswordPolicy, updatePasswordPolicy } = require('../controllers/admin.controller')
 const { authenticate } = require('../middleware/auth')
 const { requireAdmin } = require('../middleware/roles')
 
@@ -29,5 +29,7 @@ router.get('/settings/notifications',                       getNotificationSetti
 router.put('/settings/notifications',                       updateNotificationSettings)
 router.get('/settings/security',                            getSecuritySettings)
 router.put('/settings/security',                            updateSecuritySettings)
+router.get('/settings/password-policy',                     getPasswordPolicy)
+router.put('/settings/password-policy',                     updatePasswordPolicy)
 
 module.exports = router

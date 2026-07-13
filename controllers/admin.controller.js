@@ -329,3 +329,52 @@ async function updateSecuritySettings(req, res, next) {
     res.json({ success: true, message: 'Security settings updated successfully.', data: { ..._settingsStore.security } })
   } catch (e) { next(e) }
 }
+
+
+// ── Password Policy (PRODUCTION: replace store read/writes with DB calls) ──
+const _passwordPolicy = {
+  minLength: 8,
+  requireUppercase: true,
+  requireLowercase: true,
+  requireNumber: true,
+  requireSpecial: false,
+  expiration: 'Never',
+  preventReuse: '3',
+  lockoutAttempts: 5,
+  lockoutDuration: 15,
+}
+
+async function getPasswordPolicy(req, res, next) {
+  try {
+    await new Promise((r) => setTimeout(r, 300))
+    res.json({ success: true, data: { ..._passwordPolicy } })
+  } catch (e) { next(e) }
+}
+
+async function updatePasswordPolicy(req, res, next) {
+  try {
+    await new Promise((r) => setTimeout(r, 800 + Math.random() * 400))
+    const {
+      minLength, requireUppercase, requireLowercase, requireNumber,
+      requireSpecial, expiration, preventReuse, lockoutAttempts, lockoutDuration,
+    } = req.body
+
+    if (minLength           !== undefined) _passwordPolicy.minLength           = Number(minLength)
+    if (requireUppercase    !== undefined) _passwordPolicy.requireUppercase    = Boolean(requireUppercase)
+    if (requireLowercase    !== undefined) _passwordPolicy.requireLowercase    = Boolean(requireLowercase)
+    if (requireNumber       !== undefined) _passwordPolicy.requireNumber       = Boolean(requireNumber)
+    if (requireSpecial      !== undefined) _passwordPolicy.requireSpecial      = Boolean(requireSpecial)
+    if (expiration          !== undefined) _passwordPolicy.expiration          = String(expiration)
+    if (preventReuse        !== undefined) _passwordPolicy.preventReuse        = String(preventReuse)
+    if (lockoutAttempts     !== undefined) _passwordPolicy.lockoutAttempts     = Number(lockoutAttempts)
+    if (lockoutDuration     !== undefined) _passwordPolicy.lockoutDuration     = Number(lockoutDuration)
+
+    res.json({
+      success: true,
+      message: 'Password policy updated successfully.',
+      data: { ..._passwordPolicy },
+    })
+  } catch (e) { next(e) }
+}
+
+module.exports = Object.assign(module.exports, { getPasswordPolicy, updatePasswordPolicy })
