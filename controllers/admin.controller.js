@@ -378,3 +378,30 @@ async function updatePasswordPolicy(req, res, next) {
 }
 
 module.exports = Object.assign(module.exports, { getPasswordPolicy, updatePasswordPolicy })
+
+
+// ── Admin Profile Preferences ─────────────────────────────────────────────────
+// PRODUCTION: store per-admin in DB keyed by userId.
+const _adminProfilePrefs = {
+  workflowUpdates: true,
+  weeklySummary:   true,
+  productUpdates:  true,
+}
+
+async function getAdminProfilePreferences(req, res, next) {
+  try {
+    res.json({ success: true, data: { ..._adminProfilePrefs } })
+  } catch (e) { next(e) }
+}
+
+async function saveAdminProfilePreferences(req, res, next) {
+  try {
+    const { workflowUpdates, weeklySummary, productUpdates } = req.body
+    if (typeof workflowUpdates === 'boolean') _adminProfilePrefs.workflowUpdates = workflowUpdates
+    if (typeof weeklySummary   === 'boolean') _adminProfilePrefs.weeklySummary   = weeklySummary
+    if (typeof productUpdates  === 'boolean') _adminProfilePrefs.productUpdates  = productUpdates
+    res.json({ success: true, message: 'Preferences saved successfully.', data: { ..._adminProfilePrefs } })
+  } catch (e) { next(e) }
+}
+
+module.exports = Object.assign(module.exports, { getAdminProfilePreferences, saveAdminProfilePreferences })
