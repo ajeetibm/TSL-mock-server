@@ -50,12 +50,13 @@ function verifyPaystackTransaction(reference) {
 
 /**
  * MOCK fallback verification — used when Paystack secret key is not configured.
- * Simulates a successful verification for sandbox testing.
- * PRODUCTION: remove this function entirely.
+ * It can simulate a payment outcome, but must not fabricate card details.
+ * Paystack's inline callback intentionally does not expose card metadata.
  */
 function mockVerifyTransaction(reference, requestedStatus = 'success') {
-  logger.warn('paystackService', 'Using MOCK verification — configure PAYSTACK_SECRET_KEY for real verification', { reference })
+  logger.warn('paystackService', 'Using MOCK verification — card details require PAYSTACK_SECRET_KEY', { reference })
   const status = ['success', 'failed', 'cancelled'].includes(requestedStatus) ? requestedStatus : 'success'
+
   return Promise.resolve({
     reference,
     status,
@@ -63,7 +64,8 @@ function mockVerifyTransaction(reference, requestedStatus = 'success') {
     paid_at: status === 'success' ? new Date().toISOString() : null,
     amount: 399900,
     currency: 'ZAR',
-    // MOCK: indicates this is simulated, not real Paystack data
+    // Only Paystack's server-side Verify API may supply authorization details.
+    authorization: null,
     _mock: true,
   })
 }

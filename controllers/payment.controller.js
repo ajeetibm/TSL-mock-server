@@ -112,10 +112,13 @@ async function verifyPayment(req, res, next) {
     addAuditLog({ action: AUDIT_ACTIONS.PAYMENT_VERIFY, userId: req.user?.userId, email: txn.email, ip: req.ip, meta: { reference, status, plan: txn.plan } })
     logger.info('paymentController', `Payment verified: ${status}`, { reference, email: txn.email })
 
+    // Forward the Paystack authorization object so the frontend can extract
+    // real card details (card_type, last4, exp_month, exp_year) and pass them
+    // to the addPaymentMethod endpoint — no guessing, no hardcoding.
     res.json({
       success: true,
       message: status === 'success' ? 'Payment verified and subscription activated.' : `Payment ${status}.`,
-      data: { provider: 'paystack', reference, status, gatewayResponse: txn.gatewayResponse, paidAt: txn.paidAt, subscription },
+      data: { provider: 'paystack', reference, status, gatewayResponse: txn.gatewayResponse, paidAt: txn.paidAt, subscription, authorization: paystackData.authorization || null },
     })
   } catch (e) { next(e) }
 }

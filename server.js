@@ -13,6 +13,22 @@ const requestLogger = require('./middleware/requestLogger')
 const errorHandler  = require('./middleware/errorHandler')
 const logger        = require('./utils/logger')
 
+// Load local development secrets before route modules load their services.
+// Environment variables supplied by the shell always take precedence.
+function loadEnvFile() {
+  const envFile = path.join(__dirname, '.env')
+  if (!fs.existsSync(envFile)) return
+
+  for (const line of fs.readFileSync(envFile, 'utf8').split(/\r?\n/)) {
+    const match = line.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*?)\s*$/)
+    if (!match || process.env[match[1]] !== undefined) continue
+    const value = match[2].replace(/^(['"])(.*)\1$/, '$2')
+    process.env[match[1]] = value
+  }
+}
+
+loadEnvFile()
+
 // ─── Config ───────────────────────────────────────────────────────────────────
 function loadConfig() {
   try { return yaml.load(fs.readFileSync(path.join(__dirname, 'config.yml'), 'utf8')) || {} }
