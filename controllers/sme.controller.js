@@ -137,84 +137,122 @@ async function topUpCredits(req, res, next) {
 module.exports = { getProfile, updateProfile, getDashboard, getCounselCredits, getCounselRequests, createCounselRequest, topUpCredits, changePassword }
 
 
-// ── Payment Methods (in-memory store, persists for server lifetime) ──────────
-// PRODUCTION: replace with DB reads/writes keyed by userId.
-const _paymentMethodsStore = [
-  {
-    methodId: 'pm_001',
-    type: 'card',
-    brand: 'Visa',
-    last4: '4242',
-    expiry: '12/28',
-    isDefault: true,
-  },
-]
-let _nextPmId = 2
+// ── Payment Methods (in-memory mock store — resets on server restart) ─────────
+// This is intentionally not persisted: each mock-server restart restores the
+// seed card list, while cards added during a running session remain visible.
+
+const paymentMethodsByUser = new Map()
+
+function paymentMethodStoreKey(user) {
+  return String(user?.email || user?.userId || 'default').trim().toLowerCase()
+}
+
+function getDefaultStore() {
+  return [
+    { methodId: 'pm_001', type: 'card', brand: 'Visa', last4: '4242', expiry: '12/28', isDefault: true },
+  ]
+}
+
+function readStore(user) {
+  const key = paymentMethodStoreKey(user)
+  if (!paymentMethodsByUser.has(key)) paymentMethodsByUser.set(key, getDefaultStore())
+  return paymentMethodsByUser.get(key)
+}
 
 async function getPaymentMethods(req, res, next) {
   try {
-    res.json({ success: true, data: [..._paymentMethodsStore] })
+    const store = readStore(req.user)
+    res.json({ success: true, data: store })
   } catch (e) { next(e) }
 }
 
 async function addPaymentMethod(req, res, next) {
   try {
-    // In production Paystack returns a reusable authorization object.
-    // We derive a mock card from the reference so every Add returns
-    // a distinct visible entry (last4 cycles through a small set).
-    const ref = String(req.body.reference || '')
-    const brands = ['Visa', 'Mastercard', 'Visa', 'Mastercard']
-    const last4s = ['5353', '0004', '1111', '9999']
-    const expiries = ['09/29', '03/30', '11/28', '06/27']
-    const idx = (_nextPmId - 2) % brands.length
+    const store  = readStore(req.user)
+    const ref    = String(req.body.reference || '')
+
+    // ── Resolve card details ───────────────────────────────────────────────
+    // Priority 1: frontend passes verified authorization fields from Paystack
+    //   Verify API response (brand, last4, exp_month, exp_year).
+    //   This is the CORRECT path — real card data, no guessing.
+    //
+    let brand, last4, expiry
+
+    if (req.body.last4 && req.body.brand) {
+      // Priority 1 — verified card data sent by frontend after Paystack Verify
+      brand  = String(req.body.brand).charAt(0).toUpperCase() + String(req.body.brand).slice(1).toLowerCase()
+      // Normalise card_type values: "visa debit" → "Visa", "mastercard" → "Mastercard"
+      if (brand.toLowerCase().includes('visa'))       brand = 'Visa'
+      if (brand.toLowerCase().includes('mastercard')) brand = 'Mastercard'
+      if (brand.toLowerCase().includes('amex') || brand.toLowerCase().includes('american')) brand = 'Amex'
+      last4  = String(req.body.last4).slice(-4)
+      const month = String(req.body.exp_month || '').padStart(2, '0')
+      const year  = String(req.body.exp_year  || '').slice(-2)
+      expiry = month && year ? `${month}/${year}` : '**/**'
+    } else {
+      return res.status(422).json({
+        success: false,
+        error: 'MISSING_CARD_AUTHORIZATION',
+        message: 'Paystack did not return verified card details. Configure PAYSTACK_SECRET_KEY on the server and try again.',
+      })
+    }
+
+    // Prevent duplicate cards (same brand + last4)
+    const duplicate = store.find((m) => m.brand === brand && m.last4 === last4)
+    if (duplicate) {
+      return res.status(409).json({
+        success: false,
+        message: `This card (${brand} ****${last4}) is already saved.`,
+        error: 'DUPLICATE_CARD',
+      })
+    }
+
+    const methodId = `pm_${Date.now().toString(36)}`
 
     const newMethod = {
-      methodId: `pm_${String(_nextPmId).padStart(3, '0')}`,
+      methodId,
       type: 'card',
-      brand: brands[idx],
-      last4: last4s[idx],
-      expiry: expiries[idx],
-      isDefault: false,
+      brand,
+      last4,
+      expiry,
+      isDefault: store.length === 0,
       reference: ref || undefined,
     }
-    _nextPmId++
-    _paymentMethodsStore.push(newMethod)
 
+    store.push(newMethod)
     res.status(201).json({ success: true, data: newMethod })
   } catch (e) { next(e) }
 }
 
 module.exports = Object.assign(module.exports, { getPaymentMethods, addPaymentMethod })
 
-
 async function setDefaultPaymentMethod(req, res, next) {
   try {
+    const store  = readStore(req.user)
     const { methodId } = req.params
-    const found = _paymentMethodsStore.find((m) => m.methodId === methodId)
+    const found = store.find((m) => m.methodId === methodId)
     if (!found) return next(require('../utils/errors').errors.notFound('Payment method not found.', 'METHOD_NOT_FOUND'))
-    // Clear existing default, set new one
-    _paymentMethodsStore.forEach((m) => { m.isDefault = false })
+    store.forEach((m) => { m.isDefault = false })
     found.isDefault = true
-    res.json({ success: true, message: 'Default payment method updated.', data: [..._paymentMethodsStore] })
+    res.json({ success: true, message: 'Default payment method updated.', data: store })
   } catch (e) { next(e) }
 }
 
 async function removePaymentMethod(req, res, next) {
   try {
+    const store  = readStore(req.user)
     const { methodId } = req.params
-    const idx = _paymentMethodsStore.findIndex((m) => m.methodId === methodId)
+    const idx = store.findIndex((m) => m.methodId === methodId)
     if (idx === -1) return next(require('../utils/errors').errors.notFound('Payment method not found.', 'METHOD_NOT_FOUND'))
-    const wasDefault = _paymentMethodsStore[idx].isDefault
-    _paymentMethodsStore.splice(idx, 1)
-    // If removed card was default, promote the first remaining card
-    if (wasDefault && _paymentMethodsStore.length > 0) {
-      _paymentMethodsStore[0].isDefault = true
-    }
-    res.json({ success: true, message: 'Payment method removed.', data: [..._paymentMethodsStore] })
+    const wasDefault = store[idx].isDefault
+    store.splice(idx, 1)
+    if (wasDefault && store.length > 0) store[0].isDefault = true
+    res.json({ success: true, message: 'Payment method removed.', data: store })
   } catch (e) { next(e) }
 }
 
 module.exports = Object.assign(module.exports, { setDefaultPaymentMethod, removePaymentMethod })
+
 
 
 // ── Quick Access Links ───────────────────────────────────────────────────────
