@@ -1,0 +1,95 @@
+{
+  "default": [
+    {
+      "methodId": "pm_001",
+      "type": "card",
+      "brand": "Visa",
+      "last4": "4242",
+      "expiry": "12/28",
+      "isDefault": true
+    }
+  ],
+  "usr_0002": [
+    {
+      "methodId": "pm_001",
+      "type": "card",
+      "brand": "Visa",
+      "last4": "4242",
+      "expiry": "12/28",
+      "isDefault": true
+    },
+    {
+      "methodId": "pm_mrliaiho",
+      "type": "card",
+      "brand": "Visa",
+      "last4": "4796",
+      "expiry": "07/27",
+      "isDefault": false,
+      "reference": "TSL_PAYSTACK_1784085221725_Z4RPPNFL"
+    },
+    {
+      "methodId": "pm_mrlibihi",
+      "type": "card",
+      "brand": "Mastercard",
+      "last4": "6666",
+      "expiry": "07/27",
+      "isDefault": false,
+      "reference": "TSL_PAYSTACK_1784085264979_OPL0QYBQ"
+    },
+    {
+      "methodId": "pm_mrlic7gz",
+      "type": "card",
+      "brand": "Visa",
+      "last4": "4081",
+      "expiry": "07/27",
+      "isDefault": false,
+      "reference": "TSL_PAYSTACK_1784085305287_03WS4RZE"
+    }
+  ],
+  "ajeetmohan32@gmail.com": [
+    {
+      "methodId": "pm_001",
+      "type": "card",
+      "brand": "Visa",
+      "last4": "4242",
+      "expiry": "12/28",
+      "isDefault": true
+    },
+    {
+      "methodId": "pm_mrliaiho",
+      "type": "card",
+      "brand": "Visa",
+      "last4": "4796",
+      "expiry": "07/27",
+      "isDefault": false,
+      "reference": "TSL_PAYSTACK_1784085221725_Z4RPPNFL"
+    },
+    {
+      "methodId": "pm_mrlibihi",
+      "type": "card",
+      "brand": "Mastercard",
+      "last4": "6666",
+      "expiry": "07/27",
+      "isDefault": false,
+      "reference": "TSL_PAYSTACK_1784085264979_OPL0QYBQ"
+    },
+    {
+      "methodId": "pm_mrlic7gz",
+      "type": "card",
+      "brand": "Visa",
+      "last4": "4081",
+      "expiry": "07/27",
+      "isDefault": false,
+      "reference": "TSL_PAYSTACK_1784085305287_03WS4RZE"
+    },
+    {
+      "methodId": "pm_mrlk08vx",
+      "type": "card",
+      "brand": "Verve ",
+      "last4": "7812",
+      "expiry": "07/27",
+      "isDefault": false,
+      "reference": "TSL_PAYSTACK_1784088089420_PP88P4QB"
+    }
+  ]
+}
