@@ -207,6 +207,12 @@ function handleSmeRoutes(req, res, relPath) {
       status: request.status,
       assignedCounsel: request.assignedCounselName || null,
       submittedAt: request.submittedAt || request.receivedAt,
+      description: request.description || '',
+      relatedWizard: request.relatedWizard || null,
+      attachments: request.attachments || [],
+      counselResponse: request.counselResponse || null,
+      responseDate: request.completedAt || null,
+      completedAt: request.completedAt || null,
       responseUrl: request.responseUrl || null,
     }))
 
@@ -261,6 +267,8 @@ function handleSmeRoutes(req, res, relPath) {
       submittedAt,
       status: 'pending',
       description: req.body.description || req.body.notes || 'Please review the attached legal request.',
+      relatedWizard: req.body.relatedWizard || null,
+      attachments: Array.isArray(req.body.attachments) ? req.body.attachments : [],
       assignedBy: 'Admin Sarah',
       earnings: Number(req.body.earnings || 500),
       currency: 'ZAR',

@@ -369,7 +369,9 @@ function handleAdminRoutes(req, res, relPath) {
       })
     }
 
-    request.status = 'assigned'
+    // "Assigned" is an internal admin action.  The SME only sees the
+    // simplified lifecycle: Pending -> In Progress -> Completed.
+    request.status = 'in_progress'
     request.assignedCounselId = counselUser.userId
     request.assignedCounselEmail = counselUser.email
     request.assignedCounselName = counselUser.fullName
@@ -383,6 +385,9 @@ function handleAdminRoutes(req, res, relPath) {
       company: request.company,
       earnings: request.earnings,
       currency: request.currency,
+      description: request.description,
+      relatedWizard: request.relatedWizard || null,
+      attachments: Array.isArray(request.attachments) ? request.attachments : [],
       status: 'pending',
       assignedBy: 'Admin Sarah',
       assignedCounselId: counselUser.userId,

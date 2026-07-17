@@ -13,7 +13,7 @@ function getCounselRequests(email) {
 function buildCounselDashboard(email) {
   const requests = getCounselRequests(email)
   const counselUser = getCounselByEmail(email) || getCounselByEmail('s.nkosi@tsl.co.za')
-  const accepted = requests.filter((request) => request.status === 'accepted')
+  const accepted = requests.filter((request) => request.status === 'completed')
   const rejected = requests.filter((request) => request.status === 'rejected')
   const pending = requests.filter((request) => request.status === 'pending')
   const totalEarnings = accepted.reduce((sum, request) => sum + (request.earnings || 0), 0)
@@ -29,8 +29,8 @@ function buildCounselDashboard(email) {
       },
       kpis: {
         totalRequests: requests.length,
-        accepted: accepted.length,
-        acceptedRate: Math.round((accepted.length / total) * 100) + '%',
+        completed: accepted.length,
+        completedRate: Math.round((accepted.length / total) * 100) + '%',
         rejected: rejected.length,
         rejectedRate: Math.round((rejected.length / total) * 100) + '%',
         totalEarnings,
@@ -304,11 +304,11 @@ function handleCounselRoutes(req, res, relPath) {
       })
     }
 
-    request.status = 'accepted'
+    request.status = 'in_progress'
     request.acceptedAt = new Date().toISOString()
     const adminRequest = mockState.adminRequests.find((item) => item.requestId === request.requestId)
     if (adminRequest) {
-      adminRequest.status = 'accepted'
+      adminRequest.status = 'in_progress'
       adminRequest.acceptedAt = request.acceptedAt
       adminRequest.assignedCounselName = request.assignedCounselName || request.assignedCounsel || request.assignedCounselEmail
       adminRequest.responseUrl = request.responseUrl || null
@@ -317,11 +317,50 @@ function handleCounselRoutes(req, res, relPath) {
 
     return sendJson(res, 200, {
       success: true,
-      message: 'Request accepted and meeting email sent.',
+      message: 'Request accepted and moved to In Progress.',
       data: {
         requestId: request.requestId,
         status: request.status,
         email: mail,
+      },
+    })
+  }
+
+  const completeMatch = relPath.match(/^api\/v1\/counsel\/requests\/([^/]+)\/complete$/)
+  if (req.method === 'POST' && completeMatch) {
+    const request = mockState.counselRequests.find((item) => item.requestId === completeMatch[1])
+    if (!request) {
+      return sendJson(res, 404, { success: false, message: 'Counsel request not found.', error: 'REQUEST_NOT_FOUND' })
+    }
+
+    const response = String(req.body.response || req.body.comments || '').trim()
+    if (!response) {
+      return sendJson(res, 400, { success: false, message: 'A counsel response is required before marking this request as done.', error: 'RESPONSE_REQUIRED' })
+    }
+
+    const completedAt = new Date().toISOString()
+    request.status = 'completed'
+    request.counselResponse = response
+    request.supportingDocuments = Array.isArray(req.body.supportingDocuments) ? req.body.supportingDocuments : []
+    request.completedAt = completedAt
+
+    const adminRequest = mockState.adminRequests.find((item) => item.requestId === request.requestId)
+    if (adminRequest) {
+      adminRequest.status = 'completed'
+      adminRequest.counselResponse = response
+      adminRequest.supportingDocuments = request.supportingDocuments
+      adminRequest.completedAt = completedAt
+      adminRequest.assignedCounselName = request.assignedCounselName || request.assignedCounsel || request.assignedCounselEmail
+    }
+
+    return sendJson(res, 200, {
+      success: true,
+      message: 'Request marked as completed. The user and admin have been notified.',
+      data: {
+        requestId: request.requestId,
+        status: 'completed',
+        completedAt,
+        notification: { recipients: [request.userEmail, 'admin@tsl.co.za'] },
       },
     })
   }
@@ -344,6 +383,7 @@ function handleCounselRoutes(req, res, relPath) {
     const adminRequest = mockState.adminRequests.find((item) => item.requestId === request.requestId)
     if (adminRequest) {
       adminRequest.status = 'pending'
+      adminRequest.rejectionReason = request.rejectionReason
       delete adminRequest.assignedCounselId
       delete adminRequest.assignedCounselEmail
       delete adminRequest.assignedCounselName

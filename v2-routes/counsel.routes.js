@@ -1,5 +1,5 @@
 const { Router } = require('express')
-const { getDashboard, getProfile, updateProfile, changePassword, resetPassword, getRequests, updateAvailability, acceptRequest, rejectRequest } = require('../controllers/counsel.controller')
+const { getDashboard, getProfile, updateProfile, changePassword, resetPassword, getRequests, updateAvailability, acceptRequest, rejectRequest, completeRequest } = require('../controllers/counsel.controller')
 const { authenticate } = require('../middleware/auth')
 
 const router = Router()
@@ -14,6 +14,7 @@ router.put('/change-password',              authenticate, changePassword)
 router.get('/requests',                     authenticate, getRequests)
 router.patch('/availability',               authenticate, updateAvailability)
 router.post('/requests/:requestId/accept',  authenticate, acceptRequest)
-router.post('/requests/:requestId/reject',  authenticate, rejectRequest)
+router.post('/requests/:requestId/reject',    authenticate, rejectRequest)
+router.post('/requests/:requestId/complete', authenticate, completeRequest)
 
 module.exports = router

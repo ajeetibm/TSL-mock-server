@@ -138,6 +138,20 @@ async function acceptRequest(req, res, next) {
   } catch (e) { next(e) }
 }
 
+async function completeRequest(req, res, next) {
+  try {
+    const request = mockState.counselRequests.find(r => r.requestId === req.params.requestId)
+    if (!request) return next(errors.notFound('Counsel request not found.', 'REQUEST_NOT_FOUND'))
+    request.status = 'completed'
+    request.completedAt = new Date().toISOString()
+    request.counselResponse = req.body.response || ''
+    request.supportingDocuments = req.body.supportingDocuments || []
+    const adminReq = mockState.adminRequests.find(r => r.requestId === request.requestId)
+    if (adminReq) { adminReq.status = 'completed'; adminReq.completedAt = request.completedAt; adminReq.counselResponse = request.counselResponse; adminReq.supportingDocuments = request.supportingDocuments; adminReq.responseDate = request.completedAt }
+    res.json({ success: true, message: 'Request marked as completed. User and admin have been notified.', data: { requestId: request.requestId, status: request.status, completedAt: request.completedAt, notified: { user: true, admin: true } } })
+  } catch (e) { next(e) }
+}
+
 async function rejectRequest(req, res, next) {
   try {
     const request = mockState.counselRequests.find(r => r.requestId === req.params.requestId)
@@ -149,4 +163,4 @@ async function rejectRequest(req, res, next) {
   } catch (e) { next(e) }
 }
 
-module.exports = { getDashboard, getProfile, updateProfile, changePassword, resetPassword, getRequests, updateAvailability, acceptRequest, rejectRequest }
+module.exports = { getDashboard, getProfile, updateProfile, changePassword, resetPassword, getRequests, updateAvailability, acceptRequest, rejectRequest, completeRequest }

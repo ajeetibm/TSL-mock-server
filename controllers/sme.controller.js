@@ -50,7 +50,21 @@ async function getCounselCredits(req, res, next) {
 
 async function getCounselRequests(req, res, next) {
   try {
-    const requests = mockState.adminRequests.map(r => ({ requestId: r.requestId, subject: r.subject, status: r.status, assignedCounsel: r.assignedCounselName || null, submittedAt: r.submittedAt || r.receivedAt, responseUrl: r.responseUrl || null }))
+    const requests = mockState.adminRequests.map(r => ({
+      requestId:          r.requestId,
+      subject:            r.subject,
+      status:             r.status,
+      assignedCounsel:    r.assignedCounselName || null,
+      submittedAt:        r.submittedAt || r.receivedAt,
+      responseUrl:        r.responseUrl || null,
+      description:        r.description || null,
+      relatedWizard:      r.relatedWizard || null,
+      attachments:        r.attachments || [],
+      counselResponse:    r.counselResponse || null,
+      supportingDocuments: r.supportingDocuments || [],
+      completedAt:        r.completedAt || null,
+      responseDate:       r.completedAt || null,
+    }))
     res.json({ success: true, data: requests })
   } catch (e) { next(e) }
 }
@@ -76,10 +90,10 @@ async function createCounselRequest(req, res, next) {
 
     const requestId = 'req_' + mockState.nextRequestId++
     const submittedAt = now.toISOString()
-    const request = { requestId, subject, fromUser: req.body.fromUser || req.body.fullName || 'Thabo Molefe', userEmail, company: req.body.company || 'FibreGents (Pty) Ltd', receivedAt: submittedAt, submittedAt, status: 'pending', description: req.body.description || req.body.notes || 'Please review the attached legal request.', assignedBy: 'Admin Sarah', earnings: Number(req.body.earnings || 500), currency: 'ZAR' }
+    const request = { requestId, subject, fromUser: req.body.fromUser || req.body.fullName || 'Thabo Molefe', userEmail, company: req.body.company || 'FibreGents (Pty) Ltd', receivedAt: submittedAt, submittedAt, status: 'pending', description: req.body.description || req.body.notes || null, relatedWizard: req.body.relatedWizard || null, attachments: req.body.attachments || [], assignedBy: 'Admin Sarah', earnings: Number(req.body.earnings || 500), currency: 'ZAR' }
     mockState.adminRequests.unshift(request)
 
-    res.status(201).json({ success: true, data: { requestId, subject: request.subject, status: request.status, creditsRemaining: mockState.smeCredits.creditsRemaining, submittedAt: request.submittedAt } })
+    res.status(201).json({ success: true, data: { requestId, subject: request.subject, status: request.status, creditsRemaining: mockState.smeCredits.creditsRemaining, submittedAt: request.submittedAt, description: request.description, relatedWizard: request.relatedWizard, attachments: request.attachments } })
   } catch (e) { next(e) }
 }
 
