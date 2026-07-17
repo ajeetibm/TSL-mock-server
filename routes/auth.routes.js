@@ -270,3 +270,84 @@ function handleAuthRoutes(req, res, relPath) {
 }
 
 module.exports = { handleAuthRoutes, buildLoginResponse }
+
+// ── Password Reset Tokens (in-memory, resets on server restart) ──────────────
+// PRODUCTION: store tokens in DB with expiry, send email via Resend/SendGrid.
+const resetTokens = new Map() // token → { email, expiresAt }
+
+function handleForgotPassword(req, res) {
+  const email = normalizeEmail(req.body.email || '')
+  if (!email) return sendJson(res, 400, { success: false, message: 'Email is required.', error: 'EMAIL_REQUIRED' })
+
+  // Look up across all user stores — accept any registered email
+  const knownUser =
+    getSmeByEmail(email) ||
+    getAdminByEmail(email) ||
+    getCounselByEmail(email)
+
+  // Always respond success to prevent email enumeration
+  const token = 'mock-reset-token-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8)
+  const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString() // 15 min
+
+  if (knownUser) {
+    resetTokens.set(token, { email, expiresAt })
+  }
+
+  const resetLink = `http://localhost:5173/reset-password?token=${token}`
+  return sendJson(res, 200, {
+    success: true,
+    message: 'Password reset link generated.',
+    token,
+    resetLink,
+  })
+}
+
+function handleVerifyResetToken(req, res) {
+  const token = String(req.query.token || '')
+  const entry = resetTokens.get(token)
+  if (!entry) return sendJson(res, 200, { valid: false, message: 'Reset link is invalid or has expired.' })
+  if (new Date(entry.expiresAt) < new Date()) {
+    resetTokens.delete(token)
+    return sendJson(res, 200, { valid: false, message: 'Reset link has expired.' })
+  }
+  return sendJson(res, 200, { valid: true })
+}
+
+function handleResetPassword(req, res) {
+  const token = String(req.body.token || '')
+  const password = String(req.body.password || req.body.newPassword || '')
+  const entry = resetTokens.get(token)
+
+  if (!entry) return sendJson(res, 400, { success: false, message: 'Reset link is invalid or has expired.', error: 'INVALID_TOKEN' })
+  if (new Date(entry.expiresAt) < new Date()) {
+    resetTokens.delete(token)
+    return sendJson(res, 400, { success: false, message: 'Reset link has expired.', error: 'TOKEN_EXPIRED' })
+  }
+  if (!password || password.length < 8) {
+    return sendJson(res, 400, { success: false, message: 'Password must be at least 8 characters.', error: 'PASSWORD_TOO_SHORT' })
+  }
+
+  const { email } = entry
+
+  // Update password across whichever store the user belongs to
+  const sme = getSmeByEmail(email)
+  if (sme) { sme.password = password; sme.updatedAt = new Date().toISOString(); mockState.smeUsers.set(email, sme) }
+
+  const admin = getAdminByEmail(email)
+  if (admin) { admin.password = password; admin.updatedAt = new Date().toISOString(); mockState.adminUsers.set(email, admin) }
+
+  const counsel = getCounselByEmail(email)
+  if (counsel) { counsel.password = password; counsel.updatedAt = new Date().toISOString(); mockState.counselUsers.set(email, counsel) }
+
+  resetTokens.delete(token) // single-use token
+  return sendJson(res, 200, { success: true, message: 'Password updated successfully.' })
+}
+
+// Extend the existing handleAuthRoutes export to cover the new routes
+const _originalHandleAuthRoutes = module.exports.handleAuthRoutes
+module.exports.handleAuthRoutes = function handleAuthRoutesExtended(req, res, relPath) {
+  if (req.method === 'POST' && relPath === 'api/v1/auth/forgot-password') return handleForgotPassword(req, res)
+  if (req.method === 'GET'  && relPath === 'api/v1/auth/verify-reset-token') return handleVerifyResetToken(req, res)
+  if (req.method === 'POST' && relPath === 'api/v1/auth/reset-password') return handleResetPassword(req, res)
+  return _originalHandleAuthRoutes(req, res, relPath)
+}
