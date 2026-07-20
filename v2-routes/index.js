@@ -12,4 +12,7 @@ router.use('/sme/payments',    require('./payment.routes'))
 router.use('/admin',           require('./admin.routes'))
 router.use('/counsel',         require('./counsel.routes'))
 
+// Subscription upgrade / downgrade routes
+router.use('/',                require('./subscription.routes'))
+
 module.exports = router
