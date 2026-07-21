@@ -34,6 +34,23 @@ const mockState = {
     }],
   ]),
   adminUsers: new Map([
+    ['super@thestartuplegal.co.za', {
+      userId: 'adm_000',
+      fullName: 'Super Admin',
+      firstName: 'Super',
+      lastName: 'Admin',
+      email: 'super@thestartuplegal.co.za',
+      password: '',
+      role: 'super_admin',
+      portal: 'admin',
+      phone: '+27 11 000 0000',
+      location: '123 Main Street, Sandton, Johannesburg, 2196',
+      jobTitle: 'Super Administrator',
+      status: 'active',
+      joinedAt: '2025-01-01',
+      lastLogin: '',
+      updatedAt: '2026-06-10T09:30:00Z',
+    }],
     ['given@thestartuplegal.co.za', {
       userId: 'adm_001',
       fullName: 'Given Kibanza',
