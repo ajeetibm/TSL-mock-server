@@ -44,6 +44,77 @@ async function initializePayment(req, res, next) {
   } catch (e) { next(e) }
 }
 
+const MOCK_PROVIDERS = {
+  'Bank Transfers': { provider: 'paystack', channel: 'pay-by-bank', label: 'Paystack Pay by Bank' },
+  'E-wallets': { provider: 'paystack', channel: 'scan-to-pay', label: 'Paystack Scan to Pay' },
+  'PayPal': { provider: 'paypal', channel: 'paypal', label: 'PayPal sandbox' },
+  'Credit/Debit Cards': { provider: 'paystack', channel: 'card', label: 'Paystack sandbox' },
+}
+
+// Mock checkout used by the frontend for payment methods that do not have a
+// real provider configuration yet. It deliberately never calls Paystack or
+// PayPal, so it is safe for local demos and automated testing.
+async function initializeMockPayment(req, res, next) {
+  try {
+    const err = validatePaystackInitPayload(req.body)
+    if (err) return next(errors.badRequest(err, 'VALIDATION_ERROR'))
+
+    const method = String(req.body.paymentMethod || '')
+    const provider = MOCK_PROVIDERS[method]
+    if (!provider) return next(errors.badRequest('Unsupported mock payment method.', 'UNSUPPORTED_PAYMENT_METHOD'))
+
+    const txn = initializeTransaction({
+      email: req.body.email,
+      amount: Number(req.body.amount),
+      currency: req.body.currency || 'ZAR',
+      plan: req.body.plan || 'operator',
+      paymentMethod: method,
+      selectedWizards: req.body.selectedWizards,
+    })
+    txn.provider = provider.provider
+    txn.channel = provider.channel
+    paymentTransactions.set(txn.reference, txn)
+
+    res.json({
+      success: true,
+      message: `${provider.label} mock checkout initialized.`,
+      data: { reference: txn.reference, ...provider, amount: txn.amount, currency: txn.currency },
+    })
+  } catch (e) { next(e) }
+}
+
+async function completeMockPayment(req, res, next) {
+  try {
+    const reference = String(req.body.reference || '')
+    const txn = paymentTransactions.get(reference)
+    if (!txn) return next(errors.notFound('Payment reference not found.', 'PAYMENT_NOT_FOUND'))
+
+    const outcome = String(req.body.outcome || 'success').toLowerCase()
+    const status = outcome === 'cancelled' ? 'cancelled' : outcome === 'failed' ? 'failed' : 'success'
+    txn.status = status
+    txn.verifiedAt = new Date().toISOString()
+    txn.paidAt = status === 'success' ? txn.verifiedAt : null
+    txn.gatewayResponse = status === 'success' ? `Approved by ${txn.provider === 'paypal' ? 'PayPal' : 'Paystack'} mock checkout.` : `Payment ${status}.`
+    paymentTransactions.set(reference, txn)
+
+    if (!verifiedReferences.has(reference)) {
+      verifiedReferences.add(reference)
+      recordPaymentHistory(txn)
+    }
+
+    let subscription = null
+    if (status === 'success') {
+      subscription = activateUserSubscription(txn.email, txn.plan, req.user?.userId)
+    }
+
+    res.json({
+      success: true,
+      message: txn.gatewayResponse,
+      data: { provider: txn.provider, channel: txn.channel, reference, status, paidAt: txn.paidAt, subscription },
+    })
+  } catch (e) { next(e) }
+}
+
 async function verifyPayment(req, res, next) {
   try {
     const reference = String(req.body.reference || req.params.reference || '')
@@ -174,4 +245,4 @@ async function getAllSubscriptionsAdmin(req, res, next) {
   } catch (e) { next(e) }
 }
 
-module.exports = { initializePayment, verifyPayment, paystackWebhook, getHistory, getSubscriptionStatus, getAllSubscriptionsAdmin }
+module.exports = { initializePayment, initializeMockPayment, completeMockPayment, verifyPayment, paystackWebhook, getHistory, getSubscriptionStatus, getAllSubscriptionsAdmin }

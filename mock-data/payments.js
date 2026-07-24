@@ -70,7 +70,7 @@ function recordPaymentHistory(transaction) {
     plan: transaction.plan,
     status: transaction.status,
     paidAt: transaction.paidAt,
-    gateway: 'paystack',
+    gateway: transaction.provider || 'paystack',
   })
   if (paymentHistory.length > 200) paymentHistory.shift()
 }
