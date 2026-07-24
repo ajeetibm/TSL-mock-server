@@ -50,3 +50,6 @@ Dynamic path params from the API spec are stored as `__` folders. Example: `/api
 | CON-006 | PUT | `/api/v1/counsel/profile` | `mocks/api/v1/counsel/profile/PUT.mock` | 200 OK Profile updated |
 | CON-007 | POST | `/api/v1/counsel/reset-password` | `mocks/api/v1/counsel/reset-password/POST.mock` | 200 OK Counsel password reset successful |
 | PLY-001 | GET | `/api/v1/playbooks` | `mocks/api/v1/playbooks/GET.mock` | 200 OK Playbooks returned |
+| DOC-001 | GET | `/api/v1/documents` | `controllers/document.controller.js` | 200 OK Document list returned (filterable by `?category=legal\|compliance\|guide\|template`). Each record includes a `url` field (root-relative path e.g. `/assets/pdfs/popia-compliance-basics.pdf`) served by `express.static`. |
+| DOC-002 | GET | `/api/v1/documents/:documentId` | `controllers/document.controller.js` | 200 OK Single document metadata + `url` pointing to locally-served PDF at `http://localhost:8080/assets/pdfs/<filename>`. In production this would be a presigned cloud-storage URL. |
+| DOC-003 | GET | `/assets/pdfs/:filename` | `assets/pdfs/` (static) | 200 OK Raw PDF bytes served directly by `express.static`. Use the `url` from DOC-001/DOC-002 to construct this request. |

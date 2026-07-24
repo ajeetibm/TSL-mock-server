@@ -69,6 +69,11 @@ app.use((req, res, next) => {
   next()
 })
 
+// ─── Static Assets (PDFs and other files in assets/) ─────────────────────────
+// Serves assets/pdfs/*.pdf at /assets/pdfs/<filename>
+// e.g. GET /assets/pdfs/popia-compliance-basics.pdf → 200 application/pdf
+app.use('/assets', express.static(path.join(__dirname, 'assets')))
+
 // ─── V2 API Routes (new architecture) ────────────────────────────────────────
 // Mounted at /api/v1 — same prefix as before, frontend unchanged.
 app.use('/api/v1', require('./v2-routes/index'))
@@ -123,8 +128,8 @@ app.use((req, res) => {
 app.use(errorHandler)
 
 // ─── Start ────────────────────────────────────────────────────────────────────
-const server = app.listen(PORT, () => {
-  logger.info('server', `Mock server listening on http://0.0.0.0:${PORT}`)
+const server = app.listen(PORT, '127.0.0.1', () => {
+  logger.info('server', `Mock server listening on http://127.0.0.1:${PORT}`)
   logger.info('server', `Static mocks dir: ${MOCKS_DIR}`)
   logger.info('server', 'Architecture: routes → controllers → services → mock-data')
 })
