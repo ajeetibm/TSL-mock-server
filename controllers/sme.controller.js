@@ -328,3 +328,93 @@ async function saveSmeProfilePreferences(req, res, next) {
 }
 
 module.exports = Object.assign(module.exports, { getSmeProfilePreferences, saveSmeProfilePreferences })
+
+
+// ── Security: Two-Factor Authentication ──────────────────────────────────────
+// PRODUCTION: store twoFactorEnabled per user in the DB.
+const _twoFactorState = { enabled: false }
+
+async function getTwoFactor(req, res, next) {
+  try {
+    res.json({ success: true, data: { enabled: _twoFactorState.enabled } })
+  } catch (e) { next(e) }
+}
+
+async function updateTwoFactor(req, res, next) {
+  try {
+    const { enabled } = req.body
+    if (typeof enabled !== 'boolean') {
+      return res.status(400).json({ success: false, message: 'enabled (boolean) is required.' })
+    }
+    _twoFactorState.enabled = enabled
+    res.json({
+      success: true,
+      message: enabled ? 'Two-factor authentication enabled.' : 'Two-factor authentication disabled.',
+      data: { enabled: _twoFactorState.enabled },
+    })
+  } catch (e) { next(e) }
+}
+
+module.exports = Object.assign(module.exports, { getTwoFactor, updateTwoFactor })
+
+
+// ── Security: Active Sessions ─────────────────────────────────────────────────
+// PRODUCTION: track sessions in DB/Redis keyed by userId; mark current via
+// token fingerprint. Here we seed realistic mock data per in-memory user.
+const { v4: uuidv4 } = require('uuid')
+
+const _seedSessions = () => [
+  {
+    sessionId: uuidv4(),
+    device: 'Chrome on macOS',
+    location: 'Cape Town, ZA',
+    ip: '102.34.56.78',
+    lastActive: new Date().toISOString(),
+    isCurrent: true,
+  },
+  {
+    sessionId: uuidv4(),
+    device: 'Safari on iPhone',
+    location: 'Johannesburg, ZA',
+    ip: '105.22.11.90',
+    lastActive: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+    isCurrent: false,
+  },
+  {
+    sessionId: uuidv4(),
+    device: 'Firefox on Windows',
+    location: 'Durban, ZA',
+    ip: '196.45.67.12',
+    lastActive: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+    isCurrent: false,
+  },
+]
+
+// Per-user session store (in-memory); seeded on first access.
+const _sessionStore = new Map()
+
+function getSessionStore(req) {
+  const key = req.user?.userId ?? 'default'
+  if (!_sessionStore.has(key)) _sessionStore.set(key, _seedSessions())
+  return _sessionStore.get(key)
+}
+
+async function getActiveSessions(req, res, next) {
+  try {
+    res.json({ success: true, data: getSessionStore(req) })
+  } catch (e) { next(e) }
+}
+
+async function revokeSession(req, res, next) {
+  try {
+    const store = getSessionStore(req)
+    const { sessionId } = req.params
+    const idx = store.findIndex((s) => s.sessionId === sessionId)
+    if (idx === -1) return res.status(404).json({ success: false, message: 'Session not found.' })
+    if (store[idx].isCurrent) return res.status(400).json({ success: false, message: 'Cannot revoke your current session.' })
+    store.splice(idx, 1)
+    res.json({ success: true, message: 'Session revoked successfully.', data: store })
+  } catch (e) { next(e) }
+}
+
+module.exports = Object.assign(module.exports, { getActiveSessions, revokeSession })
