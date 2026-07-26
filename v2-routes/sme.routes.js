@@ -6,7 +6,6 @@ const {
   getQuickAccessLinks,
   getLegalLinks,
   getSmeProfilePreferences, saveSmeProfilePreferences,
-  getTwoFactor, updateTwoFactor,
   getActiveSessions, revokeSession,
 } = require('../controllers/sme.controller')
 const { authenticate } = require('../middleware/auth')
@@ -32,8 +31,6 @@ router.get('/legal-links',        authenticate, getLegalLinks)
 router.get('/profile/preferences',  authenticate, getSmeProfilePreferences)
 router.put('/profile/preferences',  authenticate, saveSmeProfilePreferences)
 
-router.get('/security/2fa',                    authenticate, getTwoFactor)
-router.put('/security/2fa',                    authenticate, updateTwoFactor)
 
 router.get('/security/sessions',               authenticate, getActiveSessions)
 router.delete('/security/sessions/:sessionId', authenticate, revokeSession)

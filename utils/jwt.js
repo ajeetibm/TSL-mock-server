@@ -1,36 +1,44 @@
 /**
  * utils/jwt.js
  * JWT utility — generates and verifies tokens.
- * MOCK: uses a fixed secret. PRODUCTION: load from process.env.JWT_SECRET.
- * PRODUCTION: use RS256 asymmetric keys instead of HS256.
+ * PRODUCTION: load JWT_SECRET from process.env; use RS256 asymmetric keys.
+ * Each token embeds a unique `jti` (JWT ID) claim so sessions can be tracked
+ * and individually revoked via a denylist without invalidating all sessions.
  */
-const jwt = require('jsonwebtoken')
+const jwt  = require('jsonwebtoken')
+const { v4: uuidv4 } = require('uuid')
 
-// MOCK secret — replace with process.env.JWT_SECRET in production
-const JWT_SECRET = process.env.JWT_SECRET || 'tsl_mock_jwt_secret_replace_in_production'
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '24h'
+const JWT_SECRET     = process.env.JWT_SECRET     || 'tsl_mock_jwt_secret_replace_in_production'
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '30d'
 
 /**
  * Sign a JWT token for an authenticated user.
  * @param {{ userId, email, role, portal }} payload
- * @returns {{ token: string, tokenExpiry: string }}
+ * @returns {{ token: string, tokenExpiry: string, jti: string }}
  */
 function signToken(payload) {
+  const jti   = uuidv4()   // unique ID for this token — used to track & revoke sessions
   const token = jwt.sign(
-    { userId: payload.userId, email: payload.email, role: payload.role, portal: payload.portal },
+    {
+      userId: payload.userId,
+      email:  payload.email,
+      role:   payload.role,
+      portal: payload.portal,
+      jti,                  // embedded so middleware can read it without a DB round-trip
+    },
     JWT_SECRET,
     { expiresIn: JWT_EXPIRES_IN, issuer: 'tsl-mock-server', audience: 'tsl-frontend' }
   )
-  // Decode to get exact expiry timestamp
-  const decoded = jwt.decode(token)
+  const decoded    = jwt.decode(token)
   const tokenExpiry = new Date((decoded.exp || 0) * 1000).toISOString()
-  return { token, tokenExpiry }
+  return { token, tokenExpiry, jti }
 }
 
 /**
  * Verify and decode a JWT token.
+ * Returns null if invalid, expired, or missing.
  * @param {string} token
- * @returns {{ userId, email, role, portal } | null}
+ * @returns {{ userId, email, role, portal, jti } | null}
  */
 function verifyToken(token) {
   try {

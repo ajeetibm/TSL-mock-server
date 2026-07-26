@@ -330,129 +330,41 @@ async function saveSmeProfilePreferences(req, res, next) {
 module.exports = Object.assign(module.exports, { getSmeProfilePreferences, saveSmeProfilePreferences })
 
 
-// ── Security: Two-Factor Authentication ──────────────────────────────────────
-// PRODUCTION: store twoFactorEnabled per user in the DB.
-const _twoFactorState = { enabled: false }
-
-async function getTwoFactor(req, res, next) {
-  try {
-    res.json({ success: true, data: { enabled: _twoFactorState.enabled } })
-  } catch (e) { next(e) }
-}
-
-async function updateTwoFactor(req, res, next) {
-  try {
-    const { enabled } = req.body
-    if (typeof enabled !== 'boolean') {
-      return res.status(400).json({ success: false, message: 'enabled (boolean) is required.' })
-    }
-    _twoFactorState.enabled = enabled
-    res.json({
-      success: true,
-      message: enabled ? 'Two-factor authentication enabled.' : 'Two-factor authentication disabled.',
-      data: { enabled: _twoFactorState.enabled },
-    })
-  } catch (e) { next(e) }
-}
-
-module.exports = Object.assign(module.exports, { getTwoFactor, updateTwoFactor })
-
 
 // ── Security: Active Sessions ─────────────────────────────────────────────────
-// PRODUCTION: track sessions in DB/Redis keyed by userId. isCurrent is derived
-// per-request by matching the caller's token fingerprint — never stored.
-const { v4: uuidv4 } = require('uuid')
+// Uses the production-grade sessionStore service.
+// PRODUCTION: swap sessionStore internals from in-memory Maps to PostgreSQL + Redis
+// — this controller code does not change.
+const { createSession, listSessions, revokeSession: revokeSessionStore } = require('../services/sessionStore')
 
-// Parse a User-Agent string into a human-readable device label.
-function parseUserAgent(ua) {
-  if (!ua) return 'Unknown Browser'
-  const s = ua.toLowerCase()
-  // Browser detection (order matters — Edge must come before Chrome)
-  let browser = 'Unknown Browser'
-  if (s.includes('edg/') || s.includes('edge/'))      browser = 'Edge'
-  else if (s.includes('opr/') || s.includes('opera'))  browser = 'Opera'
-  else if (s.includes('firefox'))                       browser = 'Firefox'
-  else if (s.includes('safari') && !s.includes('chrom')) browser = 'Safari'
-  else if (s.includes('chrome'))                        browser = 'Chrome'
-  // OS detection
-  let os = 'Unknown OS'
-  if (s.includes('iphone'))         os = 'iPhone'
-  else if (s.includes('ipad'))      os = 'iPad'
-  else if (s.includes('android'))   os = 'Android'
-  else if (s.includes('mac os x'))  os = 'macOS'
-  else if (s.includes('windows'))   os = 'Windows'
-  else if (s.includes('linux'))     os = 'Linux'
-  return browser + ' on ' + os
-}
-
-// Per-user session store: Map<userId, Session[]>
-// Each session stores a tokenFingerprint (last 12 chars of token) so we can
-// identify which session belongs to the current request without storing full tokens.
-const _sessionStore = new Map()
-
-function getOrCreateStore(userId) {
-  if (!_sessionStore.has(userId)) _sessionStore.set(userId, [])
-  return _sessionStore.get(userId)
-}
-
-// Called by auth.controller.js after every successful login / Google auth.
-// Registers a new session entry for the user. If a session with the same
-// tokenFingerprint already exists (e.g. refresh), update its lastActive instead.
-function registerSession(userId, userAgent, ip, token) {
-  const store = getOrCreateStore(userId)
-  const fingerprint = String(token || '').slice(-12)
-  const existing = store.findIndex((s) => s.tokenFingerprint === fingerprint)
-  if (existing !== -1) {
-    store[existing].lastActive = new Date().toISOString()
-    return
-  }
-  store.unshift({
-    sessionId: uuidv4(),
-    device: parseUserAgent(userAgent),
-    location: 'Cape Town, ZA',  // PRODUCTION: use a GeoIP library (e.g. geoip-lite)
-    ip: ip || '0.0.0.0',
-    lastActive: new Date().toISOString(),
-    tokenFingerprint: fingerprint,
-  })
+/**
+ * Called by auth.controller.js after every successful login / Google auth.
+ * Registers a real session entry keyed by userId + jti.
+ */
+function registerSession({ userId, jti, userAgent, ip }) {
+  createSession({ userId, jti, userAgent, ip })
 }
 
 async function getActiveSessions(req, res, next) {
   try {
-    const userId = req.user?.userId ?? 'default'
-    const callerFingerprint = String(
-      (req.headers.authorization || '').replace('Bearer ', '')
-    ).slice(-12)
-    const store = getOrCreateStore(userId)
-    // Derive isCurrent per-request — never persisted
-    const data = store.map((s) => ({
-      ...s,
-      isCurrent: s.tokenFingerprint === callerFingerprint,
-      tokenFingerprint: undefined, // strip from response
-    }))
-    res.json({ success: true, data })
+    const userId     = req.user?.userId ?? 'default'
+    const callerJti  = req.user?.jti    ?? ''
+    const sessions   = listSessions({ userId, callerJti })
+    res.json({ success: true, data: sessions })
   } catch (e) { next(e) }
 }
 
 async function revokeSession(req, res, next) {
   try {
-    const userId = req.user?.userId ?? 'default'
-    const callerFingerprint = String(
-      (req.headers.authorization || '').replace('Bearer ', '')
-    ).slice(-12)
-    const store = getOrCreateStore(userId)
+    const userId     = req.user?.userId ?? 'default'
+    const callerJti  = req.user?.jti    ?? ''
     const { sessionId } = req.params
-    const idx = store.findIndex((s) => s.sessionId === sessionId)
-    if (idx === -1) return res.status(404).json({ success: false, message: 'Session not found.' })
-    if (store[idx].tokenFingerprint === callerFingerprint) {
-      return res.status(400).json({ success: false, message: 'Cannot revoke your current session.' })
+    const result = revokeSessionStore({ userId, sessionId, callerJti })
+    if (!result.ok) {
+      return res.status(result.message === 'Session not found.' ? 404 : 400)
+        .json({ success: false, message: result.message })
     }
-    store.splice(idx, 1)
-    const data = store.map((s) => ({
-      ...s,
-      isCurrent: s.tokenFingerprint === callerFingerprint,
-      tokenFingerprint: undefined,
-    }))
-    res.json({ success: true, message: 'Session revoked successfully.', data })
+    res.json({ success: true, message: result.message, data: result.sessions })
   } catch (e) { next(e) }
 }
 

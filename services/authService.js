@@ -62,7 +62,7 @@ function createAdminUser(email, payload = {}) {
  * Shape matches frontend AuthUser interface — do not change field names.
  */
 function buildAuthResponse(user, extraFields = {}) {
-  const { token, tokenExpiry } = signToken({ userId: user.userId, email: user.email, role: user.role, portal: user.portal })
+  const { token, tokenExpiry, jti } = signToken({ userId: user.userId, email: user.email, role: user.role, portal: user.portal })
   return {
     success: true,
     data: {
@@ -74,6 +74,7 @@ function buildAuthResponse(user, extraFields = {}) {
       plan: user.plan || null,
       token,
       tokenExpiry,
+      jti,
       mustResetPassword: Boolean(user.mustResetPassword),
       ...extraFields,
     },

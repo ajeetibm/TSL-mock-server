@@ -21,7 +21,7 @@ async function login(req, res, next) {
     if (err) return next(errors.badRequest(err, 'VALIDATION_ERROR'))
     const result = await loginUser(req.body, req.ip)
     if (result.success && result.data?.userId && result.data?.token) {
-      registerSession(result.data.userId, req.headers['user-agent'], req.ip, result.data.token)
+      registerSession({ userId: result.data.userId, jti: result.data.jti, userAgent: req.headers['user-agent'], ip: req.ip })
     }
     res.json(result)
   } catch (e) { next(e) }
@@ -42,7 +42,7 @@ async function googleAuth(req, res, next) {
     if (!accessToken) return next(errors.badRequest('Google access token is required.', 'MISSING_TOKEN'))
     const result = await googleLogin(accessToken, req.ip)
     if (result.success && result.data?.userId && result.data?.token) {
-      registerSession(result.data.userId, req.headers['user-agent'], req.ip, result.data.token)
+      registerSession({ userId: result.data.userId, jti: result.data.jti, userAgent: req.headers['user-agent'], ip: req.ip })
     }
     res.json(result)
   } catch (e) { next(e) }
