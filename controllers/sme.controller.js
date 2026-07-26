@@ -359,62 +359,101 @@ module.exports = Object.assign(module.exports, { getTwoFactor, updateTwoFactor }
 
 
 // ── Security: Active Sessions ─────────────────────────────────────────────────
-// PRODUCTION: track sessions in DB/Redis keyed by userId; mark current via
-// token fingerprint. Here we seed realistic mock data per in-memory user.
+// PRODUCTION: track sessions in DB/Redis keyed by userId. isCurrent is derived
+// per-request by matching the caller's token fingerprint — never stored.
 const { v4: uuidv4 } = require('uuid')
 
-const _seedSessions = () => [
-  {
-    sessionId: uuidv4(),
-    device: 'Chrome on macOS',
-    location: 'Cape Town, ZA',
-    ip: '102.34.56.78',
-    lastActive: new Date().toISOString(),
-    isCurrent: true,
-  },
-  {
-    sessionId: uuidv4(),
-    device: 'Safari on iPhone',
-    location: 'Johannesburg, ZA',
-    ip: '105.22.11.90',
-    lastActive: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-    isCurrent: false,
-  },
-  {
-    sessionId: uuidv4(),
-    device: 'Firefox on Windows',
-    location: 'Durban, ZA',
-    ip: '196.45.67.12',
-    lastActive: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-    isCurrent: false,
-  },
-]
+// Parse a User-Agent string into a human-readable device label.
+function parseUserAgent(ua) {
+  if (!ua) return 'Unknown Browser'
+  const s = ua.toLowerCase()
+  // Browser detection (order matters — Edge must come before Chrome)
+  let browser = 'Unknown Browser'
+  if (s.includes('edg/') || s.includes('edge/'))      browser = 'Edge'
+  else if (s.includes('opr/') || s.includes('opera'))  browser = 'Opera'
+  else if (s.includes('firefox'))                       browser = 'Firefox'
+  else if (s.includes('safari') && !s.includes('chrom')) browser = 'Safari'
+  else if (s.includes('chrome'))                        browser = 'Chrome'
+  // OS detection
+  let os = 'Unknown OS'
+  if (s.includes('iphone'))         os = 'iPhone'
+  else if (s.includes('ipad'))      os = 'iPad'
+  else if (s.includes('android'))   os = 'Android'
+  else if (s.includes('mac os x'))  os = 'macOS'
+  else if (s.includes('windows'))   os = 'Windows'
+  else if (s.includes('linux'))     os = 'Linux'
+  return browser + ' on ' + os
+}
 
-// Per-user session store (in-memory); seeded on first access.
+// Per-user session store: Map<userId, Session[]>
+// Each session stores a tokenFingerprint (last 12 chars of token) so we can
+// identify which session belongs to the current request without storing full tokens.
 const _sessionStore = new Map()
 
-function getSessionStore(req) {
-  const key = req.user?.userId ?? 'default'
-  if (!_sessionStore.has(key)) _sessionStore.set(key, _seedSessions())
-  return _sessionStore.get(key)
+function getOrCreateStore(userId) {
+  if (!_sessionStore.has(userId)) _sessionStore.set(userId, [])
+  return _sessionStore.get(userId)
+}
+
+// Called by auth.controller.js after every successful login / Google auth.
+// Registers a new session entry for the user. If a session with the same
+// tokenFingerprint already exists (e.g. refresh), update its lastActive instead.
+function registerSession(userId, userAgent, ip, token) {
+  const store = getOrCreateStore(userId)
+  const fingerprint = String(token || '').slice(-12)
+  const existing = store.findIndex((s) => s.tokenFingerprint === fingerprint)
+  if (existing !== -1) {
+    store[existing].lastActive = new Date().toISOString()
+    return
+  }
+  store.unshift({
+    sessionId: uuidv4(),
+    device: parseUserAgent(userAgent),
+    location: 'Cape Town, ZA',  // PRODUCTION: use a GeoIP library (e.g. geoip-lite)
+    ip: ip || '0.0.0.0',
+    lastActive: new Date().toISOString(),
+    tokenFingerprint: fingerprint,
+  })
 }
 
 async function getActiveSessions(req, res, next) {
   try {
-    res.json({ success: true, data: getSessionStore(req) })
+    const userId = req.user?.userId ?? 'default'
+    const callerFingerprint = String(
+      (req.headers.authorization || '').replace('Bearer ', '')
+    ).slice(-12)
+    const store = getOrCreateStore(userId)
+    // Derive isCurrent per-request — never persisted
+    const data = store.map((s) => ({
+      ...s,
+      isCurrent: s.tokenFingerprint === callerFingerprint,
+      tokenFingerprint: undefined, // strip from response
+    }))
+    res.json({ success: true, data })
   } catch (e) { next(e) }
 }
 
 async function revokeSession(req, res, next) {
   try {
-    const store = getSessionStore(req)
+    const userId = req.user?.userId ?? 'default'
+    const callerFingerprint = String(
+      (req.headers.authorization || '').replace('Bearer ', '')
+    ).slice(-12)
+    const store = getOrCreateStore(userId)
     const { sessionId } = req.params
     const idx = store.findIndex((s) => s.sessionId === sessionId)
     if (idx === -1) return res.status(404).json({ success: false, message: 'Session not found.' })
-    if (store[idx].isCurrent) return res.status(400).json({ success: false, message: 'Cannot revoke your current session.' })
+    if (store[idx].tokenFingerprint === callerFingerprint) {
+      return res.status(400).json({ success: false, message: 'Cannot revoke your current session.' })
+    }
     store.splice(idx, 1)
-    res.json({ success: true, message: 'Session revoked successfully.', data: store })
+    const data = store.map((s) => ({
+      ...s,
+      isCurrent: s.tokenFingerprint === callerFingerprint,
+      tokenFingerprint: undefined,
+    }))
+    res.json({ success: true, message: 'Session revoked successfully.', data })
   } catch (e) { next(e) }
 }
 
-module.exports = Object.assign(module.exports, { getActiveSessions, revokeSession })
+module.exports = Object.assign(module.exports, { getActiveSessions, revokeSession, registerSession })

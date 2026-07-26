@@ -8,6 +8,7 @@ const { addAuditLog, AUDIT_ACTIONS } = require('../mock-data/audit')
 const { validateLoginPayload, validateRegisterPayload } = require('../utils/validate')
 const { errors } = require('../utils/errors')
 const logger = require('../utils/logger')
+const { registerSession } = require('./sme.controller')
 
 // ── Password Reset Tokens (in-memory, 15-min TTL) ────────────────────────────
 // PRODUCTION: store in DB with expiry column; send email via Resend/SendGrid.
@@ -19,6 +20,9 @@ async function login(req, res, next) {
     const err = validateLoginPayload(req.body)
     if (err) return next(errors.badRequest(err, 'VALIDATION_ERROR'))
     const result = await loginUser(req.body, req.ip)
+    if (result.success && result.data?.userId && result.data?.token) {
+      registerSession(result.data.userId, req.headers['user-agent'], req.ip, result.data.token)
+    }
     res.json(result)
   } catch (e) { next(e) }
 }
@@ -37,6 +41,9 @@ async function googleAuth(req, res, next) {
     const accessToken = String(req.body.access_token || req.body.credential || req.body.token || '')
     if (!accessToken) return next(errors.badRequest('Google access token is required.', 'MISSING_TOKEN'))
     const result = await googleLogin(accessToken, req.ip)
+    if (result.success && result.data?.userId && result.data?.token) {
+      registerSession(result.data.userId, req.headers['user-agent'], req.ip, result.data.token)
+    }
     res.json(result)
   } catch (e) { next(e) }
 }
