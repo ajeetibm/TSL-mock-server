@@ -11,6 +11,7 @@
 const { errors } = require('../utils/errors')
 const { addAuditLog } = require('../mock-data/audit')
 const logger = require('../utils/logger')
+const { mockState, COUNSEL_TIERS } = require('../mock-state')
 
 // ── Plan catalogue ─────────────────────────────────────────────────────────────
 const PLANS = [
@@ -162,10 +163,42 @@ function getStore(email) {
   return subscriptionStore.get(key)
 }
 
+function applyCounselTier(planId) {
+  const tier = COUNSEL_TIERS[String(planId || '').toLowerCase()]
+  if (!tier) return
+
+  const credits = mockState.smeCredits
+  credits.plan = tier.name
+  credits.includedCredits = tier.includedCredits
+  credits.topUpRate = tier.topUpRate
+  credits.creditsTotal = tier.includedCredits
+  credits.creditsUsed = 0
+  credits.usageThisMonth = 0
+  credits.creditsRemaining = tier.includedCredits
+
+  const nextReset = new Date()
+  nextReset.setUTCMonth(nextReset.getUTCMonth() + 1, 1)
+  credits.resetDate = nextReset.toISOString().slice(0, 10)
+}
+
+function applyScheduledDowngradeIfDue(email, now = new Date()) {
+  const store = getStore(email)
+  if (!store.pendingDowngrade) return store
+
+  const effectiveAt = new Date(`${store.pendingDowngrade.effectiveDate}T00:00:00.000Z`)
+  if (Number.isNaN(effectiveAt.getTime()) || effectiveAt > now) return store
+
+  store.planId = store.pendingDowngrade.toPlanId
+  store.runsUsed = 0
+  store.pendingDowngrade = null
+  applyCounselTier(store.planId)
+  return store
+}
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function buildSubscriptionResponse(email) {
-  const store = getStore(email)
+  const store = applyScheduledDowngradeIfDue(email)
   const plan  = getPlan(store.planId)
   if (!plan) throw new Error(`Unknown planId in store: ${store.planId}`)
 
@@ -236,7 +269,7 @@ async function getUpgradePreview(req, res, next) {
   try {
     const email    = String(req.user?.email || 'thabo@company.co.za').toLowerCase()
     const toPlanId = String(req.query.toPlanId || '').toLowerCase()
-    const store    = getStore(email)
+    const store    = applyScheduledDowngradeIfDue(email)
     const current  = getPlan(store.planId)
     const newPlan  = getPlan(toPlanId)
 
@@ -274,12 +307,15 @@ async function upgradeSubscription(req, res, next) {
   try {
     const email      = String(req.user?.email || 'thabo@company.co.za').toLowerCase()
     const { currentPlanId, toPlanId, paymentReference } = req.body
-    const store      = getStore(email)
-    const current    = getPlan(currentPlanId || store.planId)
+    const store      = applyScheduledDowngradeIfDue(email)
+    const current    = getPlan(store.planId)
     const newPlan    = getPlan(toPlanId)
 
     if (!newPlan) return next(errors.badRequest('Unknown target plan.', 'INVALID_PLAN'))
     if (!current) return next(errors.badRequest('Current plan data is corrupt.', 'INVALID_PLAN'))
+    if (currentPlanId && String(currentPlanId).toLowerCase() !== store.planId) {
+      return next(errors.conflict('Your subscription changed. Refresh the plan selection and try again.', 'STALE_CURRENT_PLAN'))
+    }
 
     const currentTier = PLAN_TIER[current.planId] ?? -1
     const newTier     = PLAN_TIER[newPlan.planId]  ?? -1
@@ -306,6 +342,7 @@ async function upgradeSubscription(req, res, next) {
     store.planId           = newPlan.planId
     store.runsUsed         = 0
     store.pendingDowngrade = null
+    applyCounselTier(newPlan.planId)
 
     // Persist full invoice
     store.invoices.unshift({
@@ -363,17 +400,23 @@ async function scheduleDowngrade(req, res, next) {
   try {
     const email      = String(req.user?.email || 'thabo@company.co.za').toLowerCase()
     const { currentPlanId, toPlanId } = req.body
-    const store      = getStore(email)
-    const current    = getPlan(currentPlanId || store.planId)
+    const store      = applyScheduledDowngradeIfDue(email)
+    const current    = getPlan(store.planId)
     const newPlan    = getPlan(toPlanId)
 
     if (!newPlan) return next(errors.badRequest('Unknown target plan.', 'INVALID_PLAN'))
     if (!current) return next(errors.badRequest('Current plan data is corrupt.', 'INVALID_PLAN'))
+    if (currentPlanId && String(currentPlanId).toLowerCase() !== store.planId) {
+      return next(errors.conflict('Your subscription changed. Refresh the plan selection and try again.', 'STALE_CURRENT_PLAN'))
+    }
 
     const currentTier = PLAN_TIER[current.planId] ?? -1
     const newTier     = PLAN_TIER[newPlan.planId]  ?? -1
     if (newTier >= currentTier) {
       return next(errors.badRequest('Target plan must be lower than current plan for a downgrade.', 'NOT_A_DOWNGRADE'))
+    }
+    if (store.pendingDowngrade) {
+      return next(errors.conflict(`A downgrade to ${store.pendingDowngrade.toPlanName} is already scheduled. Cancel it before scheduling another.`, 'DOWNGRADE_ALREADY_SCHEDULED'))
     }
 
     store.pendingDowngrade = {
@@ -400,7 +443,7 @@ async function scheduleDowngrade(req, res, next) {
 async function cancelDowngrade(req, res, next) {
   try {
     const email = String(req.user?.email || 'thabo@company.co.za').toLowerCase()
-    const store = getStore(email)
+    const store = applyScheduledDowngradeIfDue(email)
 
     if (!store.pendingDowngrade) {
       return next(errors.badRequest('No scheduled downgrade to cancel.', 'NO_PENDING_DOWNGRADE'))
@@ -436,4 +479,5 @@ module.exports = {
   scheduleDowngrade,
   cancelDowngrade,
   getInvoices,
+  applyScheduledDowngradeIfDue,
 }

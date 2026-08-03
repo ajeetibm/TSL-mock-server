@@ -3,7 +3,8 @@
  * SME portal endpoints — profile, counsel credits/requests, dashboard.
  * PRODUCTION: replace mockState with DB queries.
  */
-const { mockState } = require('../mock-state')
+const { mockState, resetCounselCreditsIfDue } = require('../mock-state')
+const { paymentTransactions } = require('../mock-data/payments')
 const { getSmeByEmail, normalizeEmail, createSmeUser } = require('../services/authService')
 const { addAuditLog, AUDIT_ACTIONS } = require('../mock-data/audit')
 const { errors } = require('../utils/errors')
@@ -44,7 +45,7 @@ async function getDashboard(req, res, next) {
 }
 
 async function getCounselCredits(req, res, next) {
-  try { res.json({ success: true, data: mockState.smeCredits }) }
+  try { res.json({ success: true, data: resetCounselCreditsIfDue() }) }
   catch (e) { next(e) }
 }
 
@@ -71,9 +72,14 @@ async function getCounselRequests(req, res, next) {
 
 async function createCounselRequest(req, res, next) {
   try {
+    const credits = resetCounselCreditsIfDue()
     const subject = req.body.subject || req.body.title || 'Review of SaaS Service Agreement'
     const userEmail = req.body.userEmail || req.body.email || req.user?.email || 'thabo@company.co.za'
     const now = new Date()
+    if (!String(req.body.relatedWizard || '').trim()) return next(errors.badRequest('Choose the wizard document to be reviewed before submitting a counsel request.', 'WIZARD_REQUIRED'))
+    if (!Array.isArray(req.body.attachments) || req.body.attachments.length !== 1) return next(errors.badRequest('A counsel request must contain one document.', 'SINGLE_DOCUMENT_REQUIRED'))
+    const creditsRequired = 1
+    if (credits.creditsRemaining < creditsRequired) return next(errors.conflict('No counsel credits remain. Purchase a top-up before submitting.', 'INSUFFICIENT_COUNSEL_CREDITS'))
 
     const duplicate = mockState.adminRequests.find(r => {
       const sameUser = normalizeEmail(r.userEmail) === normalizeEmail(userEmail)
@@ -86,14 +92,14 @@ async function createCounselRequest(req, res, next) {
       return res.json({ success: true, message: 'Duplicate request ignored.', data: { requestId: duplicate.requestId, subject: duplicate.subject, status: duplicate.status, creditsRemaining: mockState.smeCredits.creditsRemaining, submittedAt: duplicate.submittedAt || duplicate.receivedAt, duplicate: true } })
     }
 
-    if (mockState.smeCredits.creditsRemaining > 0) { mockState.smeCredits.creditsUsed++; mockState.smeCredits.usageThisMonth++; mockState.smeCredits.creditsRemaining-- }
+    if (creditsRequired > 0) { credits.creditsUsed += creditsRequired; credits.usageThisMonth += creditsRequired; credits.creditsRemaining -= creditsRequired }
 
     const requestId = 'req_' + mockState.nextRequestId++
     const submittedAt = now.toISOString()
-    const request = { requestId, subject, fromUser: req.body.fromUser || req.body.fullName || 'Thabo Molefe', userEmail, company: req.body.company || 'FibreGents (Pty) Ltd', receivedAt: submittedAt, submittedAt, status: 'pending', description: req.body.description || req.body.notes || null, relatedWizard: req.body.relatedWizard || null, attachments: req.body.attachments || [], assignedBy: 'Admin Sarah', earnings: Number(req.body.earnings || 500), currency: 'ZAR' }
+    const request = { requestId, subject, fromUser: req.body.fromUser || req.body.fullName || 'Thabo Molefe', userEmail, company: req.body.company || 'FibreGents (Pty) Ltd', receivedAt: submittedAt, submittedAt, status: 'pending', description: req.body.description || req.body.notes || null, relatedWizard: req.body.relatedWizard || null, attachments: req.body.attachments || [], creditsUsedForRequest: creditsRequired, assignedBy: 'Admin Sarah', earnings: Number(req.body.earnings || 500), currency: 'ZAR' }
     mockState.adminRequests.unshift(request)
 
-    res.status(201).json({ success: true, data: { requestId, subject: request.subject, status: request.status, creditsRemaining: mockState.smeCredits.creditsRemaining, submittedAt: request.submittedAt, description: request.description, relatedWizard: request.relatedWizard, attachments: request.attachments } })
+    res.status(201).json({ success: true, data: { requestId, subject: request.subject, status: request.status, creditsRemaining: credits.creditsRemaining, submittedAt: request.submittedAt, description: request.description, relatedWizard: request.relatedWizard, attachments: request.attachments } })
   } catch (e) { next(e) }
 }
 
@@ -116,35 +122,9 @@ async function changePassword(req, res, next) {
 
 async function topUpCredits(req, res, next) {
   try {
-    const { plan, credits, amountPaid, currency, reference } = req.body
-
-    const PLAN_RATES = { Launchpad: 550, Operator: 500, Boardroom: 450 }
-    const planName = String(plan || 'Operator')
-    const ratePerCredit = PLAN_RATES[planName] ?? 500
-    const creditsToAdd = Number(credits) > 0 ? Number(credits) : 1
-    const totalPaid = Number(amountPaid) || Math.round(ratePerCredit * creditsToAdd * 1.15)
-
-    // Add credits to the mock sme credits state
-    mockState.smeCredits.creditsTotal     += creditsToAdd
-    mockState.smeCredits.creditsRemaining += creditsToAdd
-
-    // Record the payment transaction for auditing
-    const txnId = 'topup_' + Date.now()
-    const txn = {
-      txnId,
-      reference: reference || txnId,
-      plan: planName,
-      creditsAdded: creditsToAdd,
-      amountPaid: totalPaid,
-      currency: currency || 'ZAR',
-      paidAt: new Date().toISOString(),
-      type: 'counsel-topup',
-    }
-    mockState.paymentTransactions.set(txnId, txn)
-
-    addAuditLog({ action: 'COUNSEL_TOPUP', userId: req.user?.userId, email: req.user?.email || 'thabo@company.co.za', ip: req.ip, meta: { plan: planName, creditsAdded: creditsToAdd, amountPaid: totalPaid } })
-
-    res.json({ success: true, message: `${creditsToAdd} credit${creditsToAdd !== 1 ? 's' : ''} added successfully.`, data: { ...mockState.smeCredits } })
+    const transaction = paymentTransactions.get(String(req.body.reference || ''))
+    if (!transaction || transaction.type !== 'counsel-topup' || transaction.status !== 'success') return next(errors.badRequest('A verified counsel top-up payment is required before credits can be added.', 'UNVERIFIED_TOPUP'))
+    res.json({ success: true, message: 'Top-up payment was already applied.', data: resetCounselCreditsIfDue() })
   } catch (e) { next(e) }
 }
 

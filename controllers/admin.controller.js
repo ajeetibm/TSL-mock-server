@@ -38,7 +38,8 @@ async function getDashboard(req, res, next) {
       data: {
         kpis: { totalUsers:2847, totalUsersTrend:'+12%', activeWizards:1234, activeWizardsTrend:'+8%', revenueMTD:48574, currency:'ZAR', issuesCount:26, criticalIssues:3 },
         topWizards: [{name:'NDA Generator',completions:1234},{name:'Employment Contract',completions:987},{name:'Shareholder Agreement',completions:756},{name:'Director Appointment',completions:543},{name:'Company Registration',completions:432}],
-        recentCounselRequests: mockState.adminRequests.filter(r => r.status === 'pending').map(r => ({ requestId:r.requestId, subject:r.subject, fromUser:r.fromUser, receivedAt:r.receivedAt||r.submittedAt, status:r.status })),
+        recentCounselRequests: mockState.adminRequests.map(r => ({ requestId:r.requestId, subject:r.subject, fromUser:r.fromUser, receivedAt:r.receivedAt||r.submittedAt, status:r.status, assignedCounselName:r.assignedCounselName, rejectionReason:r.rejectionReason, rejectedAt:r.rejectedAt })),
+        notifications: mockState.adminNotifications,
         revenueChart: { year:2026, months:REVENUE_MONTHS, summary:{ totalRevenue:total, avgMonthly:Math.round(total/REVENUE_MONTHS.length), bestMonth:Math.max(...actuals), growthRate:(((actuals[actuals.length-1]-actuals[0])/actuals[0])*100).toFixed(1)+'%' }, axis:{ yMax:60000, ticks:[60000,45000,30000,15000,0], tickLabels:['R99k','R45k','R30k','R15k','R0k'], format:'ZAR' } },
       },
     })
@@ -128,11 +129,21 @@ async function assignCounselRequest(req, res, next) {
     let counselUser = getCounselByEmail(selectedEmail)
     if (!counselUser && dirEntry) { counselUser = { userId: dirEntry.counselId, fullName: dirEntry.fullName || dirEntry.name, email: normalizeEmail(dirEntry.email), password: 'temporary', role: 'counsel', portal: 'counsel', mustResetPassword: true, status: 'active' }; mockState.counselUsers.set(counselUser.email, counselUser) }
     counselUser = counselUser || getCounselByEmail('s.nkosi@tsl.co.za')
-    request.status = 'assigned'; request.assignedCounselId = counselUser.userId; request.assignedCounselEmail = counselUser.email; request.assignedCounselName = counselUser.fullName; request.assignedAt = new Date().toISOString()
+    request.status = 'in_progress'; request.assignedCounselId = counselUser.userId; request.assignedCounselEmail = counselUser.email; request.assignedCounselName = counselUser.fullName; request.assignedAt = new Date().toISOString(); request.reassignmentRequired = false
     const counselRequest = { requestId: request.requestId, subject: request.subject, fromUser: request.fromUser, userEmail: request.userEmail, company: request.company, earnings: request.earnings, currency: request.currency, status: 'pending', assignedBy: 'Admin Sarah', assignedCounselId: counselUser.userId, assignedCounselEmail: counselUser.email, assignedCounselName: counselUser.fullName, assignedCounsel: counselUser.fullName, date: new Date().toISOString().slice(0,10), assignedAt: request.assignedAt, timeAgo: 'just now' }
     const idx = mockState.counselRequests.findIndex(r => r.requestId === request.requestId)
     if (idx >= 0) mockState.counselRequests[idx] = counselRequest; else mockState.counselRequests.unshift(counselRequest)
     res.json({ success: true, message: `Request assigned to ${counselUser.fullName}.`, data: { requestId: request.requestId, assignedCounselId: counselUser.userId, assignedCounselName: counselUser.fullName, assignedCounselEmail: counselUser.email, status: 'in_progress', assignedAt: request.assignedAt } })
+  } catch (e) { next(e) }
+}
+
+async function markAdminNotificationRead(req, res, next) {
+  try {
+    const notification = mockState.adminNotifications.find(item => item.notificationId === req.params.notificationId)
+    if (!notification) return next(errors.notFound('Notification not found.', 'NOTIFICATION_NOT_FOUND'))
+    notification.read = true
+    notification.readAt = new Date().toISOString()
+    res.json({ success: true, data: notification })
   } catch (e) { next(e) }
 }
 
@@ -248,7 +259,7 @@ async function exportBillingInvoices(req, res, next) {
   } catch (e) { next(e) }
 }
 
-module.exports = { getDashboard, getProfile, updateProfile, changePassword, getUsers, updateUser, getCounsel, addCounsel, assignCounselRequest, inviteAdmin, revokeAdmin, getIssues, getBilling, getAuditLogsEndpoint, exportBillingInvoices, getGeneralSettings, updateGeneralSettings, getNotificationSettings, updateNotificationSettings, getSecuritySettings, updateSecuritySettings }
+module.exports = { getDashboard, getProfile, updateProfile, changePassword, getUsers, updateUser, getCounsel, addCounsel, assignCounselRequest, markAdminNotificationRead, inviteAdmin, revokeAdmin, getIssues, getBilling, getAuditLogsEndpoint, exportBillingInvoices, getGeneralSettings, updateGeneralSettings, getNotificationSettings, updateNotificationSettings, getSecuritySettings, updateSecuritySettings }
 
 
 // ── In-memory settings store (PRODUCTION: replace with DB reads/writes) ──────

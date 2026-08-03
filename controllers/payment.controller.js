@@ -9,6 +9,7 @@ const { addAuditLog, AUDIT_ACTIONS } = require('../mock-data/audit')
 const { validatePaystackInitPayload } = require('../utils/validate')
 const { errors } = require('../utils/errors')
 const logger = require('../utils/logger')
+const { COUNSEL_TIERS, resetCounselCreditsIfDue } = require('../mock-state')
 
 async function initializePayment(req, res, next) {
   try {
@@ -131,14 +132,21 @@ async function verifyPayment(req, res, next) {
     // be in paymentTransactions yet — register it now so verification can proceed.
     if (!txn) {
       const type = req.body.type || 'subscription'
-      const plan = req.body.plan || 'operator'
-      const credits = Number(req.body.credits) || 0
+      const isCounselTopUp = type === 'counsel-topup'
+      const currentCredits = resetCounselCreditsIfDue()
+      const tier = COUNSEL_TIERS[String(currentCredits.plan || '').toLowerCase()] || COUNSEL_TIERS.operator
+      const credits = Number(req.body.credits)
+      if (isCounselTopUp && (!Number.isInteger(credits) || credits < 1 || credits > 20)) return next(errors.badRequest('Counsel top-ups must be between 1 and 20 whole credits.', 'INVALID_TOPUP_QUANTITY'))
+      if (isCounselTopUp && String(req.body.plan || '').toLowerCase() !== tier.name.toLowerCase()) return next(errors.badRequest('Counsel top-ups must use the account’s current tier rate.', 'TOPUP_TIER_MISMATCH'))
+      const expectedAmount = isCounselTopUp ? Math.round(tier.topUpRate * credits * 1.15) : Number(req.body.amountPaid || 0)
+      if (isCounselTopUp && Number(req.body.amountPaid) !== expectedAmount) return next(errors.badRequest('The top-up amount does not match the current tier rate.', 'TOPUP_AMOUNT_MISMATCH'))
+      const plan = isCounselTopUp ? tier.name : (req.body.plan || 'operator')
       const email = req.user?.email || req.body.email || 'unknown@tsl.co.za'
       txn = {
         reference,
         email,
-        amount: req.body.amountPaid || 0,
-        amountInKobo: Math.round((req.body.amountPaid || 0) * 100),
+        amount: expectedAmount,
+        amountInKobo: Math.round(expectedAmount * 100),
         currency: req.body.currency || 'ZAR',
         plan,
         credits,
@@ -173,11 +181,12 @@ async function verifyPayment(req, res, next) {
     }
 
     // Add counsel credits on successful top-up payment
-    if (status === 'success' && isCounselTopUp) {
-      const { mockState } = require('../mock-state')
-      const creditsToAdd = Number(txn.credits || req.body.credits) > 0 ? Number(txn.credits || req.body.credits) : 1
-      mockState.smeCredits.creditsTotal     += creditsToAdd
-      mockState.smeCredits.creditsRemaining += creditsToAdd
+    if (status === 'success' && isCounselTopUp && !txn.creditsApplied) {
+      const credits = resetCounselCreditsIfDue()
+      credits.creditsTotal += Number(txn.credits)
+      credits.creditsRemaining += Number(txn.credits)
+      txn.creditsApplied = true
+      paymentTransactions.set(reference, txn)
     }
 
     addAuditLog({ action: AUDIT_ACTIONS.PAYMENT_VERIFY, userId: req.user?.userId, email: txn.email, ip: req.ip, meta: { reference, status, plan: txn.plan } })

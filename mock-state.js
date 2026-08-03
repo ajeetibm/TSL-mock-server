@@ -2,10 +2,12 @@ const mockState = {
   nextCounselId: 8,
   nextSmeId: 2,
   nextRequestId: 7800,
+  nextAdminNotificationId: 1,
   nextPaymentId: 1,
   availability: 'available',
   smeCredits: {
     plan: 'operator',
+    includedCredits: 2,
     creditsTotal: 2,
     creditsUsed: 1,
     creditsRemaining: 1,
@@ -112,6 +114,8 @@ const mockState = {
       currency: 'ZAR',
     },
   ],
+  // Mock equivalent of the persisted admin notification/audit table.
+  adminNotifications: [],
   paymentTransactions: new Map(),
   counselRequests: [
     {
@@ -310,4 +314,27 @@ defaultAssignableCounsel.forEach((member) => {
 // wizardDrafts: Map<userId_wizardType, WizardDraft>
 mockState.wizardDrafts = new Map()
 
-module.exports = { mockState }
+const COUNSEL_TIERS = {
+  launchpad: { name: 'Launchpad', includedCredits: 0, topUpRate: 550, sla: '2 business days' },
+  operator: { name: 'Operator', includedCredits: 2, topUpRate: 500, sla: '1 business day' },
+  boardroom: { name: 'Boardroom', includedCredits: 6, topUpRate: 450, sla: '8 business hours' },
+}
+
+function resetCounselCreditsIfDue(now = new Date()) {
+  const credits = mockState.smeCredits
+  let resetAt = new Date(`${credits.resetDate}T00:00:00.000Z`)
+  if (Number.isNaN(resetAt.getTime()) || now < resetAt) return credits
+  const tier = COUNSEL_TIERS[String(credits.plan || '').toLowerCase()] || COUNSEL_TIERS.operator
+  credits.plan = tier.name
+  credits.includedCredits = tier.includedCredits
+  credits.topUpRate = tier.topUpRate
+  credits.creditsTotal = tier.includedCredits
+  credits.creditsUsed = 0
+  credits.usageThisMonth = 0
+  credits.creditsRemaining = tier.includedCredits
+  do { resetAt.setUTCMonth(resetAt.getUTCMonth() + 1) } while (resetAt <= now)
+  credits.resetDate = resetAt.toISOString().slice(0, 10)
+  return credits
+}
+
+module.exports = { mockState, COUNSEL_TIERS, resetCounselCreditsIfDue }

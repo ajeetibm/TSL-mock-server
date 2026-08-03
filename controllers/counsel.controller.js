@@ -156,10 +156,23 @@ async function rejectRequest(req, res, next) {
   try {
     const request = mockState.counselRequests.find(r => r.requestId === req.params.requestId)
     if (!request) return next(errors.notFound('Counsel request not found.', 'REQUEST_NOT_FOUND'))
-    request.status = 'rejected'; request.rejectedAt = new Date().toISOString(); request.rejectionReason = req.body.reason || 'Unavailable'
+    const counselEmail = normalizeEmail(req.user?.email)
+    if (!counselEmail || normalizeEmail(request.assignedCounselEmail) !== counselEmail) return next(errors.forbidden('This request is not assigned to you.', 'REQUEST_NOT_ASSIGNED'))
+    const reason = String(req.body.reason || '').trim()
+    if (!reason) return next(errors.badRequest('A rejection reason is required.', 'REJECTION_REASON_REQUIRED'))
+    const rejectedAt = new Date().toISOString()
+    request.status = 'rejected'; request.rejectedAt = rejectedAt; request.rejectionReason = reason
     const adminReq = mockState.adminRequests.find(r => r.requestId === request.requestId)
-    if (adminReq) { adminReq.status = 'pending'; delete adminReq.assignedCounselId; delete adminReq.assignedCounselEmail }
-    res.json({ success: true, message: 'Request rejected.', data: { requestId: request.requestId, status: request.status, returnedToAdminQueue: true } })
+    const declinedBy = request.assignedCounselName || request.assignedCounsel || request.assignedCounselEmail
+    if (adminReq) {
+      adminReq.status = 'rejected_reassignment_needed'; adminReq.reassignmentRequired = true
+      adminReq.rejectedAt = rejectedAt; adminReq.rejectionReason = reason
+      adminReq.rejectedByCounselName = declinedBy; adminReq.rejectedByCounselEmail = request.assignedCounselEmail
+      adminReq.rejectionHistory = [...(adminReq.rejectionHistory || []), { counselName: declinedBy, counselEmail: request.assignedCounselEmail, reason, rejectedAt }]
+    }
+    const notification = { notificationId: `admin_notice_${mockState.nextAdminNotificationId++}`, type: 'counsel_request_rejected', requestId: request.requestId, subject: request.subject, message: `${declinedBy} declined request “${request.subject}” — reason: ${reason}`, read: false, createdAt: rejectedAt }
+    mockState.adminNotifications.unshift(notification)
+    res.json({ success: true, message: 'Request rejected and admin notified.', data: { requestId: request.requestId, status: adminReq?.status || request.status, notification } })
   } catch (e) { next(e) }
 }
 
