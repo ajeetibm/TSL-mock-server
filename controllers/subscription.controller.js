@@ -94,7 +94,7 @@ function seedSubscription(email) {
   const billingPeriod = `${periodStart.toISOString().split('T')[0]} – ${periodEnd.toISOString().split('T')[0]}`
 
   return {
-    planId:          'operator',
+    planId:          'launchpad',
     runsUsed:         3,
     nextBillingDate,
     paymentMethod:   { brand: 'Visa', last4: '4242' },

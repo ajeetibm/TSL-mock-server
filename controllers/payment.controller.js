@@ -11,9 +11,19 @@ const { errors } = require('../utils/errors')
 const logger = require('../utils/logger')
 const { COUNSEL_TIERS, resetCounselCreditsIfDue } = require('../mock-state')
 
+const WIZARD_PLAN_LIMITS = { launchpad: 5, operator: 12, boardroom: 30 }
+function validateWizardSelection(body) {
+  const plan = String(body.plan || 'operator').toLowerCase()
+  const limit = WIZARD_PLAN_LIMITS[plan]
+  if (!limit) return 'Unknown subscription plan.'
+  const selected = Array.isArray(body.selectedWizards) ? body.selectedWizards : []
+  const uniqueTitles = new Set(selected.map(item => String(item?.title || '').trim()).filter(Boolean))
+  return uniqueTitles.size > limit ? `${plan[0].toUpperCase() + plan.slice(1)} includes up to ${limit} wizard selections. Choose which wizards to activate or select a higher plan.` : null
+}
+
 async function initializePayment(req, res, next) {
   try {
-    const err = validatePaystackInitPayload(req.body)
+    const err = validatePaystackInitPayload(req.body) || validateWizardSelection(req.body)
     if (err) return next(errors.badRequest(err, 'VALIDATION_ERROR'))
 
     const txn = initializeTransaction({
@@ -57,7 +67,7 @@ const MOCK_PROVIDERS = {
 // PayPal, so it is safe for local demos and automated testing.
 async function initializeMockPayment(req, res, next) {
   try {
-    const err = validatePaystackInitPayload(req.body)
+    const err = validatePaystackInitPayload(req.body) || validateWizardSelection(req.body)
     if (err) return next(errors.badRequest(err, 'VALIDATION_ERROR'))
 
     const method = String(req.body.paymentMethod || '')
