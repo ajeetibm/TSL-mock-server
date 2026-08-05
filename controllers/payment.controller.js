@@ -2,7 +2,7 @@
  * controllers/payment.controller.js
  * Handles Paystack payment initialize, verify, webhook, history, subscriptions.
  */
-const { initializeTransaction, paymentTransactions, verifiedReferences, recordPaymentHistory, getPaymentHistory } = require('../mock-data/payments')
+const { initializeTransaction, paymentTransactions, verifiedReferences, recordPaymentHistory, getPaymentHistory, getWizardAccess, activateWizardAccess, addWizardsToAccess } = require('../mock-data/payments')
 const { activateUserSubscription, getUserSubscription, getAllSubscriptions } = require('../services/subscriptionService')
 const { smartVerify } = require('../services/paystackService')
 const { addAuditLog, AUDIT_ACTIONS } = require('../mock-data/audit')
@@ -116,6 +116,7 @@ async function completeMockPayment(req, res, next) {
     let subscription = null
     if (status === 'success') {
       subscription = activateUserSubscription(txn.email, txn.plan, req.user?.userId)
+      activateWizardAccess(txn.email, txn.plan, txn.selectedWizards)
     }
 
     res.json({
@@ -159,6 +160,7 @@ async function verifyPayment(req, res, next) {
         amountInKobo: Math.round(expectedAmount * 100),
         currency: req.body.currency || 'ZAR',
         plan,
+        selectedWizards: Array.isArray(req.body.selectedWizards) ? req.body.selectedWizards : [],
         credits,
         type,
         status: 'initialized',
@@ -188,6 +190,7 @@ async function verifyPayment(req, res, next) {
     const isCounselTopUp = (txn.type || req.body.type) === 'counsel-topup'
     if (status === 'success' && !isCounselTopUp) {
       subscription = activateUserSubscription(txn.email, txn.plan, req.user?.userId)
+      activateWizardAccess(txn.email, txn.plan, txn.selectedWizards)
     }
 
     // Add counsel credits on successful top-up payment
@@ -211,6 +214,19 @@ async function verifyPayment(req, res, next) {
       data: { provider: 'paystack', reference, status, gatewayResponse: txn.gatewayResponse, paidAt: txn.paidAt, subscription, authorization: paystackData.authorization || null },
     })
   } catch (e) { next(e) }
+}
+
+async function getWizardAccessStatus(req, res, next) {
+  try {
+    res.json({ success: true, data: getWizardAccess(req.user?.email || 'thabo@company.co.za') })
+  } catch (e) { next(e) }
+}
+
+async function addWizardsToDashboard(req, res, next) {
+  try {
+    const access = addWizardsToAccess(req.user?.email || 'thabo@company.co.za', req.body.selectedWizards)
+    res.json({ success: true, message: 'Wizards added to your dashboard.', data: access })
+  } catch (e) { next(errors.badRequest(e.message, 'WIZARD_LIMIT_REACHED')) }
 }
 
 // Mock Paystack webhook — mimics real charge.success event
@@ -264,4 +280,4 @@ async function getAllSubscriptionsAdmin(req, res, next) {
   } catch (e) { next(e) }
 }
 
-module.exports = { initializePayment, initializeMockPayment, completeMockPayment, verifyPayment, paystackWebhook, getHistory, getSubscriptionStatus, getAllSubscriptionsAdmin }
+module.exports = { initializePayment, initializeMockPayment, completeMockPayment, verifyPayment, getWizardAccessStatus, addWizardsToDashboard, paystackWebhook, getHistory, getSubscriptionStatus, getAllSubscriptionsAdmin }

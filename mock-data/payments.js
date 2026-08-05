@@ -10,6 +10,12 @@ const paymentTransactions = new Map()
 // Map<email, subscription>
 const subscriptions = new Map()
 
+// Map<email, { plan, wizardLimit, selectedWizards, activatedAt }>.  A wizard
+// selection is an entitlement, not a payment-cart item: it is only written
+// after a successful payment or when an active plan still has capacity.
+const wizardAccessByEmail = new Map()
+const WIZARD_PLAN_LIMITS = { launchpad: 5, operator: 12, boardroom: 30 }
+
 // Array of completed payment records (history)
 const paymentHistory = []
 
@@ -80,16 +86,75 @@ function recordPaymentHistory(transaction) {
  * PRODUCTION: UPDATE subscriptions SET status='active' WHERE email=...
  */
 function activateSubscription(email, plan) {
+  const normalizedEmail = String(email || '').toLowerCase().trim()
   const sub = {
-    email,
+    email: normalizedEmail,
     plan,
     status: 'active',
     activatedAt: new Date().toISOString(),
     expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days
     credits: plan === 'boardroom' ? 30 : plan === 'operator' ? 15 : 5,
   }
-  subscriptions.set(email, sub)
+  subscriptions.set(normalizedEmail, sub)
   return sub
+}
+
+function getWizardLimit(plan) {
+  return WIZARD_PLAN_LIMITS[String(plan || '').toLowerCase()] || 0
+}
+
+function normalizeSelectedWizards(selectedWizards) {
+  const seen = new Set()
+  return (Array.isArray(selectedWizards) ? selectedWizards : []).reduce((list, item) => {
+    const title = String(item?.title || '').trim()
+    if (!title || seen.has(title)) return list
+    seen.add(title)
+    list.push({ title, quantity: 1 })
+    return list
+  }, [])
+}
+
+function getWizardAccess(email) {
+  const key = String(email || '').toLowerCase().trim()
+  const subscription = getSubscription(key)
+  const access = wizardAccessByEmail.get(key)
+  const plan = subscription?.plan || access?.plan || null
+  const wizardLimit = plan ? getWizardLimit(plan) : 0
+  const selectedWizards = access?.selectedWizards || []
+  return {
+    hasSubscription: Boolean(subscription?.status === 'active'),
+    plan,
+    wizardLimit,
+    selectedWizards,
+    remainingWizards: Math.max(0, wizardLimit - selectedWizards.length),
+  }
+}
+
+function activateWizardAccess(email, plan, selectedWizards) {
+  const key = String(email || '').toLowerCase().trim()
+  const normalized = normalizeSelectedWizards(selectedWizards)
+  const wizardLimit = getWizardLimit(plan)
+  if (normalized.length > wizardLimit) throw new Error(`The ${plan} plan allows a maximum of ${wizardLimit} selected wizards.`)
+  const access = { plan: String(plan).toLowerCase(), wizardLimit, selectedWizards: normalized, activatedAt: new Date().toISOString() }
+  wizardAccessByEmail.set(key, access)
+  return getWizardAccess(key)
+}
+
+function addWizardsToAccess(email, selectedWizards) {
+  const key = String(email || '').toLowerCase().trim()
+  const current = getWizardAccess(key)
+  if (!current.hasSubscription) throw new Error('An active subscription is required before wizards can be added.')
+  const requested = normalizeSelectedWizards(selectedWizards)
+  const existingTitles = new Set(current.selectedWizards.map(wizard => wizard.title))
+  const additions = requested.filter(wizard => !existingTitles.has(wizard.title))
+  if (additions.length > current.remainingWizards) throw new Error(`Only ${current.remainingWizards} wizard slot${current.remainingWizards === 1 ? '' : 's'} remain on your plan.`)
+  wizardAccessByEmail.set(key, {
+    plan: current.plan,
+    wizardLimit: current.wizardLimit,
+    selectedWizards: [...current.selectedWizards, ...additions],
+    activatedAt: wizardAccessByEmail.get(key)?.activatedAt || new Date().toISOString(),
+  })
+  return getWizardAccess(key)
 }
 
 function getSubscription(email) {
@@ -113,4 +178,9 @@ module.exports = {
   getPaymentHistory,
   getPlanAmount,
   PLAN_PRICES,
+  getWizardAccess,
+  activateWizardAccess,
+  addWizardsToAccess,
+  normalizeSelectedWizards,
+  WIZARD_PLAN_LIMITS,
 }
