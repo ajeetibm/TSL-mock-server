@@ -15,6 +15,7 @@
  */
 const { Router } = require('express')
 const {
+  getBlueprintCatalogue,
   getSubscription,
   getPlans,
   getUpgradePreview,
@@ -22,6 +23,8 @@ const {
   scheduleDowngrade,
   cancelDowngrade,
   getInvoices,
+  consumeBlueprintRun,
+  addBlueprintRunUnits,
 } = require('../controllers/subscription.controller')
 const { authenticate } = require('../middleware/auth')
 
@@ -34,5 +37,10 @@ router.post('/subscription/upgrade',        authenticate, upgradeSubscription)
 router.post('/subscription/downgrade',      authenticate, scheduleDowngrade)
 router.delete('/subscription/downgrade',    authenticate, cancelDowngrade)
 router.get('/subscription/invoices',        authenticate, getInvoices)
+// Charge only after a final Blueprint download/vault acceptance. Drafts and
+// previews never call this endpoint.
+router.post('/subscription/blueprint-runs/consume', authenticate, consumeBlueprintRun)
+router.post('/subscription/blueprint-runs/top-up',  authenticate, addBlueprintRunUnits)
+router.get('/blueprints',                    authenticate, getBlueprintCatalogue)
 
 module.exports = router

@@ -14,7 +14,67 @@ const subscriptions = new Map()
 // selection is an entitlement, not a payment-cart item: it is only written
 // after a successful payment or when an active plan still has capacity.
 const wizardAccessByEmail = new Map()
-const WIZARD_PLAN_LIMITS = { launchpad: 5, operator: 12, boardroom: 30 }
+// These are monthly Blueprint run-unit allowances, not a limit on how many
+// Blueprints a customer may pin to their dashboard.
+const WIZARD_PLAN_LIMITS = { launchpad: 4, operator: 12, boardroom: 30 }
+
+// ── Pre-seeded test subscriptions ──────────────────────────────────────────────
+// These mirror the 3 test SME users in mock-state.js smeUsers.
+// Restart the server to reset to these defaults.
+;(function seedTestAccounts() {
+  const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+  const activatedAt = '2026-06-01T08:00:00Z'
+
+  // Launchpad — lerato@dlaminiventures.co.za
+  subscriptions.set('launchpad@tsl.co.za', {
+    email: 'launchpad@tsl.co.za', plan: 'launchpad', status: 'active',
+    activatedAt, expiresAt, credits: 0,
+  })
+  wizardAccessByEmail.set('launchpad@tsl.co.za', {
+    plan: 'launchpad', wizardLimit: 4, activatedAt,
+    selectedWizards: [
+      { title: 'Non-Disclosure Agreement (NDA)', quantity: 1 },
+      { title: 'Employment Offer letter', quantity: 1 },
+      { title: 'Privacy Policy', quantity: 1 },
+    ],
+  })
+
+  // Operator — sipho@khumalotech.co.za
+  subscriptions.set('operator@tsl.co.za', {
+    email: 'operator@tsl.co.za', plan: 'operator', status: 'active',
+    activatedAt, expiresAt, credits: 2,
+  })
+  wizardAccessByEmail.set('operator@tsl.co.za', {
+    plan: 'operator', wizardLimit: 12, activatedAt,
+    selectedWizards: [
+      { title: 'Non-Disclosure Agreement (NDA)', quantity: 1 },
+      { title: 'Employment Offer letter', quantity: 1 },
+      { title: 'Founder Agreement', quantity: 1 },
+      { title: 'Service Agreement', quantity: 1 },
+      { title: 'Privacy Policy', quantity: 1 },
+      { title: 'Loan Agreement', quantity: 1 },
+    ],
+  })
+
+  // Boardroom — ayanda@nkosiholdings.co.za
+  subscriptions.set('boardroom@tsl.co.za', {
+    email: 'boardroom@tsl.co.za', plan: 'boardroom', status: 'active',
+    activatedAt, expiresAt, credits: 6,
+  })
+  wizardAccessByEmail.set('boardroom@tsl.co.za', {
+    plan: 'boardroom', wizardLimit: 30, activatedAt,
+    selectedWizards: [
+      { title: 'Non-Disclosure Agreement (NDA)', quantity: 1 },
+      { title: 'Employment Offer letter', quantity: 1 },
+      { title: 'Founder Agreement', quantity: 1 },
+      { title: 'Service Agreement', quantity: 1 },
+      { title: 'Privacy Policy', quantity: 1 },
+      { title: 'Loan Agreement', quantity: 1 },
+      { title: 'Shareholder Resolutions', quantity: 1 },
+      { title: 'Shareholders Agreement', quantity: 1 },
+    ],
+  })
+})()
 
 // Array of completed payment records (history)
 const paymentHistory = []
@@ -25,9 +85,9 @@ const verifiedReferences = new Set()
 let nextPaymentId = 1
 
 const PLAN_PRICES = {
-  launchpad:  1999,
-  operator:   3999,
-  boardroom:  7999,
+  launchpad:  499,
+  operator:   1499,
+  boardroom:  3999,
 }
 
 function createReference() {
@@ -93,7 +153,7 @@ function activateSubscription(email, plan) {
     status: 'active',
     activatedAt: new Date().toISOString(),
     expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days
-    credits: plan === 'boardroom' ? 30 : plan === 'operator' ? 15 : 5,
+    credits: plan === 'boardroom' ? 6 : plan === 'operator' ? 2 : 0,
   }
   subscriptions.set(normalizedEmail, sub)
   return sub
@@ -134,7 +194,8 @@ function activateWizardAccess(email, plan, selectedWizards) {
   const key = String(email || '').toLowerCase().trim()
   const normalized = normalizeSelectedWizards(selectedWizards)
   const wizardLimit = getWizardLimit(plan)
-  if (normalized.length > wizardLimit) throw new Error(`The ${plan} plan allows a maximum of ${wizardLimit} selected wizards.`)
+  // Dashboard selections are bookmarks. Subscription entitlement is measured
+  // in Blueprint run units when a final document is downloaded.
   const access = { plan: String(plan).toLowerCase(), wizardLimit, selectedWizards: normalized, activatedAt: new Date().toISOString() }
   wizardAccessByEmail.set(key, access)
   return getWizardAccess(key)
@@ -147,7 +208,6 @@ function addWizardsToAccess(email, selectedWizards) {
   const requested = normalizeSelectedWizards(selectedWizards)
   const existingTitles = new Set(current.selectedWizards.map(wizard => wizard.title))
   const additions = requested.filter(wizard => !existingTitles.has(wizard.title))
-  if (additions.length > current.remainingWizards) throw new Error(`Only ${current.remainingWizards} wizard slot${current.remainingWizards === 1 ? '' : 's'} remain on your plan.`)
   wizardAccessByEmail.set(key, {
     plan: current.plan,
     wizardLimit: current.wizardLimit,

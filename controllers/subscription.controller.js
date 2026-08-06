@@ -9,6 +9,7 @@
  */
 
 const { errors } = require('../utils/errors')
+const { documentCatalogue, getBlueprint } = require('../mock-data/documentCatalogue')
 const { addAuditLog } = require('../mock-data/audit')
 const logger = require('../utils/logger')
 const { mockState, COUNSEL_TIERS } = require('../mock-state')
@@ -19,14 +20,15 @@ const PLANS = [
     planId:      'launchpad',
     name:        'Launchpad',
     price:        499,
+    annualPrice:  4990,
     currency:    'ZAR',
     tagline:     'Perfect for solo founders getting started',
-    wizardRuns:   5,
+    wizardRuns:   4,
     teamMembers:  1,
     storage:     '6 months',
     features: [
-      '5 essential wizards',
-      '5 runs per month',
+      '4 Blueprint run units per month',
+      '0 Counsel credits per month',
       '1 team member',
       'Basic email support',
       '6 months document storage',
@@ -35,15 +37,16 @@ const PLANS = [
   {
     planId:      'operator',
     name:        'Operator',
-    price:        999,
+    price:        1499,
+    annualPrice:  14990,
     currency:    'ZAR',
     tagline:     'For growing teams that need every wizard',
     wizardRuns:  12,
     teamMembers: 10,
     storage:     'Unlimited',
     features: [
-      'All 12 legal wizards',
-      '12 runs per month',
+      '12 Blueprint run units per month',
+      '2 Counsel credits per month',
       '10 team members',
       'Priority support (24–48 hr)',
       'Unlimited document storage',
@@ -53,15 +56,16 @@ const PLANS = [
   {
     planId:      'boardroom',
     name:        'Boardroom',
-    price:       2499,
+    price:       3999,
+    annualPrice: 39990,
     currency:    'ZAR',
     tagline:     'For growing businesses with ongoing legal needs',
     wizardRuns:  30,
     teamMembers: 25,
     storage:     'Unlimited',
     features: [
-      'All 30 legal wizards',
-      '30 runs per month',
+      '30 Blueprint run units per month',
+      '6 Counsel credits per month',
       '25 team members',
       'Dedicated support (SLA)',
       'Unlimited document storage',
@@ -73,6 +77,7 @@ const PLANS = [
 ]
 
 const PLAN_TIER = { launchpad: 0, operator: 1, boardroom: 2 }
+const BLUEPRINT_RUN_TOP_UP_RATE = 250
 
 function getPlan(planId) {
   return PLANS.find(p => p.planId === (planId || '').toLowerCase().trim()) || null
@@ -80,6 +85,104 @@ function getPlan(planId) {
 
 // ── In-memory subscription store ──────────────────────────────────────────────
 const subscriptionStore = new Map()
+
+// ── Pre-seed the 3 test subscriber accounts on startup ─────────────────────────
+// Matches the 3 users in mock-state.js and payments.js.
+// Each entry gives the full subscription shape the frontend Settings page expects.
+;(function seedTestSubscriptions() {
+  const now  = new Date()
+  const next = new Date(now)
+  next.setMonth(next.getMonth() + 1)
+  next.setDate(1)
+  const nextBillingDate = next.toISOString().split('T')[0]
+
+  // ── Launchpad — lerato dlamini ──────────────────────────────────────────────
+  subscriptionStore.set('launchpad@tsl.co.za', {
+    planId: 'launchpad', planName: 'Launchpad',
+    tagline: 'Perfect for solo founders getting started',
+    price: 499, currency: 'ZAR', wizardRuns: 4, teamMembers: 1,
+    nextBillingDate,
+    paymentMethod: { brand: 'Visa', last4: '1001' },
+    pendingDowngrade: null,
+    usage: { runsUsed: 1, runsTotal: 4, runsRemaining: 3 },
+    invoices: [
+      {
+        invoiceId: 'INV-LP-001', invoiceNumber: 'INV-LP-001',
+        invoiceDate: '2026-06-01', transactionId: 'TXN_LP_001',
+        type: 'subscription', plan: 'Launchpad',
+        billingPeriod: '2026-06-01 – 2026-06-30',
+        amount: 499, tax: 74.85, total: 573.85, status: 'paid',
+        paymentMethod: { brand: 'Visa', last4: '1001' }, date: '2026-06-01',
+      },
+    ],
+  })
+
+  // ── Operator — sipho khumalo ────────────────────────────────────────────────
+  subscriptionStore.set('operator@tsl.co.za', {
+    planId: 'operator', planName: 'Operator',
+    tagline: 'For growing teams that need every wizard',
+    price: 1499, currency: 'ZAR', wizardRuns: 12, teamMembers: 10,
+    nextBillingDate,
+    paymentMethod: { brand: 'Mastercard', last4: '2002' },
+    pendingDowngrade: null,
+    usage: { runsUsed: 4, runsTotal: 12, runsRemaining: 8 },
+    invoices: [
+      {
+        invoiceId: 'INV-OP-002', invoiceNumber: 'INV-OP-002',
+        invoiceDate: '2026-06-01', transactionId: 'TXN_OP_002',
+        type: 'subscription', plan: 'Operator',
+        billingPeriod: '2026-06-01 – 2026-06-30',
+        amount: 1499, tax: 224.85, total: 1723.85, status: 'paid',
+        paymentMethod: { brand: 'Mastercard', last4: '2002' }, date: '2026-06-01',
+      },
+      {
+        invoiceId: 'INV-OP-001', invoiceNumber: 'INV-OP-001',
+        invoiceDate: '2026-05-01', transactionId: 'TXN_OP_001',
+        type: 'subscription', plan: 'Operator',
+        billingPeriod: '2026-05-01 – 2026-05-31',
+        amount: 1499, tax: 224.85, total: 1723.85, status: 'paid',
+        paymentMethod: { brand: 'Mastercard', last4: '2002' }, date: '2026-05-01',
+      },
+    ],
+  })
+
+  // ── Boardroom — ayanda nkosi ────────────────────────────────────────────────
+  subscriptionStore.set('boardroom@tsl.co.za', {
+    planId: 'boardroom', planName: 'Boardroom',
+    tagline: 'For growing businesses with ongoing legal needs',
+    price: 3999, currency: 'ZAR', wizardRuns: 30, teamMembers: 25,
+    nextBillingDate,
+    paymentMethod: { brand: 'Visa', last4: '3003' },
+    pendingDowngrade: null,
+    usage: { runsUsed: 10, runsTotal: 30, runsRemaining: 20 },
+    invoices: [
+      {
+        invoiceId: 'INV-BR-003', invoiceNumber: 'INV-BR-003',
+        invoiceDate: '2026-06-01', transactionId: 'TXN_BR_003',
+        type: 'subscription', plan: 'Boardroom',
+        billingPeriod: '2026-06-01 – 2026-06-30',
+        amount: 3999, tax: 599.85, total: 4598.85, status: 'paid',
+        paymentMethod: { brand: 'Visa', last4: '3003' }, date: '2026-06-01',
+      },
+      {
+        invoiceId: 'INV-BR-002', invoiceNumber: 'INV-BR-002',
+        invoiceDate: '2026-05-01', transactionId: 'TXN_BR_002',
+        type: 'subscription', plan: 'Boardroom',
+        billingPeriod: '2026-05-01 – 2026-05-31',
+        amount: 3999, tax: 599.85, total: 4598.85, status: 'paid',
+        paymentMethod: { brand: 'Visa', last4: '3003' }, date: '2026-05-01',
+      },
+      {
+        invoiceId: 'INV-BR-001', invoiceNumber: 'INV-BR-001',
+        invoiceDate: '2026-04-01', transactionId: 'TXN_BR_001',
+        type: 'subscription', plan: 'Boardroom',
+        billingPeriod: '2026-04-01 – 2026-04-30',
+        amount: 3999, tax: 599.85, total: 4598.85, status: 'paid',
+        paymentMethod: { brand: 'Visa', last4: '3003' }, date: '2026-04-01',
+      },
+    ],
+  })
+})()
 
 function seedSubscription(email) {
   const now  = new Date()
@@ -160,7 +263,36 @@ function getStore(email) {
   if (!subscriptionStore.has(key)) {
     subscriptionStore.set(key, seedSubscription(key))
   }
+  const store = subscriptionStore.get(key)
+  // Older fixtures stored the counter as `usage.runsUsed`; normalize it once
+  // so paid test profiles behave exactly like newly activated subscriptions.
+  if (!Number.isFinite(store.runsUsed)) store.runsUsed = Number(store.usage?.runsUsed || 0)
   return subscriptionStore.get(key)
+}
+
+// Payment verification and the subscription settings API use the same mock
+// store. This keeps a newly paid plan and its run-unit allowance visible on
+// the dashboard immediately after checkout.
+function activatePaidSubscription(email, planId) {
+  const plan = getPlan(planId)
+  if (!plan) throw new Error(`Unknown plan: ${planId}`)
+  const key = String(email || 'thabo@company.co.za').trim().toLowerCase()
+  const now = new Date()
+  const nextBilling = new Date(now)
+  nextBilling.setUTCMonth(nextBilling.getUTCMonth() + 1, 1)
+  const existing = subscriptionStore.get(key) || {}
+  subscriptionStore.set(key, {
+    ...existing,
+    planId: plan.planId,
+    runsUsed: 0,
+    topUpUnits: 0,
+    nextBillingDate: nextBilling.toISOString().slice(0, 10),
+    paymentMethod: existing.paymentMethod || { brand: 'Visa', last4: '4242' },
+    pendingDowngrade: null,
+    invoices: existing.invoices || [],
+  })
+  applyCounselTier(plan.planId)
+  return buildSubscriptionResponse(key)
 }
 
 function applyCounselTier(planId) {
@@ -190,6 +322,7 @@ function applyScheduledDowngradeIfDue(email, now = new Date()) {
 
   store.planId = store.pendingDowngrade.toPlanId
   store.runsUsed = 0
+  store.topUpUnits = 0
   store.pendingDowngrade = null
   applyCounselTier(store.planId)
   return store
@@ -202,7 +335,8 @@ function buildSubscriptionResponse(email) {
   const plan  = getPlan(store.planId)
   if (!plan) throw new Error(`Unknown planId in store: ${store.planId}`)
 
-  const runsTotal     = plan.wizardRuns
+  const topUpUnits    = Number(store.topUpUnits || 0)
+  const runsTotal     = plan.wizardRuns + topUpUnits
   const runsUsed      = Math.min(store.runsUsed, runsTotal)
   const runsRemaining = Math.max(0, runsTotal - runsUsed)
 
@@ -210,9 +344,14 @@ function buildSubscriptionResponse(email) {
     planId:          plan.planId,
     planName:        plan.name,
     price:           plan.price,
+    annualPrice:     plan.annualPrice,
     currency:        plan.currency,
     tagline:         plan.tagline,
+    // Kept for backwards-compatible clients. User-facing copy calls these
+    // Blueprint run units.
     wizardRuns:      plan.wizardRuns,
+    blueprintRunUnits: plan.wizardRuns,
+    blueprintRunTopUpRate: BLUEPRINT_RUN_TOP_UP_RATE,
     teamMembers:     plan.teamMembers,
     usage: {
       runsUsed,
@@ -224,6 +363,55 @@ function buildSubscriptionResponse(email) {
     paymentMethod:   store.paymentMethod,
     pendingDowngrade: store.pendingDowngrade,
   }
+}
+
+// This endpoint is deliberately separate from draft/preview behaviour. It is
+// called only when the user downloads a final document or accepts it into the
+// vault. Re-downloading an already charged final document supplies
+// `alreadyCharged: true` and is free.
+async function consumeBlueprintRun(req, res, next) {
+  try {
+    const email = String(req.user?.email || 'thabo@company.co.za').toLowerCase()
+    const store = applyScheduledDowngradeIfDue(email)
+    const requestedBlueprint = req.body?.blueprintId || req.body?.blueprintType || req.body?.blueprintName
+    const blueprint = getBlueprint(requestedBlueprint)
+    if (!blueprint) return next(errors.badRequest('Unknown Blueprint in the Document Catalogue.', 'UNKNOWN_BLUEPRINT'))
+
+    const plan = getPlan(store.planId)
+    const available = Math.max(0, plan.wizardRuns + Number(store.topUpUnits || 0) - store.runsUsed)
+    const units = blueprint.blueprintUnitWeight
+    if (req.body?.alreadyCharged) {
+      return res.json({ success: true, message: 'Final document was already charged; repeat download is free.', data: { unitsCharged: 0, usage: buildSubscriptionResponse(email).usage } })
+    }
+    if (available < units) {
+      return res.status(409).json({ success: false, message: `Insufficient Blueprint Units. ${blueprint.name} requires ${units}; ${available} remain.`, error: 'INSUFFICIENT_RUN_UNITS', data: { remainingBlueprintUnits: available, requiredBlueprintUnits: units, additionalBlueprintUnitsRequired: units - available, blueprint } })
+    }
+
+    store.runsUsed += units
+    const usage = buildSubscriptionResponse(email).usage
+    addAuditLog({ action: 'BLUEPRINT_RUN_CONSUMED', userId: req.user?.userId, email, meta: { blueprintId: blueprint.blueprintId, units, consumptionPoint: blueprint.consumptionPoint } })
+    res.json({ success: true, message: `${units} Blueprint Unit${units === 1 ? '' : 's'} used.`, data: { unitsCharged: units, usage, blueprint } })
+  } catch (e) { next(e) }
+}
+
+async function addBlueprintRunUnits(req, res, next) {
+  try {
+    const email = String(req.user?.email || 'thabo@company.co.za').toLowerCase()
+    const units = Number(req.body?.units)
+    if (!Number.isInteger(units) || units < 1 || units > 100) return next(errors.badRequest('Run-unit top-ups must be between 1 and 100 whole units.', 'INVALID_TOPUP_QUANTITY'))
+    const store = applyScheduledDowngradeIfDue(email)
+    // Top-ups never roll over: they extend this billing-period allowance only.
+    // A real recurring-billing job resets topUpUnits together with runsUsed.
+    store.topUpUnits = Number(store.topUpUnits || 0) + units
+    const plan = getPlan(store.planId)
+    const usage = {
+      runsUsed: store.runsUsed,
+      runsTotal: plan.wizardRuns + store.topUpUnits,
+      runsRemaining: Math.max(0, plan.wizardRuns + store.topUpUnits - store.runsUsed),
+      teamMembers: plan.teamMembers,
+    }
+    res.json({ success: true, message: `${units} Blueprint run unit${units === 1 ? '' : 's'} added for R${units * BLUEPRINT_RUN_TOP_UP_RATE}.`, data: { units, amount: units * BLUEPRINT_RUN_TOP_UP_RATE, usage } })
+  } catch (e) { next(e) }
 }
 
 function calcProration(currentPlan, newPlan, nextBillingDate) {
@@ -341,6 +529,7 @@ async function upgradeSubscription(req, res, next) {
     // Update subscription
     store.planId           = newPlan.planId
     store.runsUsed         = 0
+    store.topUpUnits       = 0
     store.pendingDowngrade = null
     applyCounselTier(newPlan.planId)
 
@@ -479,5 +668,11 @@ module.exports = {
   scheduleDowngrade,
   cancelDowngrade,
   getInvoices,
+  consumeBlueprintRun,
+  addBlueprintRunUnits,
   applyScheduledDowngradeIfDue,
+  activatePaidSubscription,
+  getBlueprintCatalogue: async (_req, res, next) => {
+    try { res.json({ success: true, data: documentCatalogue, total: documentCatalogue.length }) } catch (e) { next(e) }
+  },
 }

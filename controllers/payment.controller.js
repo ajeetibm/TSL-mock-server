@@ -10,15 +10,11 @@ const { validatePaystackInitPayload } = require('../utils/validate')
 const { errors } = require('../utils/errors')
 const logger = require('../utils/logger')
 const { COUNSEL_TIERS, resetCounselCreditsIfDue } = require('../mock-state')
+const { activatePaidSubscription } = require('./subscription.controller')
 
-const WIZARD_PLAN_LIMITS = { launchpad: 5, operator: 12, boardroom: 30 }
 function validateWizardSelection(body) {
   const plan = String(body.plan || 'operator').toLowerCase()
-  const limit = WIZARD_PLAN_LIMITS[plan]
-  if (!limit) return 'Unknown subscription plan.'
-  const selected = Array.isArray(body.selectedWizards) ? body.selectedWizards : []
-  const uniqueTitles = new Set(selected.map(item => String(item?.title || '').trim()).filter(Boolean))
-  return uniqueTitles.size > limit ? `${plan[0].toUpperCase() + plan.slice(1)} includes up to ${limit} wizard selections. Choose which wizards to activate or select a higher plan.` : null
+  return ['launchpad', 'operator', 'boardroom'].includes(plan) ? null : 'Unknown subscription plan.'
 }
 
 async function initializePayment(req, res, next) {
@@ -116,6 +112,7 @@ async function completeMockPayment(req, res, next) {
     let subscription = null
     if (status === 'success') {
       subscription = activateUserSubscription(txn.email, txn.plan, req.user?.userId)
+      activatePaidSubscription(txn.email, txn.plan)
       activateWizardAccess(txn.email, txn.plan, txn.selectedWizards)
     }
 
@@ -190,6 +187,7 @@ async function verifyPayment(req, res, next) {
     const isCounselTopUp = (txn.type || req.body.type) === 'counsel-topup'
     if (status === 'success' && !isCounselTopUp) {
       subscription = activateUserSubscription(txn.email, txn.plan, req.user?.userId)
+      activatePaidSubscription(txn.email, txn.plan)
       activateWizardAccess(txn.email, txn.plan, txn.selectedWizards)
     }
 
@@ -252,6 +250,7 @@ async function paystackWebhook(req, res, next) {
         verifiedReferences.add(reference)
         recordPaymentHistory(txn)
         activateUserSubscription(email, txn.plan, null)
+        activatePaidSubscription(email, txn.plan)
       }
     }
 
