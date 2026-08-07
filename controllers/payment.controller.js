@@ -4,6 +4,7 @@
  */
 const { initializeTransaction, paymentTransactions, verifiedReferences, recordPaymentHistory, getPaymentHistory, getWizardAccess, activateWizardAccess, addWizardsToAccess } = require('../mock-data/payments')
 const { activateUserSubscription, getUserSubscription, getAllSubscriptions } = require('../services/subscriptionService')
+const { getBlueprintRunUsage } = require('./subscription.controller')
 const { smartVerify } = require('../services/paystackService')
 const { addAuditLog, AUDIT_ACTIONS } = require('../mock-data/audit')
 const { validatePaystackInitPayload } = require('../utils/validate')
@@ -21,9 +22,10 @@ async function initializePayment(req, res, next) {
   try {
     const err = validatePaystackInitPayload(req.body) || validateWizardSelection(req.body)
     if (err) return next(errors.badRequest(err, 'VALIDATION_ERROR'))
+    const accountEmail = req.user?.email || req.body.email || 'thabo@company.co.za'
 
     const txn = initializeTransaction({
-      email: req.body.email,
+      email: accountEmail,
       amount: Number(req.body.amount),
       currency: req.body.currency || 'ZAR',
       plan: req.body.plan || 'operator',
@@ -68,10 +70,11 @@ async function initializeMockPayment(req, res, next) {
 
     const method = String(req.body.paymentMethod || '')
     const provider = MOCK_PROVIDERS[method]
+    const accountEmail = req.user?.email || req.body.email || 'thabo@company.co.za'
     if (!provider) return next(errors.badRequest('Unsupported mock payment method.', 'UNSUPPORTED_PAYMENT_METHOD'))
 
     const txn = initializeTransaction({
-      email: req.body.email,
+      email: accountEmail,
       amount: Number(req.body.amount),
       currency: req.body.currency || 'ZAR',
       plan: req.body.plan || 'operator',
@@ -185,7 +188,8 @@ async function verifyPayment(req, res, next) {
     // Activate subscription on success (skip for counsel top-up — credits handled below)
     let subscription = null
     const isCounselTopUp = (txn.type || req.body.type) === 'counsel-topup'
-    if (status === 'success' && !isCounselTopUp) {
+    const isBlueprintTopUp = (txn.type || req.body.type) === 'blueprint-topup'
+    if (status === 'success' && !isCounselTopUp && !isBlueprintTopUp) {
       subscription = activateUserSubscription(txn.email, txn.plan, req.user?.userId)
       activatePaidSubscription(txn.email, txn.plan)
       activateWizardAccess(txn.email, txn.plan, txn.selectedWizards)
@@ -222,7 +226,18 @@ async function getWizardAccessStatus(req, res, next) {
 
 async function addWizardsToDashboard(req, res, next) {
   try {
-    const access = addWizardsToAccess(req.user?.email || 'thabo@company.co.za', req.body.selectedWizards)
+    const email = req.user?.email || 'thabo@company.co.za'
+    const accessBeforeAdd = getWizardAccess(email)
+    const usage = getBlueprintRunUsage(email)
+    if (accessBeforeAdd.hasSubscription && usage.runsRemaining <= 0) {
+      return res.status(409).json({
+        success: false,
+        message: 'No Blueprint Units remain. Purchase a top-up or upgrade before adding a new Blueprint run.',
+        error: 'INSUFFICIENT_RUN_UNITS',
+        data: { remainingBlueprintUnits: 0, requiredBlueprintUnits: 1, additionalBlueprintUnitsRequired: 1 },
+      })
+    }
+    const access = addWizardsToAccess(email, req.body.selectedWizards)
     res.json({ success: true, message: 'Wizards added to your dashboard.', data: access })
   } catch (e) { next(errors.badRequest(e.message, 'WIZARD_LIMIT_REACHED')) }
 }

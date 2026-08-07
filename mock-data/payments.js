@@ -164,14 +164,14 @@ function getWizardLimit(plan) {
 }
 
 function normalizeSelectedWizards(selectedWizards) {
-  const seen = new Set()
-  return (Array.isArray(selectedWizards) ? selectedWizards : []).reduce((list, item) => {
+  const byTitle = new Map()
+  for (const item of (Array.isArray(selectedWizards) ? selectedWizards : [])) {
     const title = String(item?.title || '').trim()
-    if (!title || seen.has(title)) return list
-    seen.add(title)
-    list.push({ title, quantity: 1 })
-    return list
-  }, [])
+    if (!title) continue
+    const quantity = Math.max(1, Number(item?.quantity) || 1)
+    byTitle.set(title, (byTitle.get(title) || 0) + quantity)
+  }
+  return Array.from(byTitle, ([title, quantity]) => ({ title, quantity }))
 }
 
 function getWizardAccess(email) {
@@ -206,12 +206,17 @@ function addWizardsToAccess(email, selectedWizards) {
   const current = getWizardAccess(key)
   if (!current.hasSubscription) throw new Error('An active subscription is required before wizards can be added.')
   const requested = normalizeSelectedWizards(selectedWizards)
-  const existingTitles = new Set(current.selectedWizards.map(wizard => wizard.title))
-  const additions = requested.filter(wizard => !existingTitles.has(wizard.title))
+  const requestedByTitle = new Map(requested.map(wizard => [wizard.title, wizard.quantity]))
+  const updated = current.selectedWizards.map((wizard) => {
+    const additionalQuantity = requestedByTitle.get(wizard.title) || 0
+    requestedByTitle.delete(wizard.title)
+    return { ...wizard, quantity: (wizard.quantity || 1) + additionalQuantity }
+  })
+  const additions = Array.from(requestedByTitle, ([title, quantity]) => ({ title, quantity }))
   wizardAccessByEmail.set(key, {
     plan: current.plan,
     wizardLimit: current.wizardLimit,
-    selectedWizards: [...current.selectedWizards, ...additions],
+    selectedWizards: [...updated, ...additions],
     activatedAt: wizardAccessByEmail.get(key)?.activatedAt || new Date().toISOString(),
   })
   return getWizardAccess(key)

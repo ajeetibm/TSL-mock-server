@@ -365,6 +365,10 @@ function buildSubscriptionResponse(email) {
   }
 }
 
+function getBlueprintRunUsage(email) {
+  return buildSubscriptionResponse(String(email || 'thabo@company.co.za').toLowerCase()).usage
+}
+
 // This endpoint is deliberately separate from draft/preview behaviour. It is
 // called only when the user downloads a final document or accepts it into the
 // vault. Re-downloading an already charged final document supplies
@@ -672,6 +676,7 @@ module.exports = {
   addBlueprintRunUnits,
   applyScheduledDowngradeIfDue,
   activatePaidSubscription,
+  getBlueprintRunUsage,
   getBlueprintCatalogue: async (_req, res, next) => {
     try { res.json({ success: true, data: documentCatalogue, total: documentCatalogue.length }) } catch (e) { next(e) }
   },
