@@ -79,6 +79,7 @@ const PLANS = [
 const PLAN_TIER = { free: -1, launchpad: 0, operator: 1, boardroom: 2 }
 const BLUEPRINT_RUN_TOP_UP_RATE = 250
 
+const VAT_RATE = 0.15
 function getPlan(planId) {
   if ((planId || '').toLowerCase().trim() === 'free') {
     return { planId: 'free', name: 'Free', price: 0, annualPrice: 0, currency: 'ZAR',
@@ -284,7 +285,7 @@ function activatePaidSubscription(email, planId) {
   const key = String(email || 'thabo@company.co.za').trim().toLowerCase()
   const now = new Date()
   const nextBilling = new Date(now)
-  nextBilling.setUTCMonth(nextBilling.getUTCMonth() + 1, 1)
+  nextBilling.setUTCMonth(nextBilling.getUTCMonth() + 1)
   const existing = subscriptionStore.get(key) || {}
   subscriptionStore.set(key, {
     ...existing,
@@ -441,9 +442,26 @@ function calcProration(currentPlan, newPlan, nextBillingDate) {
   return { daysInCycle, daysRemaining, creditUnusedTime, proratedNewCharge, totalDueToday }
 }
 
-function makeBillingPeriod(fromDate) {
-  const d = new Date(fromDate)
-  const end = new Date(d.getFullYear(), d.getMonth() + 1, 0)
+function nextMonthlyBillingDate(fromDate = new Date()) {
+  const next = new Date(fromDate)
+  next.setUTCMonth(next.getUTCMonth() + 1)
+  return next.toISOString().slice(0, 10)
+}
+
+function calcUpgradeCharge(currentPlan, newPlan, nextBillingDate, startsNewCycle) {
+  const proration = startsNewCycle
+    ? { daysInCycle: 30, daysRemaining: 30, creditUnusedTime: 0, proratedNewCharge: newPlan.price }
+    : calcProration(currentPlan, newPlan, nextBillingDate)
+  const tax = parseFloat((proration.proratedNewCharge * VAT_RATE).toFixed(2))
+  return { ...proration, tax, totalDueToday: parseFloat((proration.proratedNewCharge + tax).toFixed(2)), nextBillingDate: startsNewCycle ? nextMonthlyBillingDate() : nextBillingDate, isFullMonthlyCharge: startsNewCycle }
+}
+
+function makeBillingPeriod(fromDate, nextBillingDate) {
+  const d = new Date(`${fromDate}T00:00:00.000Z`)
+  const end = nextBillingDate
+    ? new Date(`${nextBillingDate}T00:00:00.000Z`)
+    : new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0))
+  if (nextBillingDate) end.setUTCDate(end.getUTCDate() - 1)
   return `${d.toISOString().split('T')[0]} – ${end.toISOString().split('T')[0]}`
 }
 
@@ -480,7 +498,7 @@ async function getUpgradePreview(req, res, next) {
       return next(errors.badRequest('Target plan must be higher than current plan for an upgrade.', 'NOT_AN_UPGRADE'))
     }
 
-    const proration = calcProration(current, newPlan, store.nextBillingDate)
+    const charge = calcUpgradeCharge(current, newPlan, store.nextBillingDate, current.planId === 'free')
 
     res.json({
       success: true,
@@ -489,12 +507,14 @@ async function getUpgradePreview(req, res, next) {
         newPlanName:       newPlan.name,
         currentPrice:      current.price,
         newPrice:          newPlan.price,
-        daysRemaining:     proration.daysRemaining,
-        daysInCycle:       proration.daysInCycle,
-        creditUnusedTime:  proration.creditUnusedTime,
-        proratedNewCharge: proration.proratedNewCharge,
-        totalDueToday:     proration.totalDueToday,
-        nextBillingDate:   store.nextBillingDate,
+        daysRemaining:     charge.daysRemaining,
+        daysInCycle:       charge.daysInCycle,
+        creditUnusedTime:  charge.creditUnusedTime,
+        proratedNewCharge: charge.proratedNewCharge,
+        tax:               charge.tax,
+        totalDueToday:     charge.totalDueToday,
+        nextBillingDate:   charge.nextBillingDate,
+        isFullMonthlyCharge: charge.isFullMonthlyCharge,
         paymentMethod:     store.paymentMethod || null,
       },
     })
@@ -534,7 +554,8 @@ async function upgradeSubscription(req, res, next) {
       }
     }
 
-    const proration     = calcProration(current, newPlan, store.nextBillingDate)
+    const startsNewCycle = sentPlanId === 'free' || current.planId === 'free'
+    const charge        = calcUpgradeCharge(current, newPlan, store.nextBillingDate, startsNewCycle)
     const transactionId = paymentReference
       ? String(paymentReference)
       : `TXN_${Date.now().toString(36).toUpperCase()}`
@@ -545,12 +566,13 @@ async function upgradeSubscription(req, res, next) {
     const invoiceId     = `inv_${Date.now().toString(36)}`
     const paidAt        = new Date().toISOString()
     const invoiceDate   = new Date().toISOString().split('T')[0]
-    const tax           = parseFloat((proration.totalDueToday * 0.15).toFixed(2))
-    const total         = parseFloat((proration.totalDueToday + tax).toFixed(2))
-    const billingPeriod = makeBillingPeriod(invoiceDate)
+    const tax           = charge.tax
+    const total         = charge.totalDueToday
+    const billingPeriod = makeBillingPeriod(invoiceDate, charge.nextBillingDate)
 
     // Update subscription
     store.planId           = newPlan.planId
+    store.nextBillingDate  = charge.nextBillingDate
     store.runsUsed         = 0
     store.topUpUnits       = 0
     store.pendingDowngrade = null
@@ -567,7 +589,7 @@ async function upgradeSubscription(req, res, next) {
       newPlan:         newPlan.name,
       billingPeriod,
       plan:            newPlan.name,
-      amount:          proration.totalDueToday,
+      amount:          charge.proratedNewCharge,
       tax,
       total,
       status:          'paid',
@@ -578,8 +600,8 @@ async function upgradeSubscription(req, res, next) {
     const runsTotal     = newPlan.wizardRuns
     const runsRemaining = runsTotal
 
-    logger.info('subscriptionController', 'Upgrade confirmed', { email, from: current.planId, to: newPlan.planId, charged: proration.totalDueToday })
-    addAuditLog({ action: 'SUBSCRIPTION_UPGRADE', userId: req.user?.userId, email, meta: { from: current.planId, to: newPlan.planId, amount: proration.totalDueToday, transactionId } })
+    logger.info('subscriptionController', 'Upgrade confirmed', { email, from: current.planId, to: newPlan.planId, charged: total })
+    addAuditLog({ action: 'SUBSCRIPTION_UPGRADE', userId: req.user?.userId, email, meta: { from: current.planId, to: newPlan.planId, amount: total, transactionId } })
 
     res.json({
       success: true,
@@ -601,7 +623,7 @@ async function upgradeSubscription(req, res, next) {
         transactionId,
         invoiceId,
         invoiceNumber,
-        amountCharged:   proration.totalDueToday,
+        amountCharged:   total,
         paidAt,
       },
     })
