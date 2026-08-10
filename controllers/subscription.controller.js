@@ -76,10 +76,15 @@ const PLANS = [
   },
 ]
 
-const PLAN_TIER = { launchpad: 0, operator: 1, boardroom: 2 }
+const PLAN_TIER = { free: -1, launchpad: 0, operator: 1, boardroom: 2 }
 const BLUEPRINT_RUN_TOP_UP_RATE = 250
 
 function getPlan(planId) {
+  if ((planId || '').toLowerCase().trim() === 'free') {
+    return { planId: 'free', name: 'Free', price: 0, annualPrice: 0, currency: 'ZAR',
+      tagline: 'Get started with the basics — upgrade anytime to unlock more.',
+      wizardRuns: 0, teamMembers: 1, storage: '—', features: [] }
+  }
   return PLANS.find(p => p.planId === (planId || '').toLowerCase().trim()) || null
 }
 
@@ -197,7 +202,7 @@ function seedSubscription(email) {
   const billingPeriod = `${periodStart.toISOString().split('T')[0]} – ${periodEnd.toISOString().split('T')[0]}`
 
   return {
-    planId:          'launchpad',
+    planId:          'free',
     runsUsed:         3,
     nextBillingDate,
     paymentMethod:   { brand: 'Visa', last4: '4242' },
@@ -470,6 +475,7 @@ async function getUpgradePreview(req, res, next) {
 
     const currentTier = PLAN_TIER[current.planId] ?? -1
     const newTier     = PLAN_TIER[newPlan.planId]  ?? -1
+    // Free plan (tier -1) can upgrade to any paid plan
     if (newTier <= currentTier) {
       return next(errors.badRequest('Target plan must be higher than current plan for an upgrade.', 'NOT_AN_UPGRADE'))
     }
@@ -505,14 +511,27 @@ async function upgradeSubscription(req, res, next) {
 
     if (!newPlan) return next(errors.badRequest('Unknown target plan.', 'INVALID_PLAN'))
     if (!current) return next(errors.badRequest('Current plan data is corrupt.', 'INVALID_PLAN'))
-    if (currentPlanId && String(currentPlanId).toLowerCase() !== store.planId) {
-      return next(errors.conflict('Your subscription changed. Refresh the plan selection and try again.', 'STALE_CURRENT_PLAN'))
-    }
+    const sentPlanId  = String(currentPlanId || '').toLowerCase()
 
-    const currentTier = PLAN_TIER[current.planId] ?? -1
-    const newTier     = PLAN_TIER[newPlan.planId]  ?? -1
-    if (newTier <= currentTier) {
-      return next(errors.badRequest('Target plan must be higher than current plan.', 'NOT_AN_UPGRADE'))
+    // When a paymentReference is present, the Paystack verify endpoint has
+    // already activated the subscription via activatePaidSubscription().
+    // The store already reflects the new plan — skip all tier/stale checks
+    // and just record the invoice + return the success response.
+    const alreadyActivatedByPayment = Boolean(paymentReference)
+
+    if (!alreadyActivatedByPayment) {
+      // 'free' is the canonical pre-subscription state — always allow upgrade from it
+      const isFreeUpgrade = sentPlanId === 'free' || store.planId === 'free'
+      if (!isFreeUpgrade && currentPlanId && sentPlanId !== store.planId) {
+        return next(errors.conflict('Your subscription changed. Refresh the plan selection and try again.', 'STALE_CURRENT_PLAN'))
+      }
+      if (isFreeUpgrade) store.planId = 'free'
+
+      const currentTier = PLAN_TIER[current.planId] ?? -1
+      const newTier     = PLAN_TIER[newPlan.planId]  ?? -1
+      if (newTier <= currentTier) {
+        return next(errors.badRequest('Target plan must be higher than current plan.', 'NOT_AN_UPGRADE'))
+      }
     }
 
     const proration     = calcProration(current, newPlan, store.nextBillingDate)
