@@ -34,8 +34,8 @@ const WIZARD_PLAN_LIMITS = { launchpad: 4, operator: 12, boardroom: 30 }
     plan: 'launchpad', wizardLimit: 4, activatedAt,
     selectedWizards: [
       { title: 'Non-Disclosure Agreement (NDA)', quantity: 1 },
-      { title: 'Employment Offer letter', quantity: 1 },
-      { title: 'Privacy Policy', quantity: 1 },
+      { title: 'Employment Offer Letter', quantity: 1 },
+      { title: 'Privacy & Cookies Policy', quantity: 1 },
     ],
   })
 
@@ -48,10 +48,10 @@ const WIZARD_PLAN_LIMITS = { launchpad: 4, operator: 12, boardroom: 30 }
     plan: 'operator', wizardLimit: 12, activatedAt,
     selectedWizards: [
       { title: 'Non-Disclosure Agreement (NDA)', quantity: 1 },
-      { title: 'Employment Offer letter', quantity: 1 },
+      { title: 'Employment Offer Letter', quantity: 1 },
       { title: 'Founder Agreement', quantity: 1 },
       { title: 'Service Agreement', quantity: 1 },
-      { title: 'Privacy Policy', quantity: 1 },
+      { title: 'Privacy & Cookies Policy', quantity: 1 },
       { title: 'Loan Agreement', quantity: 1 },
     ],
   })
@@ -65,10 +65,10 @@ const WIZARD_PLAN_LIMITS = { launchpad: 4, operator: 12, boardroom: 30 }
     plan: 'boardroom', wizardLimit: 30, activatedAt,
     selectedWizards: [
       { title: 'Non-Disclosure Agreement (NDA)', quantity: 1 },
-      { title: 'Employment Offer letter', quantity: 1 },
+      { title: 'Employment Offer Letter', quantity: 1 },
       { title: 'Founder Agreement', quantity: 1 },
       { title: 'Service Agreement', quantity: 1 },
-      { title: 'Privacy Policy', quantity: 1 },
+      { title: 'Privacy & Cookies Policy', quantity: 1 },
       { title: 'Loan Agreement', quantity: 1 },
       { title: 'Shareholder Resolutions', quantity: 1 },
       { title: 'Shareholders Agreement', quantity: 1 },

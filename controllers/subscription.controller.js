@@ -110,7 +110,7 @@ const subscriptionStore = new Map()
     nextBillingDate,
     paymentMethod: { brand: 'Visa', last4: '1001' },
     pendingDowngrade: null,
-    usage: { runsUsed: 1, runsTotal: 4, runsRemaining: 3 },
+    runsUsed: 0, topUpUnits: 0,
     invoices: [
       {
         invoiceId: 'INV-LP-001', invoiceNumber: 'INV-LP-001',
@@ -131,7 +131,7 @@ const subscriptionStore = new Map()
     nextBillingDate,
     paymentMethod: { brand: 'Mastercard', last4: '2002' },
     pendingDowngrade: null,
-    usage: { runsUsed: 4, runsTotal: 12, runsRemaining: 8 },
+    runsUsed: 0, topUpUnits: 0,
     invoices: [
       {
         invoiceId: 'INV-OP-002', invoiceNumber: 'INV-OP-002',
@@ -160,7 +160,7 @@ const subscriptionStore = new Map()
     nextBillingDate,
     paymentMethod: { brand: 'Visa', last4: '3003' },
     pendingDowngrade: null,
-    usage: { runsUsed: 10, runsTotal: 30, runsRemaining: 20 },
+    runsUsed: 0, topUpUnits: 0,
     invoices: [
       {
         invoiceId: 'INV-BR-003', invoiceNumber: 'INV-BR-003',
@@ -342,9 +342,13 @@ function buildSubscriptionResponse(email) {
   if (!plan) throw new Error(`Unknown planId in store: ${store.planId}`)
 
   const topUpUnits    = Number(store.topUpUnits || 0)
-  const runsTotal     = plan.wizardRuns + topUpUnits
-  const runsUsed      = Math.min(store.runsUsed, runsTotal)
-  const runsRemaining = Math.max(0, runsTotal - runsUsed)
+  // runsTotal is always the plan's monthly allocation — it is the correct
+  // denominator for the "X of Y Credits Remaining" display.
+  // Top-up units extend runsRemaining beyond the plan total but do not
+  // change the plan denominator.
+  const runsTotal     = plan.wizardRuns
+  const runsUsed      = Math.min(store.runsUsed, plan.wizardRuns + topUpUnits)
+  const runsRemaining = Math.max(0, plan.wizardRuns + topUpUnits - runsUsed)
 
   return {
     planId:          plan.planId,
@@ -416,7 +420,11 @@ async function addBlueprintRunUnits(req, res, next) {
     const plan = getPlan(store.planId)
     const usage = {
       runsUsed: store.runsUsed,
-      runsTotal: plan.wizardRuns + store.topUpUnits,
+      // runsTotal always reflects the plan's monthly allocation so the
+      // dashboard "X of Y" display shows the correct plan value (e.g. 4 for
+      // Launchpad, 12 for Operator). Top-up credits extend runsRemaining
+      // beyond the plan total but do not change the plan denominator.
+      runsTotal: plan.wizardRuns,
       runsRemaining: Math.max(0, plan.wizardRuns + store.topUpUnits - store.runsUsed),
       teamMembers: plan.teamMembers,
     }
