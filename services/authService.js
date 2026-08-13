@@ -30,7 +30,7 @@ function createSmeUser(email, payload = {}) {
   const user = {
     userId: 'usr_' + String(mockState.nextSmeId++).padStart(4, '0'),
     fullName, email,
-    role: 'sme', portal: 'sme', plan: 'Operator', status: 'Active',
+    role: 'sme', portal: 'sme', plan: null, status: 'Active',
     joinedAt: new Date().toISOString().slice(0, 10),
     companyName: '', registrationNumber: '', password: '', phone: '',
     physicalAddress: '', contactPerson: fullName,

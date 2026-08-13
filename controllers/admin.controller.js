@@ -26,7 +26,7 @@ function toAdminProfile(a) {
 }
 
 function toAdminUser(u) {
-  return { userId:u.userId, fullName:u.fullName||u.contactPerson||u.companyName, email:u.email, role:u.role||'sme', portal:u.portal||'sme', companyName:u.companyName, contactPerson:u.contactPerson, phone:u.phone, registrationNumber:u.registrationNumber, physicalAddress:u.physicalAddress, plan:u.plan||'Operator', status:u.status||'Active', joinedAt:u.joinedAt||'2025-09-15', updatedAt:u.updatedAt }
+  return { userId:u.userId, fullName:u.fullName||u.contactPerson||u.companyName, email:u.email, role:u.role||'sme', portal:u.portal||'sme', companyName:u.companyName, contactPerson:u.contactPerson, phone:u.phone, registrationNumber:u.registrationNumber, physicalAddress:u.physicalAddress, plan:u.plan||null, status:u.status||'Active', joinedAt:u.joinedAt||'2025-09-15', updatedAt:u.updatedAt }
 }
 
 async function getDashboard(req, res, next) {

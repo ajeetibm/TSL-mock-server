@@ -77,7 +77,7 @@ function createSmeUser(email, payload = {}) {
     email,
     role: 'sme',
     portal: 'sme',
-    plan: 'Operator',
+    plan: null,
     status: 'Active',
     joinedAt: new Date().toISOString().slice(0, 10),
     companyName: '',
