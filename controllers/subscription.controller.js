@@ -297,6 +297,9 @@ function activatePaidSubscription(email, planId) {
     pendingDowngrade: null,
     invoices: existing.invoices || [],
   })
+  // Sync plan name back to smeUsers so admin Users & Activity reflects the new plan immediately
+  const smeUser = mockState.smeUsers.get(key)
+  if (smeUser) { smeUser.plan = plan.name; mockState.smeUsers.set(key, smeUser) }
   applyCounselTier(plan.planId)
   return buildSubscriptionResponse(key)
 }
@@ -330,6 +333,11 @@ function applyScheduledDowngradeIfDue(email, now = new Date()) {
   store.runsUsed = 0
   store.topUpUnits = 0
   store.pendingDowngrade = null
+  // Sync downgraded plan name back to smeUsers
+  const downgradePlan = getPlan(store.planId)
+  const key = String(email || '').trim().toLowerCase()
+  const smeUser = mockState.smeUsers.get(key)
+  if (smeUser && downgradePlan) { smeUser.plan = downgradePlan.name; mockState.smeUsers.set(key, smeUser) }
   applyCounselTier(store.planId)
   return store
 }
@@ -584,6 +592,9 @@ async function upgradeSubscription(req, res, next) {
     store.runsUsed         = 0
     store.topUpUnits       = 0
     store.pendingDowngrade = null
+    // Sync plan name back to smeUsers so admin Users & Activity reflects the new plan immediately
+    const smeUser = mockState.smeUsers.get(email)
+    if (smeUser) { smeUser.plan = newPlan.name; mockState.smeUsers.set(email, smeUser) }
     applyCounselTier(newPlan.planId)
 
     // Persist full invoice
