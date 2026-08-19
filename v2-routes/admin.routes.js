@@ -1,5 +1,5 @@
 const { Router } = require('express')
-const { getDashboard, getProfile, updateProfile, changePassword, getUsers, updateUser, getCounsel, addCounsel, assignCounselRequest, markAdminNotificationRead, inviteAdmin, revokeAdmin, getIssues, getBilling, getAuditLogsEndpoint, exportBillingInvoices, getGeneralSettings, updateGeneralSettings, getNotificationSettings, updateNotificationSettings, getSecuritySettings, updateSecuritySettings, getPasswordPolicy, updatePasswordPolicy, getAdminProfilePreferences, saveAdminProfilePreferences } = require('../controllers/admin.controller')
+const { getDashboard, getProfile, updateProfile, changePassword, getUsers, updateUser, getCounsel, addCounsel, assignCounselRequest, markAdminNotificationRead, inviteAdmin, revokeAdmin, getIssues, getBilling, getAuditLogsEndpoint, exportBillingInvoices, getGeneralSettings, updateGeneralSettings, getNotificationSettings, updateNotificationSettings, getSecuritySettings, updateSecuritySettings, getPasswordPolicy, updatePasswordPolicy, getAdminProfilePreferences, saveAdminProfilePreferences, getAdminSessions, revokeAdminSession } = require('../controllers/admin.controller')
 const { authenticate } = require('../middleware/auth')
 const { requireAdmin } = require('../middleware/roles')
 
@@ -35,5 +35,8 @@ router.put('/settings/password-policy',                 updatePasswordPolicy)
 
 router.get('/profile/preferences',                      getAdminProfilePreferences)
 router.put('/profile/preferences',                      saveAdminProfilePreferences)
+
+router.get('/security/sessions',                        getAdminSessions)
+router.delete('/security/sessions/:sessionId',          revokeAdminSession)
 
 module.exports = router

@@ -34,6 +34,10 @@ function createSmeUser(email, payload = {}) {
     joinedAt: new Date().toISOString().slice(0, 10),
     companyName: '', registrationNumber: '', password: '', phone: '',
     physicalAddress: '', contactPerson: fullName,
+    entityType: '', legalName: '', tradingName: '', individualFullNames: '', idNumber: '',
+    businessEmail: email, businessPhone: '', unitNumber: '', building: '', streetName: '',
+    suburb: '', city: '', province: '', postalCode: '', country: 'South Africa',
+    signatoryName: fullName, signatoryCapacity: '',
     updatedAt: new Date().toISOString(),
   }
   mockState.smeUsers.set(email, user)

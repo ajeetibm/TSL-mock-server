@@ -8,6 +8,7 @@ const { getAdminByEmail, getCounselByEmail, normalizeEmail, createAdminUser } = 
 const { addAuditLog, AUDIT_ACTIONS } = require('../mock-data/audit')
 const { getAuditLogs } = require('../mock-data/audit')
 const { errors } = require('../utils/errors')
+const { listSessions, revokeSession: revokeSessionStore } = require('../services/sessionStore')
 
 const REVENUE_MONTHS = [
   {month:'Jan',actual:38200,target:40000},{month:'Feb',actual:41500,target:40000},{month:'Mar',actual:30000,target:31000},
@@ -415,4 +416,28 @@ async function saveAdminProfilePreferences(req, res, next) {
   } catch (e) { next(e) }
 }
 
-module.exports = Object.assign(module.exports, { getAdminProfilePreferences, saveAdminProfilePreferences })
+// ── Security: Active Sessions ─────────────────────────────────────────────────
+async function getAdminSessions(req, res, next) {
+  try {
+    const userId    = req.user?.userId ?? 'default'
+    const callerJti = req.user?.jti    ?? ''
+    const sessions  = listSessions({ userId, callerJti })
+    res.json({ success: true, data: sessions })
+  } catch (e) { next(e) }
+}
+
+async function revokeAdminSession(req, res, next) {
+  try {
+    const userId    = req.user?.userId ?? 'default'
+    const callerJti = req.user?.jti    ?? ''
+    const { sessionId } = req.params
+    const result = revokeSessionStore({ userId, sessionId, callerJti })
+    if (!result.ok) {
+      return res.status(result.message === 'Session not found.' ? 404 : 400)
+        .json({ success: false, message: result.message })
+    }
+    res.json({ success: true, message: result.message, data: result.sessions })
+  } catch (e) { next(e) }
+}
+
+module.exports = Object.assign(module.exports, { getAdminProfilePreferences, saveAdminProfilePreferences, getAdminSessions, revokeAdminSession })

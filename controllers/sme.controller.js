@@ -10,7 +10,34 @@ const { addAuditLog, AUDIT_ACTIONS } = require('../mock-data/audit')
 const { errors } = require('../utils/errors')
 
 function publicProfile(user) {
-  return { userId: user.userId, fullName: user.fullName, email: user.email, role: user.role, portal: user.portal, plan: user.plan, status: user.status, joinedAt: user.joinedAt, companyName: user.companyName, registrationNumber: user.registrationNumber, phone: user.phone, physicalAddress: user.physicalAddress, contactPerson: user.contactPerson, updatedAt: user.updatedAt }
+  return {
+    userId: user.userId, companySnapshotId: user.companySnapshotId || `snapshot_${user.userId}`, fullName: user.fullName, email: user.email, role: user.role,
+    portal: user.portal, plan: user.plan, status: user.status, joinedAt: user.joinedAt,
+    companyName: user.companyName, registrationNumber: user.registrationNumber,
+    phone: user.phone, physicalAddress: user.physicalAddress, contactPerson: user.contactPerson,
+    entityType: user.entityType, legalName: user.legalName, tradingName: user.tradingName,
+    individualFullNames: user.individualFullNames, idNumber: user.idNumber,
+    businessEmail: user.businessEmail, businessPhone: user.businessPhone,
+    unitNumber: user.unitNumber, building: user.building, streetName: user.streetName,
+    suburb: user.suburb, city: user.city, province: user.province,
+    postalCode: user.postalCode, country: user.country,
+    signatoryName: user.signatoryName, signatoryCapacity: user.signatoryCapacity,
+    updatedAt: user.updatedAt,
+  }
+}
+
+function value(body, key, fallback = '') { return String(body[key] ?? fallback ?? '').trim() }
+
+function isValidSaId(idNumber) {
+  if (!/^\d{13}$/.test(idNumber)) return false
+  const digits = idNumber.split('').map(Number)
+  let sum = 0
+  for (let index = 0; index < 13; index += 1) {
+    let digit = digits[12 - index]
+    if (index % 2 === 1) { digit *= 2; if (digit > 9) digit -= 9 }
+    sum += digit
+  }
+  return sum % 10 === 0
 }
 
 async function getProfile(req, res, next) {
@@ -27,9 +54,50 @@ async function updateProfile(req, res, next) {
     const incomingEmail = normalizeEmail(req.body.email || req.user?.email || 'thabo@company.co.za')
     const existing = getSmeByEmail(incomingEmail) || createSmeUser(incomingEmail)
     const prevEmail = normalizeEmail(existing.email)
-    const contactPerson = String(req.body.contactPerson || existing.contactPerson || existing.fullName || '').trim()
-    const companyName = String(req.body.companyName || existing.companyName || '').trim()
-    const updated = { ...existing, fullName: contactPerson || existing.fullName || companyName || 'User', email: incomingEmail, companyName, registrationNumber: String(req.body.registrationNumber || existing.registrationNumber || '').trim(), phone: String(req.body.phone || existing.phone || '').trim(), physicalAddress: String(req.body.physicalAddress || existing.physicalAddress || '').trim(), contactPerson, updatedAt: new Date().toISOString() }
+    const entityType = value(req.body, 'entityType', existing.entityType)
+    const individualFullNames = value(req.body, 'individualFullNames', existing.individualFullNames)
+    const legalName = value(req.body, 'legalName', existing.legalName || existing.companyName)
+    const registrationNumber = value(req.body, 'registrationNumber', existing.registrationNumber)
+    const businessPhone = value(req.body, 'businessPhone', existing.businessPhone || existing.phone)
+    const country = value(req.body, 'country', existing.country || 'South Africa') || 'South Africa'
+    const idNumber = value(req.body, 'idNumber', existing.idNumber)
+    if (entityType === 'Individual' && idNumber && !isValidSaId(idNumber)) return next(errors.badRequest('Enter a valid 13-digit South African ID number.', 'INVALID_SA_ID'))
+    if (country === 'South Africa' && businessPhone && !/^(?:\+27|0)\d{9}$/.test(businessPhone.replace(/[\s()-]/g, ''))) return next(errors.badRequest('Enter a valid South African telephone number.', 'INVALID_SA_TELEPHONE'))
+    if (country === 'South Africa' && value(req.body, 'postalCode', existing.postalCode) && !/^\d{4}$/.test(value(req.body, 'postalCode', existing.postalCode))) return next(errors.badRequest('Enter a four-digit South African postal code.', 'INVALID_POSTAL_CODE'))
+    const hasCipcRegistration = entityType === 'Company' || entityType === 'Close corporation'
+    if (hasCipcRegistration && registrationNumber && !/^\d{4}\/\d{6}\/\d{2}$/.test(registrationNumber)) return next(errors.badRequest('Enter a CIPC registration number in the format YYYY/NNNNNN/NN.', 'INVALID_REGISTRATION_NUMBER'))
+
+    const signatoryName = value(req.body, 'signatoryName', existing.signatoryName || existing.contactPerson || existing.fullName)
+    const companyName = entityType === 'Individual' ? individualFullNames : legalName
+    const address = [value(req.body, 'unitNumber', existing.unitNumber), value(req.body, 'building', existing.building), value(req.body, 'streetName', existing.streetName), value(req.body, 'suburb', existing.suburb), value(req.body, 'city', existing.city), value(req.body, 'province', existing.province), value(req.body, 'postalCode', existing.postalCode), country].filter(Boolean).join(', ')
+    const updated = {
+      ...existing,
+      companySnapshotId: existing.companySnapshotId || `snapshot_${existing.userId}`,
+      email: incomingEmail,
+      companyName,
+      registrationNumber,
+      phone: businessPhone,
+      physicalAddress: address || existing.physicalAddress || '',
+      contactPerson: signatoryName,
+      entityType,
+      legalName,
+      tradingName: value(req.body, 'tradingName', existing.tradingName),
+      individualFullNames,
+      idNumber,
+      businessEmail: value(req.body, 'businessEmail', existing.businessEmail || incomingEmail),
+      businessPhone,
+      unitNumber: value(req.body, 'unitNumber', existing.unitNumber),
+      building: value(req.body, 'building', existing.building),
+      streetName: value(req.body, 'streetName', existing.streetName),
+      suburb: value(req.body, 'suburb', existing.suburb),
+      city: value(req.body, 'city', existing.city),
+      province: value(req.body, 'province', existing.province),
+      postalCode: value(req.body, 'postalCode', existing.postalCode),
+      country,
+      signatoryName,
+      signatoryCapacity: value(req.body, 'signatoryCapacity', existing.signatoryCapacity),
+      updatedAt: new Date().toISOString(),
+    }
     if (prevEmail && prevEmail !== updated.email) mockState.smeUsers.delete(prevEmail)
     mockState.smeUsers.set(updated.email, updated)
     addAuditLog({ action: AUDIT_ACTIONS.PROFILE_UPDATE, userId: updated.userId, email: updated.email, role: 'sme', ip: req.ip })
