@@ -273,17 +273,17 @@ const _settingsStore = {
     dateFormat: 'DD/MM/YYYY',
   },
   notifications: {
-    emailNotifications: true,
-    newUserAlerts: true,
-    paymentAlerts: true,
+    emailNotifications: false,
+    newUserAlerts: false,
+    paymentAlerts: false,
     systemAlerts: false,
-    issueNotifications: true,
+    issueNotifications: false,
     weeklyReports: false,
   },
   security: {
     twoFactorAuth: false,
     sessionTimeout: '30 minutes',
-    loginNotifications: true,
+    loginNotifications: false,
   },
 }
 
