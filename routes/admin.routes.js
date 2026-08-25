@@ -397,6 +397,11 @@ function handleAdminRoutes(req, res, relPath) {
       date: new Date().toISOString().slice(0, 10),
       assignedAt: request.assignedAt,
       timeAgo: 'just now',
+      reviewGate: request.reviewGate || null,
+      reviewStatus: request.reviewStatus || null,
+      relatedWizard: request.relatedWizard || null,
+      description: request.description || null,
+      wizardData: request.wizardData || null,
     }
 
     const existingIndex = mockState.counselRequests.findIndex((item) => item.requestId === request.requestId)

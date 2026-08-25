@@ -1,7 +1,7 @@
 const { Router } = require('express')
 const {
   getProfile, updateProfile,
-  getCounselCredits, getCounselRequests, createCounselRequest, topUpCredits, changePassword,
+  getCounselCredits, getCounselRequests, createCounselRequest, createPublicFundingReview, getPublicFundingReview, topUpCredits, changePassword,
   getPaymentMethods, addPaymentMethod, setDefaultPaymentMethod, removePaymentMethod,
   getQuickAccessLinks,
   getLegalLinks,
@@ -17,6 +17,8 @@ router.put('/profile',            authenticate, updateProfile)
 router.get('/counsel/credits',    authenticate, getCounselCredits)
 router.get('/counsel/requests',   authenticate, getCounselRequests)
 router.post('/counsel/requests',  authenticate, createCounselRequest)
+router.post('/counsel/public-funding-review', authenticate, createPublicFundingReview)
+router.get('/counsel/public-funding-review/:requestId', authenticate, getPublicFundingReview)
 router.post('/counsel/topup',     authenticate, topUpCredits)
 router.put('/change-password',    authenticate, changePassword)
 

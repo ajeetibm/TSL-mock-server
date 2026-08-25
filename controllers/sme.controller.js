@@ -171,6 +171,55 @@ async function createCounselRequest(req, res, next) {
   } catch (e) { next(e) }
 }
 
+// Mandatory review gate for Founders' Agreement & IP Assignment. This is an
+// internal routing workflow, so it does not consume a counsel credit or require
+// a user-uploaded document. Admin assigns counsel through the existing queue.
+async function createPublicFundingReview(req, res, next) {
+  try {
+    const wizardData = req.body.wizardData || {}
+    if (wizardData.publiclyFunded !== 'Yes') return next(errors.badRequest('This review gate applies only when publicly funded IP is declared.', 'PUBLIC_FUNDING_NOT_DECLARED'))
+    const userEmail = normalizeEmail(req.user?.email || req.body.userEmail || req.body.email || 'thabo@company.co.za')
+    const existing = mockState.adminRequests.find((request) =>
+      request.reviewGate === 'founders_public_funding' &&
+      normalizeEmail(request.userEmail) === userEmail &&
+      request.status !== 'completed',
+    )
+    if (existing) return res.json({ success: true, message: 'Publicly funded IP review is already awaiting counsel.', data: { requestId: existing.requestId, status: existing.reviewStatus || 'pending' } })
+
+    const requestId = 'req_' + mockState.nextRequestId++
+    const submittedAt = new Date().toISOString()
+    const request = {
+      requestId,
+      subject: "Founders' Agreement & IP Assignment - Publicly Funded IP Review",
+      fromUser: req.body.fromUser || 'Founder',
+      userEmail,
+      company: req.body.company || 'Founder company',
+      receivedAt: submittedAt,
+      submittedAt,
+      status: 'pending',
+      reviewStatus: 'pending',
+      reviewGate: 'founders_public_funding',
+      relatedWizard: 'founder-agreement',
+      description: 'Mandatory review before generating a Founders\' Agreement & IP Assignment containing publicly funded IP.',
+      wizardData,
+      attachments: [],
+      assignedBy: null,
+      earnings: 0,
+      currency: 'ZAR',
+    }
+    mockState.adminRequests.unshift(request)
+    res.status(201).json({ success: true, message: 'Publicly funded IP review sent to admin for counsel assignment.', data: { requestId, status: 'pending' } })
+  } catch (e) { next(e) }
+}
+
+async function getPublicFundingReview(req, res, next) {
+  try {
+    const request = mockState.adminRequests.find((item) => item.requestId === req.params.requestId && item.reviewGate === 'founders_public_funding')
+    if (!request) return next(errors.notFound('Publicly funded IP review not found.', 'PUBLIC_FUNDING_REVIEW_NOT_FOUND'))
+    res.json({ success: true, data: { requestId: request.requestId, status: request.reviewStatus || 'pending', assignedCounsel: request.assignedCounselName || null, completedAt: request.completedAt || null } })
+  } catch (e) { next(e) }
+}
+
 async function changePassword(req, res, next) {
   try {
     const email = normalizeEmail(req.body.email || req.user?.email || '')
@@ -196,7 +245,7 @@ async function topUpCredits(req, res, next) {
   } catch (e) { next(e) }
 }
 
-module.exports = { getProfile, updateProfile, getDashboard, getCounselCredits, getCounselRequests, createCounselRequest, topUpCredits, changePassword }
+module.exports = { getProfile, updateProfile, getDashboard, getCounselCredits, getCounselRequests, createCounselRequest, createPublicFundingReview, getPublicFundingReview, topUpCredits, changePassword }
 
 
 // ── Payment Methods (in-memory mock store — resets on server restart) ─────────

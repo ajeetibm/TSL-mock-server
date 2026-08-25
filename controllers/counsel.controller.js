@@ -146,8 +146,12 @@ async function completeRequest(req, res, next) {
     request.completedAt = new Date().toISOString()
     request.counselResponse = req.body.response || ''
     request.supportingDocuments = req.body.supportingDocuments || []
+    if (request.reviewGate === 'founders_public_funding') {
+      request.reviewStatus = 'approved'
+      request.generationReleasedAt = request.completedAt
+    }
     const adminReq = mockState.adminRequests.find(r => r.requestId === request.requestId)
-    if (adminReq) { adminReq.status = 'completed'; adminReq.completedAt = request.completedAt; adminReq.counselResponse = request.counselResponse; adminReq.supportingDocuments = request.supportingDocuments; adminReq.responseDate = request.completedAt }
+    if (adminReq) { adminReq.status = 'completed'; adminReq.completedAt = request.completedAt; adminReq.counselResponse = request.counselResponse; adminReq.supportingDocuments = request.supportingDocuments; adminReq.responseDate = request.completedAt; if (request.reviewGate === 'founders_public_funding') { adminReq.reviewStatus = 'approved'; adminReq.generationReleasedAt = request.completedAt } }
     res.json({ success: true, message: 'Request marked as completed. User and admin have been notified.', data: { requestId: request.requestId, status: request.status, completedAt: request.completedAt, notified: { user: true, admin: true } } })
   } catch (e) { next(e) }
 }
