@@ -7,6 +7,7 @@ const { Router } = require('express')
 const router = Router()
 
 router.use('/auth',            require('./auth.routes'))
+router.use('/sme/wizards',     require('./wizard.routes'))
 router.use('/sme',             require('./sme.routes'))
 router.use('/sme/payments',    require('./payment.routes'))
 router.use('/admin',           require('./admin.routes'))

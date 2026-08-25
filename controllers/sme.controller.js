@@ -176,8 +176,8 @@ async function createCounselRequest(req, res, next) {
 // a user-uploaded document. Admin assigns counsel through the existing queue.
 async function createPublicFundingReview(req, res, next) {
   try {
-    const wizardData = req.body.wizardData || {}
-    if (wizardData.publiclyFunded !== 'Yes') return next(errors.badRequest('This review gate applies only when publicly funded IP is declared.', 'PUBLIC_FUNDING_NOT_DECLARED'))
+    const wizardData = req.body.wizard_data || req.body.wizardData || {}
+    if (wizardData.publicly_funded !== true) return next(errors.badRequest('This review gate applies only when publicly funded IP is declared.', 'PUBLIC_FUNDING_NOT_DECLARED'))
     const userEmail = normalizeEmail(req.user?.email || req.body.userEmail || req.body.email || 'thabo@company.co.za')
     const existing = mockState.adminRequests.find((request) =>
       request.reviewGate === 'founders_public_funding' &&
