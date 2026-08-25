@@ -13,7 +13,7 @@
 const { mockState } = require('../mock-state')
 const { normalizeEmail } = require('../services/authService')
 
-const VALID_TYPES = ['nda', 'employment', 'privacy-policy', 'founder-agreement']
+const VALID_TYPES = ['nda', 'employment', 'privacy-policy', 'founder-agreement', 'sla']
 
 function validateAddress(prefix, addr = {}) {
   const missing = []
@@ -173,6 +173,61 @@ function validatePrivacyPolicy(data = {}) {
   return missing.length ? { message: `Missing required Privacy & Cookies Policy fields: ${[...new Set(missing)].join(', ')}` } : null
 }
 
+function validateSla(data = {}) {
+  const missing = []
+  const hasText = (value) => String(value || '').trim().length > 0
+  const hasItems = (value) => Array.isArray(value) && value.length > 0
+  const hasNumber = (value) => Number.isFinite(Number(value))
+  const hasModule = (name) => Array.isArray(data.modules) && data.modules.includes(name)
+  const validateParty = (key) => {
+    const party = data[key] || {}
+    if (!hasText(party.entity_type)) missing.push(`${key}.entity_type`)
+    if (party.entity_type === 'Individual') { if (!hasText(party.full_names)) missing.push(`${key}.full_names`) }
+    else { if (!hasText(party.legal_name)) missing.push(`${key}.legal_name`); if (!hasText(party.signatory_name)) missing.push(`${key}.signatory_name`) }
+    if (!hasText(party.email)) missing.push(`${key}.email`)
+  }
+  validateParty('customer'); validateParty('provider')
+  for (const key of ['service_description', 'start_date', 'term_type', 'governing_law', 'dispute_forum']) if (!hasText(data[key])) missing.push(key)
+  if (!hasItems(data.modules)) missing.push('modules')
+  if (data.term_type === 'Fixed end date' && !hasText(data.end_date)) missing.push('end_date')
+  if (data.dispute_forum === 'South African courts' && !hasText(data.jurisdiction_city)) missing.push('jurisdiction_city')
+  if (hasModule('Availability')) {
+    if (!hasNumber(data.uptime_target) || Number(data.uptime_target) < 90 || Number(data.uptime_target) > 100) missing.push('uptime_target')
+    if (!hasText(data.uptime_period)) missing.push('uptime_period')
+    if (!hasItems(data.uptime_exclusions)) missing.push('uptime_exclusions')
+  }
+  if (hasModule('Support')) {
+    if (!hasText(data.support_hours)) missing.push('support_hours')
+    if (!hasItems(data.support_channels)) missing.push('support_channels')
+    if (data.support_hours === 'Custom' && !hasText(data.support_hours_custom)) missing.push('support_hours_custom')
+    if (Array.isArray(data.support_channels) && data.support_channels.includes('Other') && !hasText(data.support_channel_other)) missing.push('support_channel_other')
+  }
+  if (hasModule('Incident response')) {
+    if (data.use_severity_model !== true && data.use_severity_model !== false) missing.push('use_severity_model')
+    if (!hasItems(data.escalation_contacts)) missing.push('escalation_contacts')
+    ;(data.escalation_contacts || []).forEach((row, index) => { for (const key of ['name', 'role', 'email', 'telephone']) if (!hasText(row?.[key])) missing.push(`escalation_contacts[${index}].${key}`) })
+    if (data.use_severity_model === true) {
+      if (!hasItems(data.severity_targets)) missing.push('severity_targets')
+      ;(data.severity_targets || []).forEach((row, index) => { for (const key of ['severity', 'description', 'response_target', 'resolution_target']) if (!hasText(row?.[key])) missing.push(`severity_targets[${index}].${key}`) })
+    } else if (!hasText(data.incident_narrative) || data.incident_narrative.trim().length < 200) missing.push('incident_narrative')
+  }
+  if (hasModule('Maintenance')) {
+    if (!hasText(data.maintenance_window)) missing.push('maintenance_window')
+    if (!hasNumber(data.maintenance_notice_hours)) missing.push('maintenance_notice_hours')
+    if (data.emergency_maintenance !== true && data.emergency_maintenance !== false) missing.push('emergency_maintenance')
+  }
+  if (hasModule('Backups and restore')) for (const key of ['backup_frequency', 'rto_hours', 'rpo_hours', 'backup_retention_days']) if (data[key] === null || data[key] === undefined || data[key] === '') missing.push(key)
+  if (hasModule('Security')) { if (!hasItems(data.security_commitments)) missing.push('security_commitments'); if (!hasNumber(data.breach_notice_hours)) missing.push('breach_notice_hours') }
+  if (hasModule('Service credits')) {
+    if (!hasItems(data.credit_tiers)) missing.push('credit_tiers')
+    ;(data.credit_tiers || []).forEach((row, index) => { if (!hasNumber(row?.uptime_below)) missing.push(`credit_tiers[${index}].uptime_below`); if (!hasNumber(row?.credit_pct)) missing.push(`credit_tiers[${index}].credit_pct`) })
+    for (const key of ['credit_cap_pct', 'credit_claim_days']) if (!hasNumber(data[key])) missing.push(key)
+    if (data.credits_sole_remedy !== true && data.credits_sole_remedy !== false) missing.push('credits_sole_remedy')
+  }
+  if (!hasItems(data.signatories) || !data.signatories.every((row) => hasText(row?.name) && hasText(row?.title))) missing.push('signatories')
+  return missing.length ? { message: `Missing required Service Level Agreement fields: ${[...new Set(missing)].join(', ')}` } : null
+}
+
 function draftKey(email, wizardType) {
   return `${normalizeEmail(email)}::${wizardType}`
 }
@@ -210,6 +265,7 @@ async function completeWizard(req, res, next) {
       wizardType === 'employment' ? validateEmploymentOffer(payload) :
       wizardType === 'nda'        ? validateNda(payload)             :
       wizardType === 'privacy-policy' ? validatePrivacyPolicy(payload) :
+      wizardType === 'sla' ? validateSla(payload) :
       wizardType === 'founder-agreement' ? validateFounderAgreement(payload) : null
     if (validationError) return res.status(422).json({ success: false, ...validationError })
     const email = req.user?.email || 'thabo@company.co.za'
