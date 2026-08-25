@@ -8,6 +8,7 @@ const { getAdminByEmail, getCounselByEmail, normalizeEmail, createAdminUser } = 
 const { addAuditLog, AUDIT_ACTIONS } = require('../mock-data/audit')
 const { getAuditLogs } = require('../mock-data/audit')
 const { errors } = require('../utils/errors')
+const { listSessions, revokeSession: revokeSessionStore } = require('../services/sessionStore')
 
 const REVENUE_MONTHS = [
   {month:'Jan',actual:38200,target:40000},{month:'Feb',actual:41500,target:40000},{month:'Mar',actual:30000,target:31000},
@@ -37,7 +38,7 @@ async function getDashboard(req, res, next) {
       success: true,
       data: {
         kpis: { totalUsers:2847, totalUsersTrend:'+12%', activeWizards:1234, activeWizardsTrend:'+8%', revenueMTD:48574, currency:'ZAR', issuesCount:26, criticalIssues:3 },
-        topWizards: [{name:'NDA Generator',completions:1234},{name:'Employment Contract',completions:987},{name:'Shareholder Agreement',completions:756},{name:'Director Appointment',completions:543},{name:'Company Registration',completions:432}],
+        topWizards: [{name:'NDA Generator',completions:1234},{name:'Employment Offer Letter',completions:987},{name:'Privacy & Cookies Policy',completions:756},{name:'Founder Agreement',completions:543},{name:'Service Agreement',completions:432}],
         recentCounselRequests: mockState.adminRequests.map(r => ({ requestId:r.requestId, subject:r.subject, fromUser:r.fromUser, receivedAt:r.receivedAt||r.submittedAt, status:r.status, assignedCounselName:r.assignedCounselName, rejectionReason:r.rejectionReason, rejectedAt:r.rejectedAt })),
         notifications: mockState.adminNotifications,
         revenueChart: { year:2026, months:REVENUE_MONTHS, summary:{ totalRevenue:total, avgMonthly:Math.round(total/REVENUE_MONTHS.length), bestMonth:Math.max(...actuals), growthRate:(((actuals[actuals.length-1]-actuals[0])/actuals[0])*100).toFixed(1)+'%' }, axis:{ yMax:60000, ticks:[60000,45000,30000,15000,0], tickLabels:['R99k','R45k','R30k','R15k','R0k'], format:'ZAR' } },
@@ -272,17 +273,17 @@ const _settingsStore = {
     dateFormat: 'DD/MM/YYYY',
   },
   notifications: {
-    emailNotifications: true,
-    newUserAlerts: true,
-    paymentAlerts: true,
+    emailNotifications: false,
+    newUserAlerts: false,
+    paymentAlerts: false,
     systemAlerts: false,
-    issueNotifications: true,
+    issueNotifications: false,
     weeklyReports: false,
   },
   security: {
     twoFactorAuth: false,
     sessionTimeout: '30 minutes',
-    loginNotifications: true,
+    loginNotifications: false,
   },
 }
 
@@ -336,7 +337,15 @@ async function updateSecuritySettings(req, res, next) {
     await new Promise((r) => setTimeout(r, 1000 + Math.random() * 600))
     if (req.body.twoFactorAuth      !== undefined) _settingsStore.security.twoFactorAuth      = Boolean(req.body.twoFactorAuth)
     if (req.body.sessionTimeout     !== undefined) _settingsStore.security.sessionTimeout     = req.body.sessionTimeout
-    if (req.body.loginNotifications !== undefined) _settingsStore.security.loginNotifications = Boolean(req.body.loginNotifications)
+    if (req.body.loginNotifications !== undefined) {
+      _settingsStore.security.loginNotifications = Boolean(req.body.loginNotifications)
+      // When turning OFF, remove all existing unread login_alert notifications
+      if (!_settingsStore.security.loginNotifications) {
+        mockState.adminNotifications = mockState.adminNotifications.filter(
+          (n) => n.type !== 'login_alert' || n.read
+        )
+      }
+    }
     res.json({ success: true, message: 'Security settings updated successfully.', data: { ..._settingsStore.security } })
   } catch (e) { next(e) }
 }
@@ -415,4 +424,30 @@ async function saveAdminProfilePreferences(req, res, next) {
   } catch (e) { next(e) }
 }
 
-module.exports = Object.assign(module.exports, { getAdminProfilePreferences, saveAdminProfilePreferences })
+module.exports = Object.assign(module.exports, { getAdminProfilePreferences, saveAdminProfilePreferences, _settingsStore })
+
+// ── Security: Active Sessions ─────────────────────────────────────────────────
+async function getAdminSessions(req, res, next) {
+  try {
+    const userId    = req.user?.userId ?? 'default'
+    const callerJti = req.user?.jti    ?? ''
+    const sessions  = listSessions({ userId, callerJti })
+    res.json({ success: true, data: sessions })
+  } catch (e) { next(e) }
+}
+
+async function revokeAdminSession(req, res, next) {
+  try {
+    const userId    = req.user?.userId ?? 'default'
+    const callerJti = req.user?.jti    ?? ''
+    const { sessionId } = req.params
+    const result = revokeSessionStore({ userId, sessionId, callerJti })
+    if (!result.ok) {
+      return res.status(result.message === 'Session not found.' ? 404 : 400)
+        .json({ success: false, message: result.message })
+    }
+    res.json({ success: true, message: result.message, data: result.sessions })
+  } catch (e) { next(e) }
+}
+
+module.exports = Object.assign(module.exports, { getAdminSessions, revokeAdminSession })

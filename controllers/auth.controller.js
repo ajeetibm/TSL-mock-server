@@ -22,6 +22,36 @@ async function login(req, res, next) {
     const result = await loginUser(req.body, req.ip)
     if (result.success && result.data?.userId && result.data?.token) {
       registerSession({ userId: result.data.userId, jti: result.data.jti, userAgent: req.headers['user-agent'], ip: req.ip })
+
+      // ── Login Notification ────────────────────────────────────────────────────
+      // If the admin logged in AND loginNotifications is enabled, push a bell notification.
+      if (result.data.portal === 'admin') {
+        const { mockState } = require('../mock-state')
+        const { _settingsStore } = require('./admin.controller')
+        if (_settingsStore?.security?.loginNotifications) {
+          const ua = req.headers['user-agent'] || 'Unknown device'
+          const browser = ua.includes('Chrome') ? 'Chrome'
+            : ua.includes('Firefox') ? 'Firefox'
+            : ua.includes('Safari') ? 'Safari'
+            : ua.includes('Edge') ? 'Edge'
+            : 'Browser'
+          const os = ua.includes('Windows') ? 'Windows'
+            : ua.includes('Mac') ? 'macOS'
+            : ua.includes('Linux') ? 'Linux'
+            : ua.includes('Android') ? 'Android'
+            : ua.includes('iPhone') || ua.includes('iPad') ? 'iOS'
+            : 'Unknown OS'
+          const notifId = `notif_login_${mockState.nextAdminNotificationId++}`
+          mockState.adminNotifications.unshift({
+            notificationId: notifId,
+            type: 'login_alert',
+            subject: 'New Login Detected',
+            message: `New login to your admin account from ${browser} on ${os} · IP: ${req.ip || '127.0.0.1'}`,
+            read: false,
+            createdAt: new Date().toISOString(),
+          })
+        }
+      }
     }
     res.json(result)
   } catch (e) { next(e) }
@@ -32,6 +62,27 @@ async function register(req, res, next) {
     const err = validateRegisterPayload(req.body)
     if (err) return next(errors.badRequest(err, 'VALIDATION_ERROR'))
     const result = await registerUser(req.body, req.ip)
+
+    // ── New User Notification ─────────────────────────────────────────────────
+    // If newUserAlerts is enabled, push a notification into adminNotifications.
+    if (result.success && result.data?.userId) {
+      const { mockState } = require('../mock-state')
+      const { _settingsStore } = require('./admin.controller')
+      if (_settingsStore?.notifications?.newUserAlerts) {
+        const email = String(req.body.email || result.data?.email || 'unknown')
+        const name = String(result.data?.fullName || result.data?.contactPerson || email)
+        const notifId = `notif_user_${mockState.nextAdminNotificationId++}`
+        mockState.adminNotifications.unshift({
+          notificationId: notifId,
+          type: 'new_user',
+          subject: 'New User Registered',
+          message: `${name} (${email}) created a new account`,
+          read: false,
+          createdAt: new Date().toISOString(),
+        })
+      }
+    }
+
     res.status(201).json(result)
   } catch (e) { next(e) }
 }

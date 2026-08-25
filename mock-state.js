@@ -169,7 +169,41 @@ const mockState = {
     },
   ],
   // Mock equivalent of the persisted admin notification/audit table.
-  adminNotifications: [],
+  // Seeded with sample data so the bell icon is populated on first load.
+  adminNotifications: [
+    {
+      notificationId: 'notif_login_seed1',
+      type: 'login_alert',
+      subject: 'New Login Detected',
+      message: 'New login to your admin account from Chrome on macOS · IP: 127.0.0.1',
+      read: false,
+      createdAt: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
+    },
+    {
+      notificationId: 'notif_user_seed1',
+      type: 'new_user',
+      subject: 'New User Registered',
+      message: 'Thabo Molefe (thabo@company.co.za) created a new account',
+      read: false,
+      createdAt: new Date(Date.now() - 20 * 60 * 1000).toISOString(),
+    },
+    {
+      notificationId: 'notif_user_seed2',
+      type: 'new_user',
+      subject: 'New User Registered',
+      message: 'Zanele Dlamini (zanele@startup.co.za) created a new account',
+      read: true,
+      createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+    },
+    {
+      notificationId: 'notif_login_seed2',
+      type: 'login_alert',
+      subject: 'New Login Detected',
+      message: 'New login to your admin account from Safari on iOS · IP: 10.0.0.5',
+      read: true,
+      createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+    },
+  ],
   paymentTransactions: new Map(),
   counselRequests: [
     {

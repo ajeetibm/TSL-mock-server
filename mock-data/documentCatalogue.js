@@ -26,7 +26,9 @@ const documentCatalogue = [
   ['employment-pack', 'Employment Contract Pack', 3, 'final-download'],
   ['hr-manual', 'HR Manual', 3, 'final-download'],
   ['popia-starter-kit', 'POPIA Starter Kit', 3, 'final-download'],
+  ['service-level-agreement', 'Service Level Agreement (SLA)', 3, 'final-download'],
   ['software-development-agreement', 'Software Development Agreement', 3, 'final-download'],
+  ['founder-agreement', 'Founders agreement and IP assignment', 4, 'final-download'],
   ['company-registration', 'Company Registration', 4, 'cipc-submission'],
   ['shareholders-agreement', 'Shareholders Agreement', 6, 'final-download'],
 ].map(([blueprintId, name, blueprintUnitWeight, consumptionPoint]) => ({ blueprintId, name, blueprintUnitWeight, consumptionPoint }))
@@ -34,7 +36,7 @@ const documentCatalogue = [
 // Legacy UI names resolve to a catalogue id; their weights never live here.
 const aliases = {
   employment: 'employment-offer-letter',
-  'founder-agreement': 'shareholders-agreement',
+  sla: 'service-level-agreement',
   'service-agreement': 'contractor-agreement',
   'company-registration-package': 'company-registration',
   'shareholder-resolutions': 'board-resolution',
