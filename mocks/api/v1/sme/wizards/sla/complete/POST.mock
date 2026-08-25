@@ -1,0 +1,12 @@
+HTTP/1.1 200 OK SLA wizard completed
+Content-Type: application/json
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS
+Access-Control-Allow-Headers: Content-Type, Authorization
+
+{
+  "success": true,
+  "data": {
+    "completedAt": "2026-08-13T10:00:00.000Z"
+  }
+}

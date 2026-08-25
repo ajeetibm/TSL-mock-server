@@ -1,0 +1,25 @@
+HTTP/1.1 200 OK Blueprint run consumed
+Content-Type: application/json
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS
+Access-Control-Allow-Headers: Content-Type, Authorization
+
+{
+  "success": true,
+  "message": "Blueprint run consumed successfully.",
+  "data": {
+    "unitsCharged": 1,
+    "blueprint": {
+      "blueprintId": "contractor-agreement",
+      "name": "Service Level Agreement (SLA)",
+      "unitCost": 3,
+      "description": "Service Level Agreement"
+    },
+    "usage": {
+      "runsUsed": 1,
+      "runsTotal": 4,
+      "runsRemaining": 3,
+      "teamMembers": 1
+    }
+  }
+}

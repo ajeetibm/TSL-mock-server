@@ -27,6 +27,7 @@ const documentCatalogue = [
   ['hr-manual', 'HR Manual', 3, 'final-download'],
   ['popia-starter-kit', 'POPIA Starter Kit', 3, 'final-download'],
   ['software-development-agreement', 'Software Development Agreement', 3, 'final-download'],
+  ['service-level-agreement', 'Service Level Agreement (SLA)', 3, 'final-download'],
   ['company-registration', 'Company Registration', 4, 'cipc-submission'],
   ['shareholders-agreement', 'Shareholders Agreement', 6, 'final-download'],
 ].map(([blueprintId, name, blueprintUnitWeight, consumptionPoint]) => ({ blueprintId, name, blueprintUnitWeight, consumptionPoint }))

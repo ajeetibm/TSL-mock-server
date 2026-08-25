@@ -59,7 +59,8 @@ app.use((req, res, next) => {
 const allowedOrigins = Array.isArray(config.origins) ? config.origins : []
 app.use((req, res, next) => {
   const origin = req.headers.origin
-  const isLocalDev = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin || '')
+  // Any subdomain of localhost is treated as local dev (e.g. marketing.localhost:5173)
+  const isLocalDev = /^https?:\/\/([a-z0-9-]+\.)?(localhost|127\.0\.0\.1)(:\d+)?$/i.test(origin || '')
   if (allowedOrigins.length === 0) { res.setHeader('Access-Control-Allow-Origin', '*') }
   else if (origin && (allowedOrigins.includes(origin) || isLocalDev)) { res.setHeader('Access-Control-Allow-Origin', origin); res.setHeader('Vary', 'Origin') }
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS')
