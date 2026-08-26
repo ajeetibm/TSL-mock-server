@@ -166,11 +166,13 @@ async function rejectRequest(req, res, next) {
     if (!reason) return next(errors.badRequest('A rejection reason is required.', 'REJECTION_REASON_REQUIRED'))
     const rejectedAt = new Date().toISOString()
     request.status = 'rejected'; request.rejectedAt = rejectedAt; request.rejectionReason = reason
+    if (request.reviewGate === 'founders_public_funding') request.reviewStatus = 'rejected'
     const adminReq = mockState.adminRequests.find(r => r.requestId === request.requestId)
     const declinedBy = request.assignedCounselName || request.assignedCounsel || request.assignedCounselEmail
     if (adminReq) {
-      adminReq.status = 'rejected_reassignment_needed'; adminReq.reassignmentRequired = true
+      adminReq.status = request.reviewGate === 'founders_public_funding' ? 'rejected' : 'rejected_reassignment_needed'; adminReq.reassignmentRequired = request.reviewGate !== 'founders_public_funding'
       adminReq.rejectedAt = rejectedAt; adminReq.rejectionReason = reason
+      if (request.reviewGate === 'founders_public_funding') adminReq.reviewStatus = 'rejected'
       adminReq.rejectedByCounselName = declinedBy; adminReq.rejectedByCounselEmail = request.assignedCounselEmail
       adminReq.rejectionHistory = [...(adminReq.rejectionHistory || []), { counselName: declinedBy, counselEmail: request.assignedCounselEmail, reason, rejectedAt }]
     }

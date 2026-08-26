@@ -184,7 +184,7 @@ async function createPublicFundingReview(req, res, next) {
       normalizeEmail(request.userEmail) === userEmail &&
       request.status !== 'completed',
     )
-    if (existing) return res.json({ success: true, message: 'Publicly funded IP review is already awaiting counsel.', data: { requestId: existing.requestId, status: existing.reviewStatus || 'pending' } })
+    if (existing) return res.json({ success: true, message: 'Publicly funded IP review already exists.', data: { requestId: existing.requestId, status: existing.reviewStatus || 'pending', rejectionReason: existing.rejectionReason || null } })
 
     const requestId = 'req_' + mockState.nextRequestId++
     const submittedAt = new Date().toISOString()
@@ -216,7 +216,7 @@ async function getPublicFundingReview(req, res, next) {
   try {
     const request = mockState.adminRequests.find((item) => item.requestId === req.params.requestId && item.reviewGate === 'founders_public_funding')
     if (!request) return next(errors.notFound('Publicly funded IP review not found.', 'PUBLIC_FUNDING_REVIEW_NOT_FOUND'))
-    res.json({ success: true, data: { requestId: request.requestId, status: request.reviewStatus || 'pending', assignedCounsel: request.assignedCounselName || null, completedAt: request.completedAt || null } })
+    res.json({ success: true, data: { requestId: request.requestId, status: request.reviewStatus || 'pending', rejectionReason: request.rejectionReason || null, assignedCounsel: request.assignedCounselName || null, completedAt: request.completedAt || null } })
   } catch (e) { next(e) }
 }
 
