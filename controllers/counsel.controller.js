@@ -170,7 +170,7 @@ async function rejectRequest(req, res, next) {
     const adminReq = mockState.adminRequests.find(r => r.requestId === request.requestId)
     const declinedBy = request.assignedCounselName || request.assignedCounsel || request.assignedCounselEmail
     if (adminReq) {
-      adminReq.status = request.reviewGate === 'founders_public_funding' ? 'rejected' : 'rejected_reassignment_needed'; adminReq.reassignmentRequired = request.reviewGate !== 'founders_public_funding'
+      adminReq.status = 'rejected_reassignment_needed'; adminReq.reassignmentRequired = true
       adminReq.rejectedAt = rejectedAt; adminReq.rejectionReason = reason
       if (request.reviewGate === 'founders_public_funding') adminReq.reviewStatus = 'rejected'
       adminReq.rejectedByCounselName = declinedBy; adminReq.rejectedByCounselEmail = request.assignedCounselEmail
