@@ -23,19 +23,19 @@ Access-Control-Allow-Headers: Content-Type, Authorization
         "completions": 1234
       },
       {
-        "name": "Employment Contract",
+        "name": "Employment Offer Letter",
         "completions": 987
       },
       {
-        "name": "Shareholder Agreement",
+        "name": "Privacy & Cookies Policy",
         "completions": 756
       },
       {
-        "name": "Director Appointment",
+        "name": "Founders agreement and IP assignment",
         "completions": 543
       },
       {
-        "name": "Company Registration",
+        "name": "Service Level Agreement (SLA)",
         "completions": 432
       }
     ],

@@ -47,10 +47,10 @@ function buildAdminDashboard() {
       },
       topWizards: [
         { name: 'NDA Generator', completions: 1234 },
-        { name: 'Employment Contract', completions: 987 },
-        { name: 'Shareholder Agreement', completions: 756 },
-        { name: 'Director Appointment', completions: 543 },
-        { name: 'Company Registration', completions: 432 },
+        { name: 'Employment Offer Letter', completions: 987 },
+        { name: 'Privacy & Cookies Policy', completions: 756 },
+        { name: 'Founders agreement and IP assignment', completions: 543 },
+        { name: 'Service Level Agreement (SLA)', completions: 432 },
       ],
       recentCounselRequests: mockState.adminRequests
         .filter((request) => request.status === 'pending')
