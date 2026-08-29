@@ -76,9 +76,17 @@ async function forgotPassword(req, res, next) {
 
     // Always store the token so it can be verified
     resetTokens.set(token, { email, role, expiresAt })
-    logger.info('authController', 'Reset token generated', { email, role, token, expiresAt })
 
     const resetLink = `http://localhost:5173/reset-password?token=${token}`
+
+    // Print the reset link prominently so it's easy to copy from the terminal
+    console.log('\n' + '='.repeat(60))
+    console.log('  PASSWORD RESET LINK (copy and open in browser):')
+    console.log('  ' + resetLink)
+    console.log('='.repeat(60) + '\n')
+
+    logger.info('authController', 'Reset token generated', { email, role, token, expiresAt, resetLink })
+
     res.json({
       success: true,
       message: 'Password reset link generated.',
