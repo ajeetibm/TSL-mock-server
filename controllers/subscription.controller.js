@@ -509,12 +509,15 @@ async function getUpgradePreview(req, res, next) {
 
     const currentTier = PLAN_TIER[current.planId] ?? -1
     const newTier     = PLAN_TIER[newPlan.planId]  ?? -1
-    // Free plan (tier -1) can upgrade to any paid plan
-    if (newTier <= currentTier) {
-      return next(errors.badRequest('Target plan must be higher than current plan for an upgrade.', 'NOT_AN_UPGRADE'))
+    // Free plan (tier -1) can upgrade to any paid plan.
+    // Same-plan (renewal) is allowed — treated as a full monthly charge.
+    if (newTier < currentTier) {
+      return next(errors.badRequest('Target plan must be at least the current plan.', 'NOT_AN_UPGRADE'))
     }
 
-    const charge = calcUpgradeCharge(current, newPlan, store.nextBillingDate, current.planId === 'free')
+    // Same-plan renewal always starts a new full monthly cycle
+    const isSamePlan = newPlan.planId === current.planId
+    const charge = calcUpgradeCharge(current, newPlan, store.nextBillingDate, current.planId === 'free' || isSamePlan)
 
     res.json({
       success: true,
@@ -558,19 +561,22 @@ async function upgradeSubscription(req, res, next) {
     if (!alreadyActivatedByPayment) {
       // 'free' is the canonical pre-subscription state — always allow upgrade from it
       const isFreeUpgrade = sentPlanId === 'free' || store.planId === 'free'
-      if (!isFreeUpgrade && currentPlanId && sentPlanId !== store.planId) {
+      // Same-plan renewal — always allowed regardless of tier comparison
+      const isSamePlan = newPlan.planId === current.planId
+      if (!isFreeUpgrade && !isSamePlan && currentPlanId && sentPlanId !== store.planId) {
         return next(errors.conflict('Your subscription changed. Refresh the plan selection and try again.', 'STALE_CURRENT_PLAN'))
       }
       if (isFreeUpgrade) store.planId = 'free'
 
       const currentTier = PLAN_TIER[current.planId] ?? -1
       const newTier     = PLAN_TIER[newPlan.planId]  ?? -1
-      if (newTier <= currentTier) {
-        return next(errors.badRequest('Target plan must be higher than current plan.', 'NOT_AN_UPGRADE'))
+      // Same-plan renewals and free→paid upgrades are allowed; only block true downgrades
+      if (newTier < currentTier) {
+        return next(errors.badRequest('Target plan must be at least the current plan.', 'NOT_AN_UPGRADE'))
       }
     }
 
-    const startsNewCycle = sentPlanId === 'free' || current.planId === 'free'
+    const startsNewCycle = sentPlanId === 'free' || current.planId === 'free' || newPlan.planId === current.planId
     const charge        = calcUpgradeCharge(current, newPlan, store.nextBillingDate, startsNewCycle)
     const transactionId = paymentReference
       ? String(paymentReference)
