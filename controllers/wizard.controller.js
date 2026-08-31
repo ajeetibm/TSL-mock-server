@@ -86,6 +86,9 @@ function validateEmploymentOffer(data = {}) {
   if (Array.isArray(data.conditions) && data.conditions.includes('Medical assessment') && !String(data.medical_justification || '').trim()) {
     return { message: 'Medical assessment requires an inherent requirement.', gate: { type: 'block', fieldKey: 'medical_justification', reason: 'Medical assessment selected without a justification.' } }
   }
+  const needsWorkAuthorisation = Array.isArray(data.conditions) && data.conditions.includes('Valid work authorisation')
+  if (needsWorkAuthorisation && !String(data.work_permit_type || '').trim()) missing.push('work_permit_type')
+  if (needsWorkAuthorisation && !String(data.work_permit_expiry || '').trim()) missing.push('work_permit_expiry')
   return missing.length ? { message: `Missing required Employment Offer Letter fields: ${missing.join(', ')}` } : null
 }
 
