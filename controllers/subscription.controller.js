@@ -29,9 +29,10 @@ const PLANS = [
     features: [
       '4 Blueprint run units per month',
       '0 Counsel credits per month',
-      '1 team member',
       'Basic email support',
       '6 months document storage',
+      'No API access',
+      'No white-label',
     ],
   },
   {
@@ -47,10 +48,10 @@ const PLANS = [
     features: [
       '12 Blueprint run units per month',
       '2 Counsel credits per month',
-      '10 team members',
       'Priority support (24–48 hr)',
       'Unlimited document storage',
       'API access',
+      'No white-label',
     ],
   },
   {
@@ -66,7 +67,6 @@ const PLANS = [
     features: [
       '30 Blueprint run units per month',
       '6 Counsel credits per month',
-      '25 team members',
       'Dedicated support (SLA)',
       'Unlimited document storage',
       'API access',
