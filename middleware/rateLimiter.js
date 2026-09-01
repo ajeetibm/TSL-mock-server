@@ -5,13 +5,13 @@
  */
 const rateLimit = require('express-rate-limit')
 
-// 10 attempts per 15 minutes on auth endpoints
+// 10 attempts per 30 seconds on auth endpoints (mock server — short window for dev)
 const authRateLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
+  windowMs: 30 * 1000,
   max: 10,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { success: false, message: 'Too many requests. Please try again in 15 minutes.', error: 'RATE_LIMIT_EXCEEDED' },
+  message: { success: false, message: 'Too many requests. Please try again in 30 seconds.', error: 'RATE_LIMIT_EXCEEDED' },
   skip: () => process.env.NODE_ENV === 'test',
 })
 
