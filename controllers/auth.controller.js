@@ -58,7 +58,7 @@ async function forgotPassword(req, res, next) {
 
     if (!email) return next(errors.badRequest('Email is required.', 'EMAIL_REQUIRED'))
 
-    // Determine which role store this email belongs to
+    // Determine which role store this email belongs to — reject unknown emails
     let role = 'user'
     if (portalHint === 'admin' || getAdminByEmail(email)) {
       role = 'admin'
@@ -67,8 +67,7 @@ async function forgotPassword(req, res, next) {
     } else if (getSmeByEmail(email)) {
       role = 'user'
     } else {
-      // Unknown email — auto-create as SME so the reset works for new test emails too
-      role = portalHint === 'admin' ? 'admin' : portalHint === 'counsel' ? 'counsel' : 'user'
+      return next(errors.notFound('No account found with that email address.', 'USER_NOT_FOUND'))
     }
 
     const token     = 'mock-reset-token-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8)

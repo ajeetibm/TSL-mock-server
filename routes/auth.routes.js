@@ -139,10 +139,16 @@ function buildLoginResponse(payload = {}) {
   }
 
   const smeEmail = email || 'thabo@company.co.za'
-  const sme = getSmeByEmail(smeEmail) || createSmeUser(smeEmail, payload)
+  const sme = getSmeByEmail(smeEmail)
+
+  // Reject any email that is not pre-registered in the mock user store
+  if (!sme) {
+    return { success: false, message: 'No account found with that email address.', error: 'USER_NOT_FOUND' }
+  }
+
   const incomingPassword = String(payload.password || '')
   if (sme.password && incomingPassword !== sme.password) {
-    return { success: false, message: 'Invalid SME credentials.', error: 'INVALID_CREDENTIALS' }
+    return { success: false, message: 'Incorrect password. Please try again.', error: 'INVALID_CREDENTIALS' }
   }
   if (!sme.password && incomingPassword) {
     sme.password = incomingPassword
@@ -151,12 +157,12 @@ function buildLoginResponse(payload = {}) {
   return {
     success: true,
     data: {
-      userId: sme?.userId || 'usr_8f3k2m9x',
-      fullName: sme?.fullName || sme?.contactPerson || 'Thabo Molefe',
-      email: sme?.email || payload.email || 'thabo@company.co.za',
+      userId: sme.userId,
+      fullName: sme.fullName || sme.contactPerson,
+      email: sme.email,
       role: 'sme',
       portal: 'sme',
-      plan: String(sme?.plan || 'operator').toLowerCase(),
+      plan: String(sme.plan || 'operator').toLowerCase(),
       token: 'mock_sme_token',
       tokenExpiry: '2026-06-11T08:00:00Z',
     },
@@ -279,19 +285,23 @@ function handleForgotPassword(req, res) {
   const email = normalizeEmail(req.body.email || '')
   if (!email) return sendJson(res, 400, { success: false, message: 'Email is required.', error: 'EMAIL_REQUIRED' })
 
-  // Look up across all user stores — accept any registered email
+  // Only allow password reset for emails that exist in the mock user stores
   const knownUser =
     getSmeByEmail(email) ||
     getAdminByEmail(email) ||
     getCounselByEmail(email)
 
-  // Always respond success to prevent email enumeration
+  if (!knownUser) {
+    return sendJson(res, 404, {
+      success: false,
+      message: 'No account found with that email address.',
+      error: 'USER_NOT_FOUND',
+    })
+  }
+
   const token = 'mock-reset-token-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8)
   const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString() // 15 min
-
-  if (knownUser) {
-    resetTokens.set(token, { email, expiresAt })
-  }
+  resetTokens.set(token, { email, expiresAt, role: knownUser.role || 'sme' })
 
   const resetLink = `http://localhost:5173/reset-password?token=${token}`
   return sendJson(res, 200, {
@@ -310,7 +320,7 @@ function handleVerifyResetToken(req, res) {
     resetTokens.delete(token)
     return sendJson(res, 200, { valid: false, message: 'Reset link has expired.' })
   }
-  return sendJson(res, 200, { valid: true })
+  return sendJson(res, 200, { valid: true, email: entry.email, role: entry.role || 'sme' })
 }
 
 function handleResetPassword(req, res) {

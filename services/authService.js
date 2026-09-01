@@ -113,9 +113,10 @@ async function loginUser(payload, ip) {
     if (user.password && password !== user.password) throw errors.unauthorized('Invalid credentials.', 'INVALID_CREDENTIALS')
 
   } else {
-    user = getSmeByEmail(email) || createSmeUser(email, payload)
+    user = getSmeByEmail(email)
+    if (!user) throw errors.unauthorized('No account found with that email address.', 'USER_NOT_FOUND')
     if (!user.password && password) { user.password = password; mockState.smeUsers.set(email, user) }
-    if (user.password && password !== user.password) throw errors.unauthorized('Invalid credentials.', 'INVALID_CREDENTIALS')
+    if (user.password && password !== user.password) throw errors.unauthorized('Incorrect password. Please try again.', 'INVALID_CREDENTIALS')
   }
 
   addAuditLog({ action: AUDIT_ACTIONS.LOGIN, userId: user.userId, email, role: user.role, ip })
