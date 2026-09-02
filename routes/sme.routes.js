@@ -194,9 +194,34 @@ function handleSmeRoutes(req, res, relPath) {
   }
 
   if (req.method === 'GET' && relPath === 'api/v1/sme/counsel/credits') {
+    const email = normalizeEmail(req.user?.email || '')
+    const user = email ? mockState.smeUsers.get(email) : null
+    const planId = String(user?.plan || 'free').toLowerCase()
+
+    const CREDIT_MAP = {
+      launchpad: { name: 'Launchpad', includedCredits: 0, topUpRate: 550 },
+      operator:  { name: 'Operator',  includedCredits: 2, topUpRate: 500 },
+      boardroom: { name: 'Boardroom', includedCredits: 6, topUpRate: 450 },
+    }
+    const tier = CREDIT_MAP[planId] || { name: 'Free', includedCredits: 0, topUpRate: 500 }
+
+    const next = new Date()
+    next.setUTCMonth(next.getUTCMonth() + 1)
+    next.setUTCDate(1)
+
     return sendJson(res, 200, {
       success: true,
-      data: mockState.smeCredits,
+      data: {
+        plan: tier.name,
+        includedCredits: tier.includedCredits,
+        creditsTotal: tier.includedCredits,
+        creditsUsed: 0,
+        creditsRemaining: tier.includedCredits,
+        usageThisMonth: 0,
+        topUpRate: tier.topUpRate,
+        currency: 'ZAR',
+        resetDate: next.toISOString().slice(0, 10),
+      },
     })
   }
 
@@ -223,7 +248,7 @@ function handleSmeRoutes(req, res, relPath) {
   }
 
   if (req.method === 'POST' && relPath === 'api/v1/sme/counsel/requests') {
-    const subject = req.body.subject || req.body.title || 'Review of SaaS Service Agreement'
+    const subject = req.body.subject || req.body.title || 'Counsel Request'
     const userEmail = req.body.userEmail || req.body.email || 'thabo@company.co.za'
     const now = new Date()
     const duplicateWindowMs = 30000

@@ -113,7 +113,37 @@ async function getDashboard(req, res, next) {
 }
 
 async function getCounselCredits(req, res, next) {
-  try { res.json({ success: true, data: resetCounselCreditsIfDue() }) }
+  try {
+    const email = normalizeEmail(req.user?.email || '')
+    const user  = email ? mockState.smeUsers.get(email) : null
+    const planId = String(user?.plan || 'free').toLowerCase()
+
+    const CREDIT_MAP = {
+      launchpad: { name: 'Launchpad', includedCredits: 0, topUpRate: 550 },
+      operator:  { name: 'Operator',  includedCredits: 2, topUpRate: 500 },
+      boardroom: { name: 'Boardroom', includedCredits: 6, topUpRate: 450 },
+    }
+    const tier = CREDIT_MAP[planId] || { name: 'Free', includedCredits: 0, topUpRate: 500 }
+
+    const next_ = new Date()
+    next_.setUTCMonth(next_.getUTCMonth() + 1)
+    next_.setUTCDate(1)
+
+    res.json({
+      success: true,
+      data: {
+        plan:             tier.name,
+        includedCredits:  tier.includedCredits,
+        creditsTotal:     tier.includedCredits,
+        creditsUsed:      0,
+        creditsRemaining: tier.includedCredits,
+        usageThisMonth:   0,
+        topUpRate:        tier.topUpRate,
+        currency:         'ZAR',
+        resetDate:        next_.toISOString().slice(0, 10),
+      },
+    })
+  }
   catch (e) { next(e) }
 }
 
@@ -141,7 +171,7 @@ async function getCounselRequests(req, res, next) {
 async function createCounselRequest(req, res, next) {
   try {
     const credits = resetCounselCreditsIfDue()
-    const subject = req.body.subject || req.body.title || 'Review of SaaS Service Agreement'
+    const subject = req.body.subject || req.body.title || 'Counsel Request'
     const userEmail = req.body.userEmail || req.body.email || req.user?.email || 'thabo@company.co.za'
     const now = new Date()
     if (!String(req.body.relatedWizard || '').trim()) return next(errors.badRequest('Choose the wizard document to be reviewed before submitting a counsel request.', 'WIZARD_REQUIRED'))
