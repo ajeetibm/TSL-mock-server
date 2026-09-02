@@ -114,33 +114,19 @@ async function getDashboard(req, res, next) {
 
 async function getCounselCredits(req, res, next) {
   try {
-    const email = normalizeEmail(req.user?.email || '')
-    const user  = email ? mockState.smeUsers.get(email) : null
-    const planId = String(user?.plan || 'free').toLowerCase()
-
-    const CREDIT_MAP = {
-      launchpad: { name: 'Launchpad', includedCredits: 0, topUpRate: 550 },
-      operator:  { name: 'Operator',  includedCredits: 2, topUpRate: 500 },
-      boardroom: { name: 'Boardroom', includedCredits: 6, topUpRate: 450 },
-    }
-    const tier = CREDIT_MAP[planId] || { name: 'Free', includedCredits: 0, topUpRate: 500 }
-
-    const next_ = new Date()
-    next_.setUTCMonth(next_.getUTCMonth() + 1)
-    next_.setUTCDate(1)
-
+    const credits = resetCounselCreditsIfDue()
     res.json({
       success: true,
       data: {
-        plan:             tier.name,
-        includedCredits:  tier.includedCredits,
-        creditsTotal:     tier.includedCredits,
-        creditsUsed:      0,
-        creditsRemaining: tier.includedCredits,
-        usageThisMonth:   0,
-        topUpRate:        tier.topUpRate,
-        currency:         'ZAR',
-        resetDate:        next_.toISOString().slice(0, 10),
+        plan:             credits.plan,
+        includedCredits:  credits.includedCredits,
+        creditsTotal:     credits.creditsTotal,
+        creditsUsed:      credits.creditsUsed,
+        creditsRemaining: credits.creditsRemaining,
+        usageThisMonth:   credits.usageThisMonth,
+        topUpRate:        credits.topUpRate,
+        currency:         credits.currency,
+        resetDate:        credits.resetDate,
       },
     })
   }
