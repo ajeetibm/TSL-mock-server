@@ -197,70 +197,14 @@ function seedSubscription(email) {
   next.setDate(1)
 
   const nextBillingDate = next.toISOString().split('T')[0]
-  // Seed billing period: last full month
-  const periodStart = new Date(now.getFullYear(), now.getMonth() - 1, 1)
-  const periodEnd   = new Date(now.getFullYear(), now.getMonth(), 0)
-  const billingPeriod = `${periodStart.toISOString().split('T')[0]} – ${periodEnd.toISOString().split('T')[0]}`
 
   return {
     planId:          'free',
-    runsUsed:         3,
+    runsUsed:         0,
     nextBillingDate,
     paymentMethod:   { brand: 'Visa', last4: '4242' },
     pendingDowngrade: null,
-    invoices: [
-      {
-        invoiceId:       'INV-2025-003',
-        invoiceNumber:   'INV-2025-003',
-        invoiceDate:     '2025-12-01',
-        transactionId:   'TXN_SEED003',
-        type:            'subscription',
-        previousPlan:    'Operator',
-        newPlan:         'Operator',
-        billingPeriod:   '2025-12-01 – 2025-12-31',
-        plan:            'Operator',
-        amount:           999,
-        tax:              149.85,
-        total:            1148.85,
-        status:          'paid',
-        paymentMethod:   { brand: 'Visa', last4: '4242' },
-        date:            '2025-12-01',
-      },
-      {
-        invoiceId:       'INV-2025-002',
-        invoiceNumber:   'INV-2025-002',
-        invoiceDate:     '2025-11-01',
-        transactionId:   'TXN_SEED002',
-        type:            'subscription',
-        previousPlan:    'Operator',
-        newPlan:         'Operator',
-        billingPeriod:   '2025-11-01 – 2025-11-30',
-        plan:            'Operator',
-        amount:           999,
-        tax:              149.85,
-        total:            1148.85,
-        status:          'paid',
-        paymentMethod:   { brand: 'Visa', last4: '4242' },
-        date:            '2025-11-01',
-      },
-      {
-        invoiceId:       'INV-2025-001',
-        invoiceNumber:   'INV-2025-001',
-        invoiceDate:     '2025-10-01',
-        transactionId:   'TXN_SEED001',
-        type:            'subscription',
-        previousPlan:    'Launchpad',
-        newPlan:         'Operator',
-        billingPeriod:   '2025-10-01 – 2025-10-31',
-        plan:            'Operator',
-        amount:           999,
-        tax:              149.85,
-        total:            1148.85,
-        status:          'paid',
-        paymentMethod:   { brand: 'Visa', last4: '4242' },
-        date:            '2025-10-01',
-      },
-    ],
+    invoices:        [],
   }
 }
 
