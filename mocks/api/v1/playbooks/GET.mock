@@ -46,30 +46,30 @@ Access-Control-Allow-Headers: Content-Type, Authorization
         "icon": "Shield",
         "cards": [
           {
-            "title": "POPIA Compliance Basics",
-            "steps": "7 steps",
-            "time": "12 min",
-            "description": "Set up practical privacy controls, consent language, and data handling processes for South African businesses.",
+            "title": "POPIA Compliance Essentials",
+            "steps": "10 steps",
+            "time": "25 min",
+            "description": "Navigate the Protection of Personal Information Act (POPIA) requirements for your business, including data protection and privacy policies.",
             "icon": "Shield",
-            "wizards": ["Privacy Policy (POPIA Compliant)", "Data Processing Agreement"],
+            "wizards": ["POPIA Privacy Policy", "Data Processing Agreement"],
             "pdfUrl": "https://www.w3.org/WAI/WCAG21/Techniques/pdf/sample.pdf"
           },
           {
-            "title": "Document Retention Checklist",
+            "title": "Website Legal Compliance",
             "steps": "6 steps",
-            "time": "9 min",
-            "description": "Know which company, employment, tax, and customer records to keep, and how long to retain them.",
-            "icon": "FileText",
-            "wizards": ["Records Retention Policy"],
+            "time": "12 min",
+            "description": "Ensure your website meets all legal requirements including terms of service, privacy policies, and cookie consent under SA law.",
+            "icon": "Shield",
+            "wizards": ["Website Terms & Conditions", "Privacy Policy"],
             "pdfUrl": "https://www.w3.org/WAI/WCAG21/Techniques/pdf/sample.pdf"
           },
           {
-            "title": "Website Legal Readiness",
-            "steps": "9 steps",
-            "time": "14 min",
-            "description": "Prepare a legally sound website with terms, privacy disclosures, cookies, and customer-facing notices.",
-            "icon": "WandSparkles",
-            "wizards": ["Terms of Service", "Privacy Policy"],
+            "title": "BBBEE Verification Guide",
+            "steps": "7 steps",
+            "time": "18 min",
+            "description": "Step-by-step guidance on obtaining your BBBEE certificate and understanding the verification process for South African businesses.",
+            "icon": "CheckCircle2",
+            "wizards": ["Website Terms & Conditions", "Privacy Policy"],
             "pdfUrl": "https://www.w3.org/WAI/WCAG21/Techniques/pdf/sample.pdf"
           }
         ]
@@ -79,30 +79,30 @@ Access-Control-Allow-Headers: Content-Type, Authorization
         "icon": "TrendingUp",
         "cards": [
           {
-            "title": "Investor Meeting Prep",
-            "steps": "6 steps",
-            "time": "11 min",
-            "description": "Prepare the core legal documents and confidentiality steps needed before sharing sensitive startup materials.",
+            "title": "Pre-Seed Fundraising Preparation",
+            "steps": "15 steps",
+            "time": "30 min",
+            "description": "Get your startup investor-ready with proper corporate governance, shareholder agreements, and due diligence preparation.",
             "icon": "TrendingUp",
-            "wizards": ["Non-Disclosure Agreement (NDA)", "Founder Agreement"],
+            "wizards": ["Shareholders Agreement", "Investment Term Sheet"],
             "pdfUrl": "https://www.w3.org/WAI/WCAG21/Techniques/pdf/sample.pdf"
           },
           {
-            "title": "Founder Equity Readiness",
-            "steps": "8 steps",
-            "time": "16 min",
-            "description": "Review founder roles, equity splits, vesting expectations, and decision-making before funding conversations.",
-            "icon": "UsersRound",
-            "wizards": ["Founder Agreement", "Shareholder Resolutions"],
+            "title": "Understanding Term Sheets",
+            "steps": "9 steps",
+            "time": "20 min",
+            "description": "Decode investor term sheets and understand key terms, valuation, and governance provisions in South African investment deals.",
+            "icon": "FileText",
+            "wizards": ["Investment Term Sheet", "Shareholders Agreement"],
             "pdfUrl": "https://www.w3.org/WAI/WCAG21/Techniques/pdf/sample.pdf"
           },
           {
-            "title": "Due Diligence Pack",
-            "steps": "10 steps",
-            "time": "18 min",
-            "description": "Organise contracts, policies, resolutions, and employment records into a cleaner investor review package.",
-            "icon": "BookOpen",
-            "wizards": ["Board Resolution", "Service Agreement"],
+            "title": "Due Diligence Readiness",
+            "steps": "11 steps",
+            "time": "22 min",
+            "description": "Prepare your legal and corporate documents for investor due diligence, ensuring a smooth fundraising process.",
+            "icon": "TrendingUp",
+            "wizards": ["Corporate Records Kit", "Share Certificate Package"],
             "pdfUrl": "https://www.w3.org/WAI/WCAG21/Techniques/pdf/sample.pdf"
           }
         ]
