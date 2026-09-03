@@ -77,7 +77,7 @@ const PLANS = [
 ]
 
 const PLAN_TIER = { free: -1, launchpad: 0, operator: 1, boardroom: 2 }
-const BLUEPRINT_RUN_TOP_UP_RATE = 250
+const BLUEPRINT_RUN_TOP_UP_RATE = 149
 
 const VAT_RATE = 0.15
 function getPlan(planId) {

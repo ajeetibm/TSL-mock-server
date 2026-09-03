@@ -161,7 +161,6 @@ async function createCounselRequest(req, res, next) {
     const userEmail = req.body.userEmail || req.body.email || req.user?.email || 'thabo@company.co.za'
     const now = new Date()
     if (!String(req.body.relatedWizard || '').trim()) return next(errors.badRequest('Choose the wizard document to be reviewed before submitting a counsel request.', 'WIZARD_REQUIRED'))
-    if (!Array.isArray(req.body.attachments) || req.body.attachments.length !== 1) return next(errors.badRequest('A counsel request must contain one document.', 'SINGLE_DOCUMENT_REQUIRED'))
     const creditsRequired = 1
     if (credits.creditsRemaining < creditsRequired) return next(errors.conflict('No counsel credits remain. Purchase a top-up before submitting.', 'INSUFFICIENT_COUNSEL_CREDITS'))
 
