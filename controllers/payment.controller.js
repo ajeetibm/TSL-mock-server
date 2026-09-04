@@ -4,13 +4,13 @@
  */
 const { initializeTransaction, paymentTransactions, verifiedReferences, recordPaymentHistory, getPaymentHistory, getWizardAccess, activateWizardAccess, addWizardsToAccess } = require('../mock-data/payments')
 const { activateUserSubscription, getUserSubscription, getAllSubscriptions } = require('../services/subscriptionService')
-const { getBlueprintRunUsage } = require('./subscription.controller')
+const { getBlueprintRunUsage, getSubscriptionPlanId } = require('./subscription.controller')
 const { smartVerify } = require('../services/paystackService')
 const { addAuditLog, AUDIT_ACTIONS } = require('../mock-data/audit')
 const { validatePaystackInitPayload } = require('../utils/validate')
 const { errors } = require('../utils/errors')
 const logger = require('../utils/logger')
-const { COUNSEL_TIERS, resetCounselCreditsIfDue } = require('../mock-state')
+const { COUNSEL_TIERS, syncCounselCreditsForUser } = require('../mock-state')
 const { activatePaidSubscription } = require('./subscription.controller')
 
 function validateWizardSelection(body) {
@@ -144,15 +144,18 @@ async function verifyPayment(req, res, next) {
     if (!txn) {
       const type = req.body.type || 'subscription'
       const isCounselTopUp = type === 'counsel-topup'
-      const currentCredits = resetCounselCreditsIfDue()
-      const tier = COUNSEL_TIERS[String(currentCredits.plan || '').toLowerCase()] || COUNSEL_TIERS.operator
       const credits = Number(req.body.credits)
       if (isCounselTopUp && (!Number.isInteger(credits) || credits < 1 || credits > 20)) return next(errors.badRequest('Counsel top-ups must be between 1 and 20 whole credits.', 'INVALID_TOPUP_QUANTITY'))
-      if (isCounselTopUp && String(req.body.plan || '').toLowerCase() !== tier.name.toLowerCase()) return next(errors.badRequest('Counsel top-ups must use the account’s current tier rate.', 'TOPUP_TIER_MISMATCH'))
-      const expectedAmount = isCounselTopUp ? Math.round(tier.topUpRate * credits * 1.15) : Number(req.body.amountPaid || 0)
-      if (isCounselTopUp && Number(req.body.amountPaid) !== expectedAmount) return next(errors.badRequest('The top-up amount does not match the current tier rate.', 'TOPUP_AMOUNT_MISMATCH'))
-      const plan = isCounselTopUp ? tier.name : (req.body.plan || 'operator')
+      // Counsel top-ups are independent purchases. The chosen tier determines
+      // the price only; it does not change the account subscription or its
+      // monthly included-credit entitlement.
+      const requestedPlanKey = String(req.body.plan || '').toLowerCase()
       const email = req.user?.email || req.body.email || 'unknown@tsl.co.za'
+      const activePlanId = getSubscriptionPlanId(email)
+      const activeTier = COUNSEL_TIERS[String(activePlanId || '').toLowerCase()] || COUNSEL_TIERS.free
+      const tier = COUNSEL_TIERS[requestedPlanKey] || activeTier
+      const expectedAmount = Number(req.body.amountPaid || 0)
+      const plan = isCounselTopUp ? tier.name : (req.body.plan || 'operator')
       txn = {
         reference,
         email,
@@ -197,7 +200,8 @@ async function verifyPayment(req, res, next) {
 
     // Add counsel credits on successful top-up payment
     if (status === 'success' && isCounselTopUp && !txn.creditsApplied) {
-      const credits = resetCounselCreditsIfDue()
+      const email = req.user?.email || txn.email
+      const credits = syncCounselCreditsForUser(email, getSubscriptionPlanId(email))
       credits.creditsTotal += Number(txn.credits)
       credits.creditsRemaining += Number(txn.credits)
       txn.creditsApplied = true

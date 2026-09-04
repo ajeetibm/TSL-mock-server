@@ -3,11 +3,17 @@
  * SME portal endpoints — profile, counsel credits/requests, dashboard.
  * PRODUCTION: replace mockState with DB queries.
  */
-const { mockState, resetCounselCreditsIfDue } = require('../mock-state')
+const { mockState, syncCounselCreditsForUser } = require('../mock-state')
 const { paymentTransactions } = require('../mock-data/payments')
 const { getSmeByEmail, normalizeEmail, createSmeUser } = require('../services/authService')
 const { addAuditLog, AUDIT_ACTIONS } = require('../mock-data/audit')
 const { errors } = require('../utils/errors')
+const { getSubscriptionPlanId } = require('./subscription.controller')
+
+function counselCreditsFor(email) {
+  const accountEmail = String(email || 'thabo@company.co.za').trim().toLowerCase()
+  return syncCounselCreditsForUser(accountEmail, getSubscriptionPlanId(accountEmail))
+}
 
 function publicProfile(user) {
   return {
@@ -114,7 +120,7 @@ async function getDashboard(req, res, next) {
 
 async function getCounselCredits(req, res, next) {
   try {
-    const credits = resetCounselCreditsIfDue()
+    const credits = counselCreditsFor(req.user?.email)
     res.json({
       success: true,
       data: {
@@ -156,9 +162,9 @@ async function getCounselRequests(req, res, next) {
 
 async function createCounselRequest(req, res, next) {
   try {
-    const credits = resetCounselCreditsIfDue()
     const subject = req.body.subject || req.body.title || 'Counsel Request'
     const userEmail = req.body.userEmail || req.body.email || req.user?.email || 'thabo@company.co.za'
+    const credits = counselCreditsFor(userEmail)
     const now = new Date()
     if (!String(req.body.relatedWizard || '').trim()) return next(errors.badRequest('Choose the wizard document to be reviewed before submitting a counsel request.', 'WIZARD_REQUIRED'))
     const creditsRequired = 1
@@ -172,7 +178,7 @@ async function createCounselRequest(req, res, next) {
     })
 
     if (duplicate) {
-      return res.json({ success: true, message: 'Duplicate request ignored.', data: { requestId: duplicate.requestId, subject: duplicate.subject, status: duplicate.status, creditsRemaining: mockState.smeCredits.creditsRemaining, submittedAt: duplicate.submittedAt || duplicate.receivedAt, duplicate: true } })
+      return res.json({ success: true, message: 'Duplicate request ignored.', data: { requestId: duplicate.requestId, subject: duplicate.subject, status: duplicate.status, creditsRemaining: credits.creditsRemaining, submittedAt: duplicate.submittedAt || duplicate.receivedAt, duplicate: true } })
     }
 
     if (creditsRequired > 0) { credits.creditsUsed += creditsRequired; credits.usageThisMonth += creditsRequired; credits.creditsRemaining -= creditsRequired }
@@ -223,7 +229,16 @@ async function createPublicFundingReview(req, res, next) {
       currency: 'ZAR',
     }
     mockState.adminRequests.unshift(request)
-    res.status(201).json({ success: true, message: 'Publicly funded IP review sent to admin for counsel assignment.', data: { requestId, status: 'pending' } })
+
+    // Deduct one counsel credit for this review request (same rule as a regular counsel request).
+    const credits = counselCreditsFor(userEmail)
+    if (credits.creditsRemaining > 0) {
+      credits.creditsUsed += 1
+      credits.usageThisMonth += 1
+      credits.creditsRemaining -= 1
+    }
+
+    res.status(201).json({ success: true, message: 'Publicly funded IP review sent to admin for counsel assignment.', data: { requestId, status: 'pending', creditsRemaining: credits.creditsRemaining } })
   } catch (e) { next(e) }
 }
 
@@ -256,7 +271,7 @@ async function topUpCredits(req, res, next) {
   try {
     const transaction = paymentTransactions.get(String(req.body.reference || ''))
     if (!transaction || transaction.type !== 'counsel-topup' || transaction.status !== 'success') return next(errors.badRequest('A verified counsel top-up payment is required before credits can be added.', 'UNVERIFIED_TOPUP'))
-    res.json({ success: true, message: 'Top-up payment was already applied.', data: resetCounselCreditsIfDue() })
+    res.json({ success: true, message: 'Top-up payment was already applied.', data: counselCreditsFor(req.user?.email) })
   } catch (e) { next(e) }
 }
 

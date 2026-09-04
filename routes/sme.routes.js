@@ -1,5 +1,11 @@
-const { mockState } = require('../mock-state')
+const { mockState, syncCounselCreditsForUser } = require('../mock-state')
 const { getFirstSmeUser, getSmeByEmail, normalizeEmail, sendJson } = require('./helpers')
+const { getSubscriptionPlanId } = require('../controllers/subscription.controller')
+
+function counselCreditsFor(email) {
+  const accountEmail = String(email || 'thabo@company.co.za').trim().toLowerCase()
+  return syncCounselCreditsForUser(accountEmail, getSubscriptionPlanId(accountEmail))
+}
 
 function titleCaseFromEmail(email) {
   const localPart = normalizeEmail(email).split('@')[0] || 'user'
@@ -194,33 +200,21 @@ function handleSmeRoutes(req, res, relPath) {
   }
 
   if (req.method === 'GET' && relPath === 'api/v1/sme/counsel/credits') {
-    const email = normalizeEmail(req.user?.email || '')
-    const user = email ? mockState.smeUsers.get(email) : null
-    const planId = String(user?.plan || 'free').toLowerCase()
-
-    const CREDIT_MAP = {
-      launchpad: { name: 'Launchpad', includedCredits: 0, topUpRate: 550 },
-      operator:  { name: 'Operator',  includedCredits: 2, topUpRate: 500 },
-      boardroom: { name: 'Boardroom', includedCredits: 6, topUpRate: 450 },
-    }
-    const tier = CREDIT_MAP[planId] || { name: 'Free', includedCredits: 0, topUpRate: 500 }
-
-    const next = new Date()
-    next.setUTCMonth(next.getUTCMonth() + 1)
-    next.setUTCDate(1)
+    const email = normalizeEmail(req.user?.email || 'thabo@company.co.za')
+    const credits = counselCreditsFor(email)
 
     return sendJson(res, 200, {
       success: true,
       data: {
-        plan: tier.name,
-        includedCredits: tier.includedCredits,
-        creditsTotal: tier.includedCredits,
-        creditsUsed: 0,
-        creditsRemaining: tier.includedCredits,
-        usageThisMonth: 0,
-        topUpRate: tier.topUpRate,
-        currency: 'ZAR',
-        resetDate: next.toISOString().slice(0, 10),
+        plan: credits.plan,
+        includedCredits: credits.includedCredits,
+        creditsTotal: credits.creditsTotal,
+        creditsUsed: credits.creditsUsed,
+        creditsRemaining: credits.creditsRemaining,
+        usageThisMonth: credits.usageThisMonth,
+        topUpRate: credits.topUpRate,
+        currency: credits.currency,
+        resetDate: credits.resetDate,
       },
     })
   }
@@ -250,6 +244,7 @@ function handleSmeRoutes(req, res, relPath) {
   if (req.method === 'POST' && relPath === 'api/v1/sme/counsel/requests') {
     const subject = req.body.subject || req.body.title || 'Counsel Request'
     const userEmail = req.body.userEmail || req.body.email || 'thabo@company.co.za'
+    const credits = counselCreditsFor(userEmail)
     const now = new Date()
     const duplicateWindowMs = 30000
     const existingPendingRequest = mockState.adminRequests.find((request) => {
@@ -267,17 +262,17 @@ function handleSmeRoutes(req, res, relPath) {
           requestId: existingPendingRequest.requestId,
           subject: existingPendingRequest.subject,
           status: existingPendingRequest.status,
-          creditsRemaining: mockState.smeCredits.creditsRemaining,
+          creditsRemaining: credits.creditsRemaining,
           submittedAt: existingPendingRequest.submittedAt || existingPendingRequest.receivedAt,
           duplicate: true,
         },
       })
     }
 
-    if (mockState.smeCredits.creditsRemaining > 0) {
-      mockState.smeCredits.creditsUsed += 1
-      mockState.smeCredits.usageThisMonth += 1
-      mockState.smeCredits.creditsRemaining -= 1
+    if (credits.creditsRemaining > 0) {
+      credits.creditsUsed += 1
+      credits.usageThisMonth += 1
+      credits.creditsRemaining -= 1
     }
 
     const requestId = 'req_' + mockState.nextRequestId++
@@ -306,7 +301,7 @@ function handleSmeRoutes(req, res, relPath) {
         requestId,
         subject: request.subject,
         status: request.status,
-        creditsRemaining: mockState.smeCredits.creditsRemaining,
+        creditsRemaining: credits.creditsRemaining,
         submittedAt: request.submittedAt,
       },
     })

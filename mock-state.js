@@ -5,17 +5,10 @@ const mockState = {
   nextAdminNotificationId: 1,
   nextPaymentId: 1,
   availability: 'available',
-  smeCredits: {
-    plan: 'free',
-    includedCredits: 0,
-    creditsTotal: 0,
-    creditsUsed: 0,
-    creditsRemaining: 0,
-    usageThisMonth: 0,
-    topUpRate: 500,
-    currency: 'ZAR',
-    resetDate: '2026-07-10',
-  },
+  // Per-user counsel credits: Map<normalizedEmail, CreditRecord>
+  smeCreditsByUser: new Map(),
+  // Legacy single-user object kept for backward compat — do not reference directly.
+  smeCredits: { plan: 'free', includedCredits: 0, creditsTotal: 0, creditsUsed: 0, creditsRemaining: 0, usageThisMonth: 0, topUpRate: 500, currency: 'ZAR', resetDate: '2026-07-10' },
   smeUsers: new Map([
     ['thabo@company.co.za', {
       userId: 'usr_8f3k2m9x',
@@ -442,26 +435,94 @@ defaultAssignableCounsel.forEach((member) => {
 mockState.wizardDrafts = new Map()
 
 const COUNSEL_TIERS = {
+  free: { name: 'Free', includedCredits: 0, topUpRate: 550, sla: '—' },
   launchpad: { name: 'Launchpad', includedCredits: 0, topUpRate: 550, sla: '2 business days' },
   operator: { name: 'Operator', includedCredits: 2, topUpRate: 500, sla: '1 business day' },
   boardroom: { name: 'Boardroom', includedCredits: 6, topUpRate: 450, sla: '8 business hours' },
 }
 
-function resetCounselCreditsIfDue(now = new Date()) {
-  const credits = mockState.smeCredits
-  let resetAt = new Date(`${credits.resetDate}T00:00:00.000Z`)
-  if (Number.isNaN(resetAt.getTime()) || now < resetAt) return credits
-  const tier = COUNSEL_TIERS[String(credits.plan || '').toLowerCase()] || COUNSEL_TIERS.operator
-  credits.plan = tier.name
-  credits.includedCredits = tier.includedCredits
-  credits.topUpRate = tier.topUpRate
-  credits.creditsTotal = tier.includedCredits
-  credits.creditsUsed = 0
-  credits.usageThisMonth = 0
-  credits.creditsRemaining = tier.includedCredits
-  do { resetAt.setUTCMonth(resetAt.getUTCMonth() + 1) } while (resetAt <= now)
-  credits.resetDate = resetAt.toISOString().slice(0, 10)
+function resetCounselCreditsIfDue() {
+  // Superseded by per-user logic in syncCounselCreditsForUser — kept for export compat.
+  return mockState.smeCredits
+}
+
+// Per-user counsel credits — each email gets its own record so accounts
+// never overwrite each other's balance.
+function syncCounselCreditsForUser(email, activePlanId) {
+  const key = String(email || '').trim().toLowerCase()
+  const subscriber = mockState.smeUsers.get(key)
+  const tier = COUNSEL_TIERS[String(activePlanId || subscriber?.plan || 'free').toLowerCase()] || COUNSEL_TIERS.free
+
+  // Initialise the per-user record on first access
+  if (!mockState.smeCreditsByUser.has(key)) {
+    const nextReset = new Date()
+    nextReset.setUTCMonth(nextReset.getUTCMonth() + 1)
+    nextReset.setUTCDate(1)
+    mockState.smeCreditsByUser.set(key, {
+      plan: tier.name,
+      includedCredits: tier.includedCredits,
+      creditsTotal: tier.includedCredits,
+      creditsUsed: 0,
+      creditsRemaining: tier.includedCredits,
+      usageThisMonth: 0,
+      topUpRate: tier.topUpRate,
+      currency: 'ZAR',
+      resetDate: nextReset.toISOString().slice(0, 10),
+    })
+  }
+
+  const credits = mockState.smeCreditsByUser.get(key)
+
+  // Monthly reset if due
+  const now = new Date()
+  let resetAt = new Date(credits.resetDate + 'T00:00:00.000Z')
+  if (!Number.isNaN(resetAt.getTime()) && now >= resetAt) {
+    const resetTier = tier || COUNSEL_TIERS[String(credits.plan || '').toLowerCase()] || COUNSEL_TIERS.free
+    credits.plan = resetTier.name
+    credits.includedCredits = resetTier.includedCredits
+    credits.topUpRate = resetTier.topUpRate
+    credits.creditsTotal = resetTier.includedCredits
+    credits.creditsUsed = 0
+    credits.usageThisMonth = 0
+    credits.creditsRemaining = resetTier.includedCredits
+    do { resetAt.setUTCMonth(resetAt.getUTCMonth() + 1) } while (resetAt <= now)
+    credits.resetDate = resetAt.toISOString().slice(0, 10)
+  }
+
+  // If the user's subscription plan changed, re-sync included credits
+  // but preserve any top-up buffer accumulated above the included amount.
+  if (credits.plan !== tier.name) {
+    const topUpBuffer = Math.max(0, credits.creditsRemaining - credits.includedCredits)
+    credits.plan = tier.name
+    credits.includedCredits = tier.includedCredits
+    credits.topUpRate = tier.topUpRate
+    credits.creditsTotal = tier.includedCredits + topUpBuffer
+    credits.creditsRemaining = tier.includedCredits + topUpBuffer
+  }
+
   return credits
 }
 
-module.exports = { mockState, COUNSEL_TIERS, resetCounselCreditsIfDue }
+// Subscription changes are an entitlement reset, not a credit top-up. Keep this
+// per account so one user's upgrade cannot change any other user's balance.
+function setCounselTierForUser(email, planId) {
+  const key = String(email || '').trim().toLowerCase()
+  const tier = COUNSEL_TIERS[String(planId || 'free').toLowerCase()] || COUNSEL_TIERS.free
+  const nextReset = new Date()
+  nextReset.setUTCMonth(nextReset.getUTCMonth() + 1, 1)
+  const credits = {
+    plan: tier.name,
+    includedCredits: tier.includedCredits,
+    creditsTotal: tier.includedCredits,
+    creditsUsed: 0,
+    creditsRemaining: tier.includedCredits,
+    usageThisMonth: 0,
+    topUpRate: tier.topUpRate,
+    currency: 'ZAR',
+    resetDate: nextReset.toISOString().slice(0, 10),
+  }
+  mockState.smeCreditsByUser.set(key, credits)
+  return credits
+}
+
+module.exports = { mockState, COUNSEL_TIERS, resetCounselCreditsIfDue, syncCounselCreditsForUser, setCounselTierForUser }

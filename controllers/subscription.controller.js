@@ -12,7 +12,7 @@ const { errors } = require('../utils/errors')
 const { documentCatalogue, getBlueprint } = require('../mock-data/documentCatalogue')
 const { addAuditLog } = require('../mock-data/audit')
 const logger = require('../utils/logger')
-const { mockState, COUNSEL_TIERS } = require('../mock-state')
+const { mockState, setCounselTierForUser } = require('../mock-state')
 
 // ── Plan catalogue ─────────────────────────────────────────────────────────────
 const PLANS = [
@@ -244,26 +244,12 @@ function activatePaidSubscription(email, planId) {
   // Sync plan name back to smeUsers so admin Users & Activity reflects the new plan immediately
   const smeUser = mockState.smeUsers.get(key)
   if (smeUser) { smeUser.plan = plan.name; mockState.smeUsers.set(key, smeUser) }
-  applyCounselTier(plan.planId)
+  applyCounselTier(key, plan.planId)
   return buildSubscriptionResponse(key)
 }
 
-function applyCounselTier(planId) {
-  const tier = COUNSEL_TIERS[String(planId || '').toLowerCase()]
-  if (!tier) return
-
-  const credits = mockState.smeCredits
-  credits.plan = tier.name
-  credits.includedCredits = tier.includedCredits
-  credits.topUpRate = tier.topUpRate
-  credits.creditsTotal = tier.includedCredits
-  credits.creditsUsed = 0
-  credits.usageThisMonth = 0
-  credits.creditsRemaining = tier.includedCredits
-
-  const nextReset = new Date()
-  nextReset.setUTCMonth(nextReset.getUTCMonth() + 1, 1)
-  credits.resetDate = nextReset.toISOString().slice(0, 10)
+function applyCounselTier(email, planId) {
+  return setCounselTierForUser(email, planId)
 }
 
 function applyScheduledDowngradeIfDue(email, now = new Date()) {
@@ -282,7 +268,7 @@ function applyScheduledDowngradeIfDue(email, now = new Date()) {
   const key = String(email || '').trim().toLowerCase()
   const smeUser = mockState.smeUsers.get(key)
   if (smeUser && downgradePlan) { smeUser.plan = downgradePlan.name; mockState.smeUsers.set(key, smeUser) }
-  applyCounselTier(store.planId)
+  applyCounselTier(email, store.planId)
   return store
 }
 
@@ -329,6 +315,10 @@ function buildSubscriptionResponse(email) {
 
 function getBlueprintRunUsage(email) {
   return buildSubscriptionResponse(String(email || 'thabo@company.co.za').toLowerCase()).usage
+}
+
+function getSubscriptionPlanId(email) {
+  return applyScheduledDowngradeIfDue(String(email || 'thabo@company.co.za').toLowerCase()).planId
 }
 
 // This endpoint is deliberately separate from draft/preview behaviour. It is
@@ -545,7 +535,7 @@ async function upgradeSubscription(req, res, next) {
     // Sync plan name back to smeUsers so admin Users & Activity reflects the new plan immediately
     const smeUser = mockState.smeUsers.get(email)
     if (smeUser) { smeUser.plan = newPlan.name; mockState.smeUsers.set(email, smeUser) }
-    applyCounselTier(newPlan.planId)
+    applyCounselTier(email, newPlan.planId)
 
     // Persist full invoice
     store.invoices.unshift({
@@ -687,6 +677,7 @@ module.exports = {
   applyScheduledDowngradeIfDue,
   activatePaidSubscription,
   getBlueprintRunUsage,
+  getSubscriptionPlanId,
   getBlueprintCatalogue: async (_req, res, next) => {
     try { res.json({ success: true, data: documentCatalogue, total: documentCatalogue.length }) } catch (e) { next(e) }
   },
