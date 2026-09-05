@@ -437,8 +437,8 @@ mockState.wizardDrafts = new Map()
 const COUNSEL_TIERS = {
   free: { name: 'Free', includedCredits: 0, topUpRate: 550, sla: '—' },
   launchpad: { name: 'Launchpad', includedCredits: 0, topUpRate: 550, sla: '2 business days' },
-  operator: { name: 'Operator', includedCredits: 2, topUpRate: 500, sla: '1 business day' },
-  boardroom: { name: 'Boardroom', includedCredits: 6, topUpRate: 450, sla: '8 business hours' },
+  operator: { name: 'Operator', includedCredits: 2, topUpRate: 550, sla: '1 business day' },
+  boardroom: { name: 'Boardroom', includedCredits: 6, topUpRate: 550, sla: '8 business hours' },
 }
 
 function resetCounselCreditsIfDue() {
