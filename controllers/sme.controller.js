@@ -141,22 +141,48 @@ async function getCounselCredits(req, res, next) {
 
 async function getCounselRequests(req, res, next) {
   try {
-    const requests = mockState.adminRequests.map(r => ({
-      requestId:          r.requestId,
-      subject:            r.subject,
-      status:             r.status,
-      assignedCounsel:    r.assignedCounselName || null,
-      submittedAt:        r.submittedAt || r.receivedAt,
-      responseUrl:        r.responseUrl || null,
-      description:        r.description || null,
-      relatedWizard:      r.relatedWizard || null,
-      attachments:        r.attachments || [],
-      counselResponse:    r.counselResponse || null,
-      supportingDocuments: r.supportingDocuments || [],
-      completedAt:        r.completedAt || null,
-      responseDate:       r.completedAt || null,
-    }))
+    const userEmail = normalizeEmail(req.user?.email || '')
+    const requests = mockState.adminRequests
+      .filter(r => normalizeEmail(r.userEmail) === userEmail)
+      .map(r => ({
+        requestId:          r.requestId,
+        subject:            r.subject,
+        status:             r.status,
+        assignedCounsel:    r.assignedCounselName || null,
+        submittedAt:        r.submittedAt || r.receivedAt,
+        responseUrl:        r.responseUrl || null,
+        description:        r.description || null,
+        relatedWizard:      r.relatedWizard || null,
+        attachments:        r.attachments || [],
+        counselResponse:    r.counselResponse || null,
+        supportingDocuments: r.supportingDocuments || [],
+        completedAt:        r.completedAt || null,
+        responseDate:       r.completedAt || null,
+      }))
     res.json({ success: true, data: requests })
+  } catch (e) { next(e) }
+}
+
+async function listPublicFundingReviews(req, res, next) {
+  try {
+    const userEmail = normalizeEmail(req.user?.email || '')
+    const reviews = mockState.adminRequests
+      .filter(r => r.reviewGate === 'founders_public_funding' && normalizeEmail(r.userEmail) === userEmail)
+      .map(r => ({
+        requestId:       r.requestId,
+        subject:         r.subject,
+        status:          r.reviewStatus || r.status,
+        assignedCounsel: r.assignedCounselName || null,
+        submittedAt:     r.submittedAt || r.receivedAt,
+        responseUrl:     r.responseUrl || null,
+        description:     r.description || null,
+        relatedWizard:   r.relatedWizard || null,
+        attachments:     r.attachments || [],
+        counselResponse: r.counselResponse || null,
+        completedAt:     r.completedAt || null,
+        responseDate:    r.completedAt || null,
+      }))
+    res.json({ success: true, data: reviews })
   } catch (e) { next(e) }
 }
 
@@ -194,20 +220,13 @@ async function createCounselRequest(req, res, next) {
   } catch (e) { next(e) }
 }
 
-// Mandatory review gate for Founders' Agreement & IP Assignment. This is an
-// internal routing workflow, so it does not consume a counsel credit or require
-// a user-uploaded document. Admin assigns counsel through the existing queue.
+// Mandatory review gate for Founders' Agreement & IP Assignment. Each call
+// always creates a new request so users can submit multiple blueprints that
+// each need a separate counsel review.
 async function createPublicFundingReview(req, res, next) {
   try {
     const wizardData = req.body.wizard_data || req.body.wizardData || {}
-    if (wizardData.publicly_funded !== true) return next(errors.badRequest('This review gate applies only when publicly funded IP is declared.', 'PUBLIC_FUNDING_NOT_DECLARED'))
     const userEmail = normalizeEmail(req.user?.email || req.body.userEmail || req.body.email || 'thabo@company.co.za')
-    const existing = mockState.adminRequests.find((request) =>
-      request.reviewGate === 'founders_public_funding' &&
-      normalizeEmail(request.userEmail) === userEmail &&
-      request.status !== 'completed',
-    )
-    if (existing) return res.json({ success: true, message: 'Publicly funded IP review already exists.', data: { requestId: existing.requestId, status: existing.reviewStatus || 'pending', rejectionReason: existing.rejectionReason || null } })
 
     const requestId = 'req_' + mockState.nextRequestId++
     const submittedAt = new Date().toISOString()
@@ -277,7 +296,7 @@ async function topUpCredits(req, res, next) {
   } catch (e) { next(e) }
 }
 
-module.exports = { getProfile, updateProfile, getDashboard, getCounselCredits, getCounselRequests, createCounselRequest, createPublicFundingReview, getPublicFundingReview, topUpCredits, changePassword }
+module.exports = { getProfile, updateProfile, getDashboard, getCounselCredits, getCounselRequests, createCounselRequest, createPublicFundingReview, listPublicFundingReviews, getPublicFundingReview, topUpCredits, changePassword }
 
 
 // ── Payment Methods (in-memory mock store — resets on server restart) ─────────
