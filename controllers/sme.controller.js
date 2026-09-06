@@ -163,7 +163,9 @@ async function getCounselRequests(req, res, next) {
 async function createCounselRequest(req, res, next) {
   try {
     const subject = req.body.subject || req.body.title || 'Counsel Request'
-    const userEmail = req.body.userEmail || req.body.email || req.user?.email || 'thabo@company.co.za'
+    // Always derive the billing email from the authenticated JWT so a spoofed
+    // body.userEmail cannot bypass the credit check for a different account.
+    const userEmail = req.user?.email || 'thabo@company.co.za'
     const credits = counselCreditsFor(userEmail)
     const now = new Date()
     if (!String(req.body.relatedWizard || '').trim()) return next(errors.badRequest('Choose the wizard document to be reviewed before submitting a counsel request.', 'WIZARD_REQUIRED'))

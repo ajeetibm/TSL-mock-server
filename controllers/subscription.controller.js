@@ -12,7 +12,7 @@ const { errors } = require('../utils/errors')
 const { documentCatalogue, getBlueprint } = require('../mock-data/documentCatalogue')
 const { addAuditLog } = require('../mock-data/audit')
 const logger = require('../utils/logger')
-const { mockState, setCounselTierForUser } = require('../mock-state')
+const { mockState, setCounselTierForUser, syncCounselCreditsForUser } = require('../mock-state')
 
 // ── Plan catalogue ─────────────────────────────────────────────────────────────
 const PLANS = [
@@ -314,6 +314,8 @@ function buildSubscriptionResponse(email) {
   const runsUsed      = Math.min(store.runsUsed, plan.wizardRuns + topUpUnits)
   const runsRemaining = Math.max(0, plan.wizardRuns + topUpUnits - runsUsed)
 
+  const counselCredits = syncCounselCreditsForUser(email, plan.planId)
+
   return {
     planId:          plan.planId,
     planName:        plan.name,
@@ -332,7 +334,11 @@ function buildSubscriptionResponse(email) {
       runsTotal,
       runsRemaining,
       teamMembers: plan.teamMembers,
+      counselCreditsTotal:     counselCredits.creditsTotal,
+      counselCreditsRemaining: counselCredits.creditsRemaining,
     },
+    counselCreditsTotal:     counselCredits.creditsTotal,
+    counselCreditsRemaining: counselCredits.creditsRemaining,
     nextBillingDate: store.nextBillingDate,
     paymentMethod:   store.paymentMethod,
     pendingDowngrade: store.pendingDowngrade,
