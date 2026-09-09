@@ -1,3 +1,4 @@
+const planCatalogue = require('./config/subscription-plans.json')
 const mockState = {
   nextCounselId: 8,
   nextSmeId: 2,
@@ -8,7 +9,7 @@ const mockState = {
   // Per-user counsel credits: Map<normalizedEmail, CreditRecord>
   smeCreditsByUser: new Map(),
   // Legacy single-user object kept for backward compat — do not reference directly.
-  smeCredits: { plan: 'free', includedCredits: 0, creditsTotal: 0, creditsUsed: 0, creditsRemaining: 0, usageThisMonth: 0, topUpRate: 500, currency: 'ZAR', resetDate: '2026-07-10' },
+  smeCredits: { plan: 'free', includedCredits: 0, creditsTotal: 0, creditsUsed: 0, creditsRemaining: 0, usageThisMonth: 0, topUpRate: planCatalogue.plans[0]?.counselTopUpRate ?? 0, currency: planCatalogue.currency, resetDate: '2026-07-10' },
   smeUsers: new Map([
     ['thabo@company.co.za', {
       userId: 'usr_8f3k2m9x',
@@ -434,12 +435,10 @@ defaultAssignableCounsel.forEach((member) => {
 // wizardDrafts: Map<userId_wizardType, WizardDraft>
 mockState.wizardDrafts = new Map()
 
-const COUNSEL_TIERS = {
-  free: { name: 'Free', includedCredits: 0, topUpRate: 550, sla: '—' },
-  launchpad: { name: 'Launchpad', includedCredits: 0, topUpRate: 550, sla: '2 business days' },
-  operator: { name: 'Operator', includedCredits: 2, topUpRate: 550, sla: '1 business day' },
-  boardroom: { name: 'Boardroom', includedCredits: 6, topUpRate: 550, sla: '8 business hours' },
-}
+const COUNSEL_TIERS = Object.fromEntries(planCatalogue.plans.map((plan) => [plan.planId, {
+  name: plan.name, includedCredits: plan.counselCredits, topUpRate: plan.counselTopUpRate, sla: plan.counselSla,
+}]))
+COUNSEL_TIERS.free = { name: 'Free', includedCredits: 0, topUpRate: planCatalogue.plans[0]?.counselTopUpRate ?? 0, sla: '—' }
 
 function resetCounselCreditsIfDue() {
   // Superseded by per-user logic in syncCounselCreditsForUser — kept for export compat.

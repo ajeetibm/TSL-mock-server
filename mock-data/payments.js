@@ -4,6 +4,8 @@
  * PRODUCTION: replace with DB tables: payment_transactions, subscriptions, payment_history.
  */
 
+const planCatalogue = require('../config/subscription-plans.json')
+
 // Map<reference, transaction>
 const paymentTransactions = new Map()
 
@@ -16,7 +18,8 @@ const subscriptions = new Map()
 const wizardAccessByEmail = new Map()
 // These are monthly Blueprint run-unit allowances, not a limit on how many
 // Blueprints a customer may pin to their dashboard.
-const WIZARD_PLAN_LIMITS = { launchpad: 4, operator: 12, boardroom: 30 }
+const PLANS_BY_ID = new Map(planCatalogue.plans.map((plan) => [plan.planId, plan]))
+const WIZARD_PLAN_LIMITS = Object.fromEntries(planCatalogue.plans.map((plan) => [plan.planId, plan.wizardRuns]))
 
 // ── Pre-seeded test subscriptions ──────────────────────────────────────────────
 // These mirror the 3 test SME users in mock-state.js smeUsers.
@@ -28,10 +31,10 @@ const WIZARD_PLAN_LIMITS = { launchpad: 4, operator: 12, boardroom: 30 }
   // Launchpad — lerato@dlaminiventures.co.za
   subscriptions.set('launchpad@tsl.co.za', {
     email: 'launchpad@tsl.co.za', plan: 'launchpad', status: 'active',
-    activatedAt, expiresAt, credits: 0,
+    activatedAt, expiresAt, credits: PLANS_BY_ID.get('launchpad')?.counselCredits ?? 0,
   })
   wizardAccessByEmail.set('launchpad@tsl.co.za', {
-    plan: 'launchpad', wizardLimit: 4, activatedAt,
+    plan: 'launchpad', wizardLimit: WIZARD_PLAN_LIMITS.launchpad, activatedAt,
     selectedWizards: [
       { title: 'Non-Disclosure Agreement (NDA)', quantity: 1 },
       { title: 'Employment Offer Letter', quantity: 1 },
@@ -42,10 +45,10 @@ const WIZARD_PLAN_LIMITS = { launchpad: 4, operator: 12, boardroom: 30 }
   // Operator — sipho@khumalotech.co.za
   subscriptions.set('operator@tsl.co.za', {
     email: 'operator@tsl.co.za', plan: 'operator', status: 'active',
-    activatedAt, expiresAt, credits: 2,
+    activatedAt, expiresAt, credits: PLANS_BY_ID.get('operator')?.counselCredits ?? 0,
   })
   wizardAccessByEmail.set('operator@tsl.co.za', {
-    plan: 'operator', wizardLimit: 12, activatedAt,
+    plan: 'operator', wizardLimit: WIZARD_PLAN_LIMITS.operator, activatedAt,
     selectedWizards: [
       { title: 'Non-Disclosure Agreement (NDA)', quantity: 1 },
       { title: 'Employment Offer Letter', quantity: 1 },
@@ -59,10 +62,10 @@ const WIZARD_PLAN_LIMITS = { launchpad: 4, operator: 12, boardroom: 30 }
   // Boardroom — ayanda@nkosiholdings.co.za
   subscriptions.set('boardroom@tsl.co.za', {
     email: 'boardroom@tsl.co.za', plan: 'boardroom', status: 'active',
-    activatedAt, expiresAt, credits: 6,
+    activatedAt, expiresAt, credits: PLANS_BY_ID.get('boardroom')?.counselCredits ?? 0,
   })
   wizardAccessByEmail.set('boardroom@tsl.co.za', {
-    plan: 'boardroom', wizardLimit: 30, activatedAt,
+    plan: 'boardroom', wizardLimit: WIZARD_PLAN_LIMITS.boardroom, activatedAt,
     selectedWizards: [
       { title: 'Non-Disclosure Agreement (NDA)', quantity: 1 },
       { title: 'Employment Offer Letter', quantity: 1 },
@@ -84,18 +87,14 @@ const verifiedReferences = new Set()
 
 let nextPaymentId = 1
 
-const PLAN_PRICES = {
-  launchpad:  499,
-  operator:   1499,
-  boardroom:  3999,
-}
-
 function createReference() {
   return `TSL_PAY_${Date.now()}_${String(nextPaymentId++).padStart(4, '0')}`
 }
 
 function getPlanAmount(plan) {
-  return PLAN_PRICES[String(plan || '').toLowerCase()] || 3999
+  return PLANS_BY_ID.get(String(plan || '').toLowerCase())?.price
+    ?? planCatalogue.plans[0]?.price
+    ?? 0
 }
 
 /**
@@ -153,7 +152,7 @@ function activateSubscription(email, plan) {
     status: 'active',
     activatedAt: new Date().toISOString(),
     expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days
-    credits: plan === 'boardroom' ? 6 : plan === 'operator' ? 2 : 0,
+    credits: PLANS_BY_ID.get(String(plan).toLowerCase())?.counselCredits ?? 0,
   }
   subscriptions.set(normalizedEmail, sub)
   return sub
@@ -242,7 +241,6 @@ module.exports = {
   getSubscription,
   getPaymentHistory,
   getPlanAmount,
-  PLAN_PRICES,
   getWizardAccess,
   activateWizardAccess,
   addWizardsToAccess,

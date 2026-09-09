@@ -31,7 +31,9 @@ const { authenticate } = require('../middleware/auth')
 const router = Router()
 
 router.get('/subscription',                 authenticate, getSubscription)
-router.get('/plans',                        authenticate, getPlans)
+// Commercial plan details are public so the marketing and guest wizard pages
+// can render the same configured catalogue as authenticated billing flows.
+router.get('/plans',                        getPlans)
 router.get('/subscription/upgrade/preview', authenticate, getUpgradePreview)
 router.post('/subscription/upgrade',        authenticate, upgradeSubscription)
 router.post('/subscription/downgrade',      authenticate, scheduleDowngrade)
