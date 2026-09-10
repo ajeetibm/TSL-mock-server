@@ -410,7 +410,14 @@ const defaultAssignableCounsel = [
   },
 ]
 
-mockState.counselDirectory = defaultAssignableCounsel
+// Merge: keep any initial directory entries (e.g. Sipho Nkosi / s.nkosi@tsl.co.za)
+// and append the assignable pool, deduplicating by email so re-runs are idempotent.
+defaultAssignableCounsel.forEach((member) => {
+  const exists = mockState.counselDirectory.some(
+    (e) => (e.email || '').toLowerCase().trim() === (member.email || '').toLowerCase().trim()
+  )
+  if (!exists) mockState.counselDirectory.push(member)
+})
 defaultAssignableCounsel.forEach((member) => {
   const email = member.email.toLowerCase()
   if (!mockState.counselUsers.has(email)) {

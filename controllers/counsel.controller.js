@@ -122,7 +122,20 @@ async function getRequests(req, res, next) {
 
 async function updateAvailability(req, res, next) {
   try {
-    mockState.availability = req.body.availability === 'unavailable' ? 'unavailable' : 'available'
+    const next_availability = req.body.availability === 'unavailable' ? 'unavailable' : 'available'
+    mockState.availability = next_availability
+
+    // Reflect the new status in counselDirectory so the admin dashboard reads it
+    const counselEmail = normalizeEmail(req.user?.email || '')
+    if (counselEmail) {
+      const dirEntry = mockState.counselDirectory.find(e => normalizeEmail(e.email) === counselEmail)
+      if (dirEntry) {
+        const statusLabel = next_availability === 'available' ? 'Available' : 'Not Available'
+        dirEntry.status = statusLabel
+        dirEntry.availability = statusLabel
+      }
+    }
+
     res.json({ success: true, message: 'Availability updated.', data: { counselId: req.user?.userId || 'con_002', availability: mockState.availability, updatedAt: new Date().toISOString() } })
   } catch (e) { next(e) }
 }

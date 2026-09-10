@@ -281,7 +281,20 @@ function handleCounselRoutes(req, res, relPath) {
   }
 
   if (req.method === 'PATCH' && relPath === 'api/v1/counsel/availability') {
-    mockState.availability = req.body.availability === 'unavailable' ? 'unavailable' : 'available'
+    const nextAvail = req.body.availability === 'unavailable' ? 'unavailable' : 'available'
+    mockState.availability = nextAvail
+
+    // Reflect the new status in counselDirectory so the admin dashboard reads it
+    const counselEmail = (req.user?.email || '').toLowerCase().trim()
+    if (counselEmail) {
+      const dirEntry = mockState.counselDirectory.find(e => (e.email || '').toLowerCase().trim() === counselEmail)
+      if (dirEntry) {
+        const statusLabel = nextAvail === 'available' ? 'Available' : 'Not Available'
+        dirEntry.status = statusLabel
+        dirEntry.availability = statusLabel
+      }
+    }
+
     return sendJson(res, 200, {
       success: true,
       message: 'Availability updated.',
