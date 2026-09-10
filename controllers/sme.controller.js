@@ -199,7 +199,6 @@ async function createCounselRequest(req, res, next) {
     const userEmail = req.user?.email || 'thabo@company.co.za'
     const credits = counselCreditsFor(userEmail)
     const now = new Date()
-    if (!String(req.body.relatedWizard || '').trim()) return next(errors.badRequest('Choose the wizard document to be reviewed before submitting a counsel request.', 'WIZARD_REQUIRED'))
     const creditsRequired = 1
     if (credits.creditsRemaining < creditsRequired) return next(errors.conflict('No counsel credits remain. Purchase a top-up before submitting.', 'INSUFFICIENT_COUNSEL_CREDITS'))
 
