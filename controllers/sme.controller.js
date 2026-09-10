@@ -217,7 +217,10 @@ async function createCounselRequest(req, res, next) {
 
     const requestId = 'req_' + mockState.nextRequestId++
     const submittedAt = now.toISOString()
-    const request = { requestId, subject, fromUser: req.body.fromUser || req.body.fullName || 'Thabo Molefe', userEmail, company: req.body.company || 'FibreGents (Pty) Ltd', receivedAt: submittedAt, submittedAt, status: 'pending', description: req.body.description || req.body.notes || null, relatedWizard: req.body.relatedWizard || null, attachments: req.body.attachments || [], creditsUsedForRequest: creditsRequired, assignedBy: 'Admin Sarah', earnings: Number(req.body.earnings || 500), currency: 'ZAR' }
+    const userProfile = mockState.smeUsers.get(normalizeEmail(userEmail))
+    const fromUser = userProfile?.fullName || req.body.fromUser || req.body.fullName || userEmail
+    const company = userProfile?.legalName || userProfile?.companyName || req.body.company || ''
+    const request = { requestId, subject, fromUser, fromUserEmail: userEmail, userEmail, company, receivedAt: submittedAt, submittedAt, status: 'pending', description: req.body.description || req.body.notes || null, relatedWizard: req.body.relatedWizard || null, attachments: req.body.attachments || [], creditsUsedForRequest: creditsRequired, assignedBy: 'Admin', earnings: Number(req.body.earnings || 500), currency: 'ZAR' }
     mockState.adminRequests.unshift(request)
 
     res.status(201).json({ success: true, data: { requestId, subject: request.subject, status: request.status, creditsRemaining: credits.creditsRemaining, submittedAt: request.submittedAt, description: request.description, relatedWizard: request.relatedWizard, attachments: request.attachments } })

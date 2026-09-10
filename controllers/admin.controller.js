@@ -39,7 +39,7 @@ async function getDashboard(req, res, next) {
       data: {
         kpis: { totalUsers:2847, totalUsersTrend:'+12%', activeWizards:1234, activeWizardsTrend:'+8%', revenueMTD:48574, currency:'ZAR', issuesCount:26, criticalIssues:3 },
         topWizards: [{name:'NDA Generator',completions:1234},{name:'Employment Offer Letter',completions:987},{name:'Privacy & Cookies Policy',completions:756},{name:'Founders agreement and IP assignment',completions:543},{name:'Service Level Agreement (SLA)',completions:432}],
-        recentCounselRequests: mockState.adminRequests.map(r => ({ requestId:r.requestId, subject:r.subject, fromUser:r.fromUser, receivedAt:r.receivedAt||r.submittedAt, status:r.status, assignedCounselName:r.assignedCounselName, rejectionReason:r.rejectionReason, rejectedAt:r.rejectedAt, description:r.description||null, relatedWizard:r.relatedWizard||null })),
+        recentCounselRequests: mockState.adminRequests.map(r => ({ requestId:r.requestId, subject:r.subject, fromUser:r.fromUser, fromUserEmail:r.fromUserEmail||r.userEmail||null, receivedAt:r.receivedAt||r.submittedAt, status:r.status, assignedCounselName:r.assignedCounselName, rejectionReason:r.rejectionReason, rejectedAt:r.rejectedAt, description:r.description||null, relatedWizard:r.relatedWizard||null })),
         notifications: mockState.adminNotifications,
         revenueChart: { year:2026, months:REVENUE_MONTHS, summary:{ totalRevenue:total, avgMonthly:Math.round(total/REVENUE_MONTHS.length), bestMonth:Math.max(...actuals), growthRate:(((actuals[actuals.length-1]-actuals[0])/actuals[0])*100).toFixed(1)+'%' }, axis:{ yMax:60000, ticks:[60000,45000,30000,15000,0], tickLabels:['R99k','R45k','R30k','R15k','R0k'], format:'ZAR' } },
       },

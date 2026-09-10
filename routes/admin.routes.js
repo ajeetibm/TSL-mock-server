@@ -58,6 +58,7 @@ function buildAdminDashboard() {
           requestId: request.requestId,
           subject: request.subject,
           fromUser: request.fromUser,
+          fromUserEmail: request.fromUserEmail || request.userEmail || null,
           receivedAt: request.receivedAt || request.submittedAt,
           status: request.status,
           assignedCounselName: request.assignedCounselName || null,
