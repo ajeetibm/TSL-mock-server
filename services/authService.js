@@ -9,6 +9,7 @@ const { addAuditLog, AUDIT_ACTIONS } = require('../mock-data/audit')
 const { fetchGoogleUserInfo, getRoleForEmail } = require('./googleService')
 const { errors } = require('../utils/errors')
 const logger = require('../utils/logger')
+const { createAdminNotification } = require('./adminNotificationService')
 
 function normalizeEmail(email) { return String(email || '').trim().toLowerCase() }
 
@@ -120,6 +121,15 @@ async function loginUser(payload, ip) {
   }
 
   addAuditLog({ action: AUDIT_ACTIONS.LOGIN, userId: user.userId, email, role: user.role, ip })
+  if (user.role === 'admin' || user.role === 'super_admin') {
+    const adminRoleLabel = user.role === 'super_admin' ? 'Super admin' : 'Admin'
+    createAdminNotification({
+      type: 'admin_login',
+      subject: `${adminRoleLabel} signed in`,
+      message: `${user.fullName} (${user.email}) signed in to the admin portal.`,
+      actorEmail: user.email,
+    })
+  }
   logger.info('authService', 'Login successful', { email, role: user.role })
   return buildAuthResponse(user)
 }
@@ -138,6 +148,12 @@ async function registerUser(payload, ip) {
   mockState.smeUsers.set(email, user)
 
   addAuditLog({ action: AUDIT_ACTIONS.LOGIN, userId: user.userId, email, role: user.role, ip, meta: { newUser: true } })
+  createAdminNotification({
+    type: 'new_user',
+    subject: 'New user registered',
+    message: `${user.fullName} (${user.email}) created a new account.`,
+    actorEmail: user.email,
+  })
   logger.info('authService', 'Registration successful', { email })
   return { ...buildAuthResponse(user), isNewUser: true }
 }

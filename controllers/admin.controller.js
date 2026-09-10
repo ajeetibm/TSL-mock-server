@@ -9,6 +9,7 @@ const { addAuditLog, AUDIT_ACTIONS } = require('../mock-data/audit')
 const { getAuditLogs } = require('../mock-data/audit')
 const { errors } = require('../utils/errors')
 const { listSessions, revokeSession: revokeSessionStore } = require('../services/sessionStore')
+const adminNotificationService = require('../services/adminNotificationService')
 
 const REVENUE_MONTHS = [
   {month:'Jan',actual:38200,target:40000},{month:'Feb',actual:41500,target:40000},{month:'Mar',actual:30000,target:31000},
@@ -40,7 +41,7 @@ async function getDashboard(req, res, next) {
         kpis: { totalUsers:2847, totalUsersTrend:'+12%', activeWizards:1234, activeWizardsTrend:'+8%', revenueMTD:48574, currency:'ZAR', issuesCount:26, criticalIssues:3 },
         topWizards: [{name:'NDA Generator',completions:1234},{name:'Employment Offer Letter',completions:987},{name:'Privacy & Cookies Policy',completions:756},{name:'Founders agreement and IP assignment',completions:543},{name:'Service Level Agreement (SLA)',completions:432}],
         recentCounselRequests: mockState.adminRequests.map(r => ({ requestId:r.requestId, subject:r.subject, fromUser:r.fromUser, fromUserEmail:r.fromUserEmail||r.userEmail||null, receivedAt:r.receivedAt||r.submittedAt, status:r.status, assignedCounselName:r.assignedCounselName, rejectionReason:r.rejectionReason, rejectedAt:r.rejectedAt, description:r.description||null, relatedWizard:r.relatedWizard||null })),
-        notifications: mockState.adminNotifications,
+        notifications: adminNotificationService.listAdminNotifications(),
         revenueChart: { year:2026, months:REVENUE_MONTHS, summary:{ totalRevenue:total, avgMonthly:Math.round(total/REVENUE_MONTHS.length), bestMonth:Math.max(...actuals), growthRate:(((actuals[actuals.length-1]-actuals[0])/actuals[0])*100).toFixed(1)+'%' }, axis:{ yMax:60000, ticks:[60000,45000,30000,15000,0], tickLabels:['R99k','R45k','R30k','R15k','R0k'], format:'ZAR' } },
       },
     })
@@ -158,6 +159,20 @@ async function markAdminNotificationRead(req, res, next) {
   } catch (e) { next(e) }
 }
 
+async function getAdminNotifications(req, res, next) {
+  try {
+    const notifications = adminNotificationService.listAdminNotifications()
+    res.json({ success: true, data: { notifications, unreadCount: notifications.filter(item => !item.read).length } })
+  } catch (e) { next(e) }
+}
+
+async function markAllAdminNotificationsRead(req, res, next) {
+  try {
+    const notifications = adminNotificationService.markAllAdminNotificationsRead()
+    res.json({ success: true, data: { notifications, unreadCount: 0 } })
+  } catch (e) { next(e) }
+}
+
 async function inviteAdmin(req, res, next) {
   try { res.status(201).json({ success: true, message: 'Sub-admin invitation sent (MOCK — no email sent).', data: { email: req.body.email, invitedAt: new Date().toISOString() } }) }
   catch (e) { next(e) }
@@ -270,7 +285,7 @@ async function exportBillingInvoices(req, res, next) {
   } catch (e) { next(e) }
 }
 
-module.exports = { getDashboard, getProfile, updateProfile, changePassword, getUsers, updateUser, getCounsel, addCounsel, assignCounselRequest, markAdminNotificationRead, inviteAdmin, revokeAdmin, getIssues, getBilling, getAuditLogsEndpoint, exportBillingInvoices, getGeneralSettings, updateGeneralSettings, getNotificationSettings, updateNotificationSettings, getSecuritySettings, updateSecuritySettings }
+module.exports = { getDashboard, getProfile, updateProfile, changePassword, getUsers, updateUser, getCounsel, addCounsel, assignCounselRequest, getAdminNotifications, markAdminNotificationRead, markAllAdminNotificationsRead, inviteAdmin, revokeAdmin, getIssues, getBilling, getAuditLogsEndpoint, exportBillingInvoices, getGeneralSettings, updateGeneralSettings, getNotificationSettings, updateNotificationSettings, getSecuritySettings, updateSecuritySettings }
 
 
 // ── In-memory settings store (PRODUCTION: replace with DB reads/writes) ──────
@@ -320,35 +335,30 @@ async function updateGeneralSettings(req, res, next) {
 async function getNotificationSettings(req, res, next) {
   try {
     await new Promise((r) => setTimeout(r, 300))
-    res.json({ success: true, data: { ..._settingsStore.notifications } })
+    res.json({ success: true, data: adminNotificationService.getNotificationSettings() })
   } catch (e) { next(e) }
 }
 
 async function updateNotificationSettings(req, res, next) {
   try {
     await new Promise((r) => setTimeout(r, 1000 + Math.random() * 600))
-    const keys = ['emailNotifications','newUserAlerts','paymentAlerts','systemAlerts','issueNotifications','weeklyReports']
-    for (const k of keys) {
-      if (req.body[k] !== undefined) _settingsStore.notifications[k] = Boolean(req.body[k])
-    }
-    res.json({ success: true, message: 'Notification preferences saved successfully.', data: { ..._settingsStore.notifications } })
+    const settings = adminNotificationService.updateNotificationSettings(req.body)
+    res.json({ success: true, message: 'Notification preferences saved successfully.', data: settings })
   } catch (e) { next(e) }
 }
 
 async function getSecuritySettings(req, res, next) {
   try {
     await new Promise((r) => setTimeout(r, 300))
-    res.json({ success: true, data: { ..._settingsStore.security } })
+    res.json({ success: true, data: adminNotificationService.getSecuritySettings() })
   } catch (e) { next(e) }
 }
 
 async function updateSecuritySettings(req, res, next) {
   try {
     await new Promise((r) => setTimeout(r, 1000 + Math.random() * 600))
-    if (req.body.twoFactorAuth      !== undefined) _settingsStore.security.twoFactorAuth      = Boolean(req.body.twoFactorAuth)
-    if (req.body.sessionTimeout     !== undefined) _settingsStore.security.sessionTimeout     = req.body.sessionTimeout
-    if (req.body.loginNotifications !== undefined) _settingsStore.security.loginNotifications = Boolean(req.body.loginNotifications)
-    res.json({ success: true, message: 'Security settings updated successfully.', data: { ..._settingsStore.security } })
+    const settings = adminNotificationService.updateSecuritySettings(req.body)
+    res.json({ success: true, message: 'Security settings updated successfully.', data: settings })
   } catch (e) { next(e) }
 }
 
