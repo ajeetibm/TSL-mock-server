@@ -36,14 +36,18 @@ function value(body, key, fallback = '') { return String(body[key] ?? fallback ?
 
 function isValidSaId(idNumber) {
   if (!/^\d{13}$/.test(idNumber)) return false
-  const digits = idNumber.split('').map(Number)
+  const yy = Number(idNumber.slice(0, 2))
+  const month = Number(idNumber.slice(2, 4))
+  const day = Number(idNumber.slice(4, 6))
+  if (month < 1 || month > 12 || day < 1 || day > new Date(2000 + yy, month, 0).getDate()) return false
+  if (idNumber[10] !== '0' && idNumber[10] !== '1') return false
   let sum = 0
-  for (let index = 0; index < 13; index += 1) {
-    let digit = digits[12 - index]
-    if (index % 2 === 1) { digit *= 2; if (digit > 9) digit -= 9 }
+  for (let index = 0; index < 12; index += 1) {
+    let digit = Number(idNumber[index])
+    if (index % 2 !== 0) { digit *= 2; if (digit > 9) digit -= 9 }
     sum += digit
   }
-  return sum % 10 === 0
+  return (10 - (sum % 10)) % 10 === Number(idNumber[12])
 }
 
 async function getProfile(req, res, next) {
@@ -67,7 +71,8 @@ async function updateProfile(req, res, next) {
     const businessPhone = value(req.body, 'businessPhone', existing.businessPhone || existing.phone)
     const country = value(req.body, 'country', existing.country || 'South Africa') || 'South Africa'
     const idNumber = value(req.body, 'idNumber', existing.idNumber)
-    if (entityType === 'Individual' && idNumber && !isValidSaId(idNumber)) return next(errors.badRequest('Enter a valid 13-digit South African ID number.', 'INVALID_SA_ID'))
+    if (entityType === 'Individual' && !idNumber) return next(errors.badRequest('Enter the 13-digit South African ID number for this individual.', 'SA_ID_REQUIRED'))
+    if (entityType === 'Individual' && !isValidSaId(idNumber)) return next(errors.badRequest('Enter a valid 13-digit South African ID number.', 'INVALID_SA_ID'))
     if (country === 'South Africa' && businessPhone && !/^(?:\+27|0)\d{9}$/.test(businessPhone.replace(/[\s()-]/g, ''))) return next(errors.badRequest('Enter a valid South African telephone number.', 'INVALID_SA_TELEPHONE'))
     if (country === 'South Africa' && value(req.body, 'postalCode', existing.postalCode) && !/^\d{4}$/.test(value(req.body, 'postalCode', existing.postalCode))) return next(errors.badRequest('Enter a four-digit South African postal code.', 'INVALID_POSTAL_CODE'))
     const hasCipcRegistration = entityType === 'Company' || entityType === 'Close corporation'

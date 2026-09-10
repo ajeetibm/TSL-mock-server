@@ -25,6 +25,22 @@ function validateAddress(prefix, addr = {}) {
   return missing
 }
 
+function isValidSaId(idNumber) {
+  if (!/^\d{13}$/.test(idNumber)) return false
+  const yy = Number(idNumber.slice(0, 2))
+  const month = Number(idNumber.slice(2, 4))
+  const day = Number(idNumber.slice(4, 6))
+  if (month < 1 || month > 12 || day < 1 || day > new Date(2000 + yy, month, 0).getDate()) return false
+  if (idNumber[10] !== '0' && idNumber[10] !== '1') return false
+  let sum = 0
+  for (let index = 0; index < 12; index += 1) {
+    let digit = Number(idNumber[index])
+    if (index % 2 !== 0) { digit *= 2; if (digit > 9) digit -= 9 }
+    sum += digit
+  }
+  return (10 - (sum % 10)) % 10 === Number(idNumber[12])
+}
+
 function validateNda(data = {}) {
   const missing = []
 
@@ -149,8 +165,14 @@ function validatePrivacyPolicy(data = {}) {
   for (const key of ['children_data', 'cross_border', 'direct_marketing']) {
     if (data[key] !== true && data[key] !== false) missing.push(key)
   }
-  for (const key of ['full_names', 'id_number', 'email']) {
+  for (const key of ['full_names', 'id_number', 'email', 'address']) {
     if (!hasText(data.info_officer?.[key])) missing.push(`info_officer.${key}`)
+  }
+  if (hasText(data.info_officer?.id_number) && !isValidSaId(String(data.info_officer.id_number).trim())) {
+    return { message: 'Information officer identity number must be a valid 13-digit South African ID number.' }
+  }
+  if (hasText(data.info_officer?.phone) && !/^(?:\+27|0)\d{9}$/.test(String(data.info_officer.phone).replace(/[\s()-]/g, ''))) {
+    return { message: 'Information officer telephone must be a valid South African telephone number.' }
   }
   if (hasItems(data.special_pi) && !hasText(data.special_pi_basis)) missing.push('special_pi_basis')
   if (data.children_data === true && !hasText(data.children_consent)) missing.push('children_consent')
