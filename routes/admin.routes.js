@@ -60,6 +60,11 @@ function buildAdminDashboard() {
           fromUser: request.fromUser,
           receivedAt: request.receivedAt || request.submittedAt,
           status: request.status,
+          assignedCounselName: request.assignedCounselName || null,
+          rejectionReason: request.rejectionReason || null,
+          rejectedAt: request.rejectedAt || null,
+          description: request.description || null,
+          relatedWizard: request.relatedWizard || null,
         })),
       revenueChart: {
         year: 2026,
