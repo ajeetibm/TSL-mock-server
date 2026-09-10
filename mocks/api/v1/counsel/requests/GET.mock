@@ -17,7 +17,7 @@ Access-Control-Allow-Headers: Content-Type, Authorization
         "earnings": 550,
         "currency": "ZAR",
         "status": "pending",
-        "assignedBy": "Admin Sarah",
+        "assignedBy": "Given Kibanza",
         "date": "2026-01-12"
       },
       {
@@ -28,7 +28,7 @@ Access-Control-Allow-Headers: Content-Type, Authorization
         "earnings": 450,
         "currency": "ZAR",
         "status": "pending",
-        "assignedBy": "Admin Sarah",
+        "assignedBy": "Given Kibanza",
         "date": "2026-01-12"
       },
       {
@@ -39,7 +39,7 @@ Access-Control-Allow-Headers: Content-Type, Authorization
         "earnings": 550,
         "currency": "ZAR",
         "status": "accepted",
-        "assignedBy": "Admin John",
+        "assignedBy": "Given Kibanza",
         "date": "2026-01-11"
       },
       {
@@ -50,7 +50,7 @@ Access-Control-Allow-Headers: Content-Type, Authorization
         "earnings": 500,
         "currency": "ZAR",
         "status": "accepted",
-        "assignedBy": "Admin Sarah",
+        "assignedBy": "Given Kibanza",
         "date": "2026-01-10"
       },
       {
@@ -61,7 +61,7 @@ Access-Control-Allow-Headers: Content-Type, Authorization
         "earnings": 500,
         "currency": "ZAR",
         "status": "accepted",
-        "assignedBy": "Admin John",
+        "assignedBy": "Given Kibanza",
         "date": "2026-01-10"
       },
       {
@@ -72,7 +72,7 @@ Access-Control-Allow-Headers: Content-Type, Authorization
         "earnings": 450,
         "currency": "ZAR",
         "status": "rejected",
-        "assignedBy": "Admin Sarah",
+        "assignedBy": "Given Kibanza",
         "date": "2026-01-09"
       },
       {
@@ -83,7 +83,7 @@ Access-Control-Allow-Headers: Content-Type, Authorization
         "earnings": 550,
         "currency": "ZAR",
         "status": "accepted",
-        "assignedBy": "Admin John",
+        "assignedBy": "Given Kibanza",
         "date": "2026-01-08"
       },
       {
@@ -94,7 +94,7 @@ Access-Control-Allow-Headers: Content-Type, Authorization
         "earnings": 550,
         "currency": "ZAR",
         "status": "accepted",
-        "assignedBy": "Admin Sarah",
+        "assignedBy": "Given Kibanza",
         "date": "2026-01-08"
       }
     ]

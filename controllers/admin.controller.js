@@ -135,7 +135,13 @@ async function assignCounselRequest(req, res, next) {
       request.reviewStatus = 'pending'
       request.rejectionReason = null
     }
-    const counselRequest = { requestId: request.requestId, subject: request.subject, fromUser: request.fromUser, userEmail: request.userEmail, company: request.company, earnings: request.earnings, currency: request.currency, status: 'pending', assignedBy: 'Admin Sarah', assignedCounselId: counselUser.userId, assignedCounselEmail: counselUser.email, assignedCounselName: counselUser.fullName, assignedCounsel: counselUser.fullName, date: new Date().toISOString().slice(0,10), assignedAt: request.assignedAt, timeAgo: 'just now', reviewGate: request.reviewGate || null, reviewStatus: request.reviewStatus || null, relatedWizard: request.relatedWizard || null, description: request.description || null, wizardData: request.wizardData || null }
+    // Resolve the assigning admin's display name:
+    // 1. Look up the logged-in admin by email from mockState
+    // 2. Fall back to assignedBy/adminName sent in the request body (set by the frontend)
+    // 3. Last resort: 'Admin'
+    const adminUser = mockState.adminUsers.get(req.user.email)
+    const assignedBy = (adminUser && adminUser.fullName) || req.body.assignedBy || req.body.adminName || 'Admin'
+    const counselRequest = { requestId: request.requestId, subject: request.subject, fromUser: request.fromUser, userEmail: request.userEmail, company: request.company, earnings: request.earnings, currency: request.currency, status: 'pending', assignedBy, assignedCounselId: counselUser.userId, assignedCounselEmail: counselUser.email, assignedCounselName: counselUser.fullName, assignedCounsel: counselUser.fullName, date: new Date().toISOString().slice(0,10), assignedAt: request.assignedAt, timeAgo: 'just now', reviewGate: request.reviewGate || null, reviewStatus: request.reviewStatus || null, relatedWizard: request.relatedWizard || null, description: request.description || null, wizardData: request.wizardData || null }
     const idx = mockState.counselRequests.findIndex(r => r.requestId === request.requestId)
     if (idx >= 0) mockState.counselRequests[idx] = counselRequest; else mockState.counselRequests.unshift(counselRequest)
     res.json({ success: true, message: `Request assigned to ${counselUser.fullName}.`, data: { requestId: request.requestId, assignedCounselId: counselUser.userId, assignedCounselName: counselUser.fullName, assignedCounselEmail: counselUser.email, status: 'in_progress', assignedAt: request.assignedAt } })
