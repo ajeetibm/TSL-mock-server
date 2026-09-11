@@ -112,6 +112,9 @@ async function loginUser(payload, ip) {
     // Persist first-time password (MOCK only — production uses bcrypt hash on register)
     if (!user.password && password) { user.password = password; mockState.adminUsers.set(email, user) }
     if (user.password && password !== user.password) throw errors.unauthorized('Invalid credentials.', 'INVALID_CREDENTIALS')
+    // Record the login time so the profile page can display a live "Last Login"
+    user.lastLogin = new Date().toISOString()
+    mockState.adminUsers.set(email, user)
 
   } else {
     user = getSmeByEmail(email)
@@ -139,6 +142,14 @@ async function registerUser(payload, ip) {
   const email    = normalizeEmail(payload.email)
   const fullName = String(payload.fullName || '').trim()
   const password = String(payload.password || '')
+
+  // Block reserved admin / sub-admin domains from registering as SME users
+  if (email.includes('thestartuplegal') || email.includes('@admin')) {
+    throw errors.conflict(
+      'This email address is reserved for admin or sub-admin accounts. Please use a personal email address to create a user profile.',
+      'EMAIL_RESERVED_FOR_ADMIN'
+    )
+  }
 
   // PRODUCTION: check DB for existing user
   if (getSmeByEmail(email)) throw errors.conflict('An account with this email already exists.', 'EMAIL_TAKEN')
