@@ -351,8 +351,8 @@ const defaultAssignableCounsel = [
     phone: '+27 11 101 1003',
     specialty: 'Employment Law & HR Compliance',
     expertise: 'Employment Law & HR Compliance',
-    status: 'Busy',
-    availability: 'Busy',
+    status: 'Not Available',
+    availability: 'Not Available',
     experience: '8 years exp',
     location: 'Durban, KwaZulu-Natal',
   },
@@ -377,8 +377,8 @@ const defaultAssignableCounsel = [
     phone: '+27 11 101 1005',
     specialty: 'Commercial Contracts & Compliance',
     expertise: 'Commercial Contracts & Compliance',
-    status: 'Busy',
-    availability: 'Busy',
+    status: 'Not Available',
+    availability: 'Not Available',
     experience: '10 years exp',
     location: 'Johannesburg, Gauteng',
   },
@@ -478,19 +478,28 @@ function syncCounselCreditsForUser(email, activePlanId) {
   }
 
   const credits = mockState.smeCreditsByUser.get(key)
+  // Records created before top-up credits were tracked independently need a
+  // one-time migration. Do not infer future balances from creditsTotal: that
+  // value is an entitlement total, not the number of purchased credits left.
+  if (!Number.isFinite(credits.topUpCreditsRemaining)) {
+    const unusedIncluded = Math.max(0, credits.includedCredits - credits.creditsUsed)
+    credits.topUpCreditsRemaining = Math.max(0, credits.creditsRemaining - unusedIncluded)
+  }
 
   // Monthly reset if due
   const now = new Date()
   let resetAt = new Date(credits.resetDate + 'T00:00:00.000Z')
   if (!Number.isNaN(resetAt.getTime()) && now >= resetAt) {
     const resetTier = tier || COUNSEL_TIERS[String(credits.plan || '').toLowerCase()] || COUNSEL_TIERS.free
+    // Purchased credits do not expire with the monthly included allowance.
+    const topUpBuffer = credits.topUpCreditsRemaining
     credits.plan = resetTier.name
     credits.includedCredits = resetTier.includedCredits
     credits.topUpRate = resetTier.topUpRate
-    credits.creditsTotal = resetTier.includedCredits
+    credits.creditsTotal = resetTier.includedCredits + topUpBuffer
     credits.creditsUsed = 0
     credits.usageThisMonth = 0
-    credits.creditsRemaining = resetTier.includedCredits
+    credits.creditsRemaining = resetTier.includedCredits + topUpBuffer
     do { resetAt.setUTCMonth(resetAt.getUTCMonth() + 1) } while (resetAt <= now)
     credits.resetDate = resetAt.toISOString().slice(0, 10)
   }
@@ -498,7 +507,7 @@ function syncCounselCreditsForUser(email, activePlanId) {
   // If the user's subscription plan changed, re-sync included credits
   // but preserve any top-up buffer accumulated above the included amount.
   if (credits.plan !== tier.name) {
-    const topUpBuffer = Math.max(0, credits.creditsRemaining - credits.includedCredits)
+    const topUpBuffer = credits.topUpCreditsRemaining
     credits.plan = tier.name
     credits.includedCredits = tier.includedCredits
     credits.topUpRate = tier.topUpRate
@@ -531,4 +540,42 @@ function setCounselTierForUser(email, planId) {
   return credits
 }
 
-module.exports = { mockState, COUNSEL_TIERS, resetCounselCreditsIfDue, syncCounselCreditsForUser, setCounselTierForUser }
+/**
+ * Add purchased top-up credits to a user's balance without triggering a
+ * monthly reset. The reset in syncCounselCreditsForUser re-grants included
+ * credits which inflates the balance when called during a top-up payment.
+ */
+function addCounselTopUpCredits(email, qty) {
+  if (!Number.isInteger(qty) || qty < 1) return null
+  const key = String(email || '').trim().toLowerCase()
+  // If no record exists yet, initialise it first via the normal sync path.
+  if (!mockState.smeCreditsByUser.has(key)) {
+    const { getSubscriptionPlanId } = require('./controllers/subscription.controller')
+    syncCounselCreditsForUser(key, getSubscriptionPlanId(key))
+  }
+  const credits = mockState.smeCreditsByUser.get(key)
+  if (!credits) return null
+  if (!Number.isFinite(credits.topUpCreditsRemaining)) credits.topUpCreditsRemaining = 0
+  credits.creditsTotal     += qty
+  credits.creditsRemaining += qty
+  credits.topUpCreditsRemaining += qty
+  return credits
+}
+
+/** Deduct credits using the current month's included allowance before top-ups. */
+function consumeCounselCredits(email, qty) {
+  if (!Number.isInteger(qty) || qty < 1) return null
+  const { getSubscriptionPlanId } = require('./controllers/subscription.controller')
+  const credits = syncCounselCreditsForUser(email, getSubscriptionPlanId(email))
+  if (!credits || credits.creditsRemaining < qty) return null
+
+  const unusedIncluded = Math.max(0, credits.includedCredits - credits.creditsUsed)
+  const topUpUsed = Math.max(0, qty - unusedIncluded)
+  credits.creditsUsed += qty
+  credits.usageThisMonth += qty
+  credits.creditsRemaining -= qty
+  credits.topUpCreditsRemaining = Math.max(0, credits.topUpCreditsRemaining - topUpUsed)
+  return credits
+}
+
+module.exports = { mockState, COUNSEL_TIERS, resetCounselCreditsIfDue, syncCounselCreditsForUser, setCounselTierForUser, addCounselTopUpCredits, consumeCounselCredits }

@@ -10,7 +10,7 @@ const { addAuditLog, AUDIT_ACTIONS } = require('../mock-data/audit')
 const { validatePaystackInitPayload } = require('../utils/validate')
 const { errors } = require('../utils/errors')
 const logger = require('../utils/logger')
-const { COUNSEL_TIERS, syncCounselCreditsForUser } = require('../mock-state')
+const { COUNSEL_TIERS, syncCounselCreditsForUser, addCounselTopUpCredits } = require('../mock-state')
 const { activatePaidSubscription } = require('./subscription.controller')
 
 function validateWizardSelection(body) {
@@ -198,12 +198,14 @@ async function verifyPayment(req, res, next) {
       activateWizardAccess(txn.email, txn.plan, txn.selectedWizards)
     }
 
-    // Add counsel credits on successful top-up payment
+    // Add counsel credits on successful top-up payment.
+    // Use addCounselTopUpCredits instead of syncCounselCreditsForUser to avoid
+    // triggering a monthly reset that would re-grant included credits and inflate the balance.
+    let counselCredits = null
     if (status === 'success' && isCounselTopUp && !txn.creditsApplied) {
       const email = req.user?.email || txn.email
-      const credits = syncCounselCreditsForUser(email, getSubscriptionPlanId(email))
-      credits.creditsTotal += Number(txn.credits)
-      credits.creditsRemaining += Number(txn.credits)
+      counselCredits = addCounselTopUpCredits(email, Number(txn.credits))
+      if (!counselCredits) return next(errors.badRequest('Counsel top-up quantity must be a positive whole number.', 'INVALID_TOPUP_QUANTITY'))
       txn.creditsApplied = true
       paymentTransactions.set(reference, txn)
     }
@@ -217,7 +219,7 @@ async function verifyPayment(req, res, next) {
     res.json({
       success: true,
       message: status === 'success' ? 'Payment verified and subscription activated.' : `Payment ${status}.`,
-      data: { provider: 'paystack', reference, status, gatewayResponse: txn.gatewayResponse, paidAt: txn.paidAt, subscription, authorization: paystackData.authorization || null },
+      data: { provider: 'paystack', reference, status, gatewayResponse: txn.gatewayResponse, paidAt: txn.paidAt, subscription, counselCredits, authorization: paystackData.authorization || null },
     })
   } catch (e) { next(e) }
 }
