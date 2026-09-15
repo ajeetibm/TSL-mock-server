@@ -3,7 +3,7 @@
  * SME portal endpoints — profile, counsel credits/requests, dashboard.
  * PRODUCTION: replace mockState with DB queries.
  */
-const { mockState, syncCounselCreditsForUser } = require('../mock-state')
+const { mockState, syncCounselCreditsForUser, consumeCounselCredits } = require('../mock-state')
 const { paymentTransactions } = require('../mock-data/payments')
 const { getSmeByEmail, normalizeEmail, createSmeUser } = require('../services/authService')
 const { addAuditLog, AUDIT_ACTIONS } = require('../mock-data/audit')
@@ -135,6 +135,7 @@ async function getCounselCredits(req, res, next) {
         creditsUsed:      credits.creditsUsed,
         creditsRemaining: credits.creditsRemaining,
         usageThisMonth:   credits.usageThisMonth,
+        topUpCreditsRemaining: credits.topUpCreditsRemaining,
         topUpRate:        credits.topUpRate,
         currency:         credits.currency,
         resetDate:        credits.resetDate,
@@ -213,7 +214,9 @@ async function createCounselRequest(req, res, next) {
       return res.json({ success: true, message: 'Duplicate request ignored.', data: { requestId: duplicate.requestId, subject: duplicate.subject, status: duplicate.status, creditsRemaining: credits.creditsRemaining, submittedAt: duplicate.submittedAt || duplicate.receivedAt, duplicate: true } })
     }
 
-    if (creditsRequired > 0) { credits.creditsUsed += creditsRequired; credits.usageThisMonth += creditsRequired; credits.creditsRemaining -= creditsRequired }
+    if (creditsRequired > 0 && !consumeCounselCredits(userEmail, creditsRequired)) {
+      return next(errors.conflict('No counsel credits remain. Purchase a top-up before submitting.', 'INSUFFICIENT_COUNSEL_CREDITS'))
+    }
 
     const requestId = 'req_' + mockState.nextRequestId++
     const submittedAt = now.toISOString()
@@ -260,11 +263,7 @@ async function createPublicFundingReview(req, res, next) {
 
     // Deduct one counsel credit for this review request (same rule as a regular counsel request).
     const credits = counselCreditsFor(userEmail)
-    if (credits.creditsRemaining > 0) {
-      credits.creditsUsed += 1
-      credits.usageThisMonth += 1
-      credits.creditsRemaining -= 1
-    }
+    if (credits.creditsRemaining > 0) consumeCounselCredits(userEmail, 1)
 
     res.status(201).json({ success: true, message: 'Publicly funded IP review sent to admin for counsel assignment.', data: { requestId, status: 'pending', creditsRemaining: credits.creditsRemaining } })
   } catch (e) { next(e) }
