@@ -41,12 +41,15 @@ async function getDashboard(req, res, next) {
     const total = requests.length || 1
     const totalEarnings = accepted.reduce((s, r) => s + (r.earnings || 0), 0)
 
+    // Read per-counsel availability; fall back to legacy global scalar for the default account.
+    const counselAvailability = mockState.counselAvailability.get(email) ?? mockState.availability
+
     res.json({
       success: true,
       data: {
         counsel: { counselId: counselUser?.userId, fullName: counselUser?.fullName, email: counselUser?.email },
         kpis: { totalRequests: requests.length, accepted: accepted.length, acceptedRate: Math.round((accepted.length/total)*100)+'%', rejected: rejected.length, rejectedRate: Math.round((rejected.length/total)*100)+'%', totalEarnings, currency: 'ZAR' },
-        availability: mockState.availability, pendingRequests: pending,
+        availability: counselAvailability, pendingRequests: pending,
         acceptedRequests: accepted.map(r => ({ requestId: r.requestId, subject: r.subject, company: r.company, date: r.date, earnings: r.earnings, currency: r.currency })),
         earningsChart: { year: 2025, months: [{ month:'Jan',earnings:1800,target:2000},{ month:'Feb',earnings:2100,target:2200},{ month:'Mar',earnings:1950,target:2100},{ month:'Apr',earnings:2300,target:2300},{ month:'May',earnings:2200,target:2400},{ month:'Jun',earnings:2500,target:2500},{ month:'Jul',earnings:2700,target:2700},{ month:'Aug',earnings:2850,target:2850},{ month:'Sep',earnings:3000,target:3000},{ month:'Oct',earnings:3400,target:3300},{ month:'Nov',earnings:3650,target:3600},{ month:'Dec',earnings:3900,target:3800}], summary: { totalEarnings:32800, avgMonthly:2700, bestMonth:3900, growthRate:'108.1%' } },
       },
@@ -123,20 +126,35 @@ async function getRequests(req, res, next) {
 async function updateAvailability(req, res, next) {
   try {
     const next_availability = req.body.availability === 'unavailable' ? 'unavailable' : 'available'
-    mockState.availability = next_availability
 
-    // Reflect the new status in counselDirectory so the admin dashboard reads it
-    const counselEmail = normalizeEmail(req.user?.email || '')
-    if (counselEmail) {
-      const dirEntry = mockState.counselDirectory.find(e => normalizeEmail(e.email) === counselEmail)
-      if (dirEntry) {
-        const statusLabel = next_availability === 'available' ? 'Available' : 'Not Available'
-        dirEntry.status = statusLabel
-        dirEntry.availability = statusLabel
-      }
+    // Resolve the email of the counsel making the request.
+    // Fall back to the default demo counsel so dev/test still works without auth.
+    const counselEmail = normalizeEmail(req.user?.email || 's.nkosi@tsl.co.za')
+
+    // Persist per-counsel availability so each counsel's status is independent.
+    mockState.counselAvailability.set(counselEmail, next_availability)
+
+    // Keep legacy single-user scalar in sync for the default counsel account.
+    if (counselEmail === normalizeEmail('s.nkosi@tsl.co.za')) {
+      mockState.availability = next_availability
     }
 
-    res.json({ success: true, message: 'Availability updated.', data: { counselId: req.user?.userId || 'con_002', availability: mockState.availability, updatedAt: new Date().toISOString() } })
+    // Reflect the new status in counselDirectory so the admin assign list reads it.
+    const statusLabel = next_availability === 'available' ? 'Available' : 'Not Available'
+    const dirEntry = mockState.counselDirectory.find(e => normalizeEmail(e.email) === counselEmail)
+    if (dirEntry) {
+      dirEntry.status = statusLabel
+      dirEntry.availability = next_availability
+    }
+
+    // Also update counselUsers map so profile reads are consistent.
+    const counselUser = mockState.counselUsers.get(counselEmail)
+    if (counselUser) {
+      counselUser.availability = next_availability
+      counselUser.status = statusLabel
+    }
+
+    res.json({ success: true, message: 'Availability updated.', data: { counselId: req.user?.userId || 'con_002', availability: next_availability, updatedAt: new Date().toISOString() } })
   } catch (e) { next(e) }
 }
 

@@ -5,7 +5,8 @@ const mockState = {
   nextRequestId: 7800,
   nextAdminNotificationId: 1,
   nextPaymentId: 1,
-  availability: 'available',
+  availability: 'available',           // legacy single-user field (kept for backward compat)
+  counselAvailability: new Map(),       // per-counsel: Map<normalizedEmail, 'available'|'unavailable'>
   // Per-user counsel credits: Map<normalizedEmail, CreditRecord>
   smeCreditsByUser: new Map(),
   // Legacy single-user object kept for backward compat — do not reference directly.
