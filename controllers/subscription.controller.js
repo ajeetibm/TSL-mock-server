@@ -169,14 +169,16 @@ function buildSubscriptionResponse(email) {
   const plan  = getPlan(store.planId)
   if (!plan) throw new Error(`Unknown planId in store: ${store.planId}`)
 
-  const topUpUnits    = Number(store.topUpUnits || 0)
-  // runsTotal is always the plan's monthly allocation — it is the correct
-  // denominator for the "X of Y Credits Remaining" display.
-  // Top-up units extend runsRemaining beyond the plan total but do not
-  // change the plan denominator.
-  const runsTotal     = plan.wizardRuns
-  const runsUsed      = Math.min(store.runsUsed, plan.wizardRuns + topUpUnits)
-  const runsRemaining = Math.max(0, plan.wizardRuns + topUpUnits - runsUsed)
+  const topUpRunsPurchased = Math.max(0, Number(store.topUpUnits || 0))
+  const runsTotal          = plan.wizardRuns
+  const runsUsed           = Math.min(store.runsUsed, plan.wizardRuns + topUpRunsPurchased)
+  const runsRemaining      = Math.max(0, plan.wizardRuns + topUpRunsPurchased - runsUsed)
+  // A Blueprint run consumes the monthly plan allocation first, then the
+  // purchased top-up balance. Keeping these values separate lets the client
+  // accurately show, for example, "3 of 3" top-up credits remaining rather
+  // than incorrectly retaining a Launchpad "of 4" denominator.
+  const topUpRunsConsumed  = Math.max(0, runsUsed - plan.wizardRuns)
+  const topUpRunsRemaining = Math.max(0, topUpRunsPurchased - topUpRunsConsumed)
 
   const counselCredits = syncCounselCreditsForUser(email, plan.planId)
 
@@ -197,6 +199,8 @@ function buildSubscriptionResponse(email) {
       runsUsed,
       runsTotal,
       runsRemaining,
+      topUpRunsPurchased,
+      topUpRunsRemaining,
       teamMembers: plan.teamMembers,
       counselCreditsTotal:     counselCredits.creditsTotal,
       counselCreditsRemaining: counselCredits.creditsRemaining,
@@ -255,17 +259,7 @@ async function addBlueprintRunUnits(req, res, next) {
     // Top-ups never roll over: they extend this billing-period allowance only.
     // A real recurring-billing job resets topUpUnits together with runsUsed.
     store.topUpUnits = Number(store.topUpUnits || 0) + units
-    const plan = getPlan(store.planId)
-    const usage = {
-      runsUsed: store.runsUsed,
-      // runsTotal always reflects the plan's monthly allocation so the
-      // dashboard "X of Y" display shows the correct plan value (e.g. 4 for
-      // Launchpad, 12 for Operator). Top-up credits extend runsRemaining
-      // beyond the plan total but do not change the plan denominator.
-      runsTotal: plan.wizardRuns,
-      runsRemaining: Math.max(0, plan.wizardRuns + store.topUpUnits - store.runsUsed),
-      teamMembers: plan.teamMembers,
-    }
+    const usage = buildSubscriptionResponse(email).usage
     res.json({ success: true, message: `${units} Blueprint run unit${units === 1 ? '' : 's'} added for R${units * BLUEPRINT_RUN_TOP_UP_RATE}.`, data: { units, amount: units * BLUEPRINT_RUN_TOP_UP_RATE, usage } })
   } catch (e) { next(e) }
 }
