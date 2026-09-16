@@ -183,6 +183,7 @@ async function listPublicFundingReviews(req, res, next) {
         responseUrl:     r.responseUrl || null,
         description:     r.description || null,
         relatedWizard:   r.relatedWizard || null,
+        reviewDraftKey:  r.reviewDraftKey || null,
         attachments:     r.attachments || [],
         counselResponse: r.counselResponse || null,
         completedAt:     r.completedAt || null,
@@ -230,13 +231,38 @@ async function createCounselRequest(req, res, next) {
   } catch (e) { next(e) }
 }
 
-// Mandatory review gate for Founders' Agreement & IP Assignment. Each call
-// always creates a new request so users can submit multiple blueprints that
-// each need a separate counsel review.
+// Mandatory review gate for Founders' Agreement & IP Assignment. A draft key
+// makes retries for the same wizard instance idempotent while still allowing
+// separate agreement drafts to create their own reviews.
 async function createPublicFundingReview(req, res, next) {
   try {
     const wizardData = req.body.wizard_data || req.body.wizardData || {}
     const userEmail = normalizeEmail(req.user?.email || req.body.userEmail || req.body.email || 'thabo@company.co.za')
+    const reviewDraftKey = String(req.body.review_draft_key || req.body.reviewDraftKey || '').trim()
+    if (!reviewDraftKey) return next(errors.badRequest('A public-funding review draft key is required.', 'MISSING_REVIEW_DRAFT_KEY'))
+
+    const existing = mockState.adminRequests.find((item) => (
+      item.reviewGate === 'founders_public_funding'
+      && normalizeEmail(item.userEmail) === userEmail
+      && item.reviewDraftKey === reviewDraftKey
+    ))
+    if (existing) {
+      return res.json({
+        success: true,
+        message: 'Existing public-funding review returned.',
+        data: {
+          requestId: existing.requestId,
+          status: existing.reviewStatus || existing.status || 'pending',
+          rejectionReason: existing.rejectionReason || null,
+          duplicate: true,
+        },
+      })
+    }
+
+    const credits = counselCreditsFor(userEmail)
+    if (credits.creditsRemaining < 1) {
+      return next(errors.conflict('No counsel credits remain. Purchase a top-up before submitting.', 'INSUFFICIENT_COUNSEL_CREDITS'))
+    }
 
     const requestId = 'req_' + mockState.nextRequestId++
     const submittedAt = new Date().toISOString()
@@ -251,6 +277,7 @@ async function createPublicFundingReview(req, res, next) {
       status: 'pending',
       reviewStatus: 'pending',
       reviewGate: 'founders_public_funding',
+      reviewDraftKey,
       relatedWizard: 'founder-agreement',
       description: 'Mandatory review before generating a Founders\' Agreement & IP Assignment containing publicly funded IP.',
       wizardData,
@@ -262,10 +289,9 @@ async function createPublicFundingReview(req, res, next) {
     mockState.adminRequests.unshift(request)
 
     // Deduct one counsel credit for this review request (same rule as a regular counsel request).
-    const credits = counselCreditsFor(userEmail)
-    if (credits.creditsRemaining > 0) consumeCounselCredits(userEmail, 1)
+    consumeCounselCredits(userEmail, 1)
 
-    res.status(201).json({ success: true, message: 'Publicly funded IP review sent to admin for counsel assignment.', data: { requestId, status: 'pending', creditsRemaining: credits.creditsRemaining } })
+    res.status(201).json({ success: true, message: 'Publicly funded IP review sent to admin for counsel assignment.', data: { requestId, status: 'pending', creditsRemaining: counselCreditsFor(userEmail).creditsRemaining } })
   } catch (e) { next(e) }
 }
 
