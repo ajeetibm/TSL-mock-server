@@ -1,6 +1,6 @@
 const { Router } = require('express')
 const {
-  getProfile, updateProfile,
+  getProfile, updateProfile, getDashboardWorkspace, saveDashboardWorkspace,
   getCounselCredits, getCounselRequests, createCounselRequest, createPublicFundingReview, listPublicFundingReviews, getPublicFundingReview, topUpCredits, changePassword,
   getPaymentMethods, addPaymentMethod, setDefaultPaymentMethod, removePaymentMethod,
   getQuickAccessLinks,
@@ -14,6 +14,8 @@ const router = Router()
 
 router.get('/profile',            authenticate, getProfile)
 router.put('/profile',            authenticate, updateProfile)
+router.get('/dashboard/workspace', authenticate, getDashboardWorkspace)
+router.put('/dashboard/workspace', authenticate, saveDashboardWorkspace)
 router.get('/counsel/credits',    authenticate, getCounselCredits)
 router.get('/counsel/requests',   authenticate, getCounselRequests)
 router.post('/counsel/requests',  authenticate, createCounselRequest)

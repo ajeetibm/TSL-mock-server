@@ -9,6 +9,9 @@ const mockState = {
   counselAvailability: new Map(),       // per-counsel: Map<normalizedEmail, 'available'|'unavailable'>
   // Per-user counsel credits: Map<normalizedEmail, CreditRecord>
   smeCreditsByUser: new Map(),
+  // Per-user dashboard workflow state: New, In Progress, and Completed tabs.
+  // This survives browser sessions while the mock server is running.
+  dashboardWorkspaces: new Map(),
   // Legacy single-user object kept for backward compat — do not reference directly.
   smeCredits: { plan: 'free', includedCredits: 0, creditsTotal: 0, creditsUsed: 0, creditsRemaining: 0, usageThisMonth: 0, topUpRate: planCatalogue.plans[0]?.counselTopUpRate ?? 0, currency: planCatalogue.currency, resetDate: '2026-07-10' },
   smeUsers: new Map([

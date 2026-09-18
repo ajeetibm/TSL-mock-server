@@ -15,6 +15,48 @@ function counselCreditsFor(email) {
   return syncCounselCreditsForUser(accountEmail, getSubscriptionPlanId(accountEmail))
 }
 
+function emptyDashboardWorkspace() {
+  return { viewMode: 'initial', queuedCounts: {}, inProgressInstances: [], completedInstances: [], updatedAt: null }
+}
+
+function dashboardWorkspaceFor(email) {
+  return mockState.dashboardWorkspaces.get(email) || emptyDashboardWorkspace()
+}
+
+function sanitizeDashboardWorkspace(body = {}) {
+  const queuedCounts = Object.fromEntries(
+    Object.entries(body.queuedCounts || {}).flatMap(([wizardType, count]) => {
+      const quantity = Number(count)
+      return typeof wizardType === 'string' && Number.isFinite(quantity) && quantity >= 0
+        ? [[wizardType, Math.floor(quantity)]]
+        : []
+    }),
+  )
+  return {
+    viewMode: body.viewMode === 'returning' ? 'returning' : 'initial',
+    queuedCounts,
+    inProgressInstances: Array.isArray(body.inProgressInstances) ? body.inProgressInstances : [],
+    completedInstances: Array.isArray(body.completedInstances) ? body.completedInstances : [],
+    updatedAt: new Date().toISOString(),
+  }
+}
+
+async function getDashboardWorkspace(req, res, next) {
+  try {
+    const email = normalizeEmail(req.user?.email || 'thabo@company.co.za')
+    res.json({ success: true, data: dashboardWorkspaceFor(email) })
+  } catch (e) { next(e) }
+}
+
+async function saveDashboardWorkspace(req, res, next) {
+  try {
+    const email = normalizeEmail(req.user?.email || 'thabo@company.co.za')
+    const workspace = sanitizeDashboardWorkspace(req.body)
+    mockState.dashboardWorkspaces.set(email, workspace)
+    res.json({ success: true, data: workspace })
+  } catch (e) { next(e) }
+}
+
 function publicProfile(user) {
   return {
     userId: user.userId, companySnapshotId: user.companySnapshotId || `snapshot_${user.userId}`, fullName: user.fullName, email: user.email, role: user.role,
@@ -328,7 +370,7 @@ async function topUpCredits(req, res, next) {
   } catch (e) { next(e) }
 }
 
-module.exports = { getProfile, updateProfile, getDashboard, getCounselCredits, getCounselRequests, createCounselRequest, createPublicFundingReview, listPublicFundingReviews, getPublicFundingReview, topUpCredits, changePassword }
+module.exports = { getProfile, updateProfile, getDashboard, getDashboardWorkspace, saveDashboardWorkspace, getCounselCredits, getCounselRequests, createCounselRequest, createPublicFundingReview, listPublicFundingReviews, getPublicFundingReview, topUpCredits, changePassword }
 
 
 // ── Payment Methods (in-memory mock store — resets on server restart) ─────────
