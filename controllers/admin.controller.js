@@ -174,8 +174,26 @@ async function markAllAdminNotificationsRead(req, res, next) {
 }
 
 async function inviteAdmin(req, res, next) {
-  try { res.status(201).json({ success: true, message: 'Sub-admin invitation sent (MOCK — no email sent).', data: { email: req.body.email, invitedAt: new Date().toISOString() } }) }
-  catch (e) { next(e) }
+  try {
+    const email = normalizeEmail(req.body.email || '')
+    if (!email) return res.status(400).json({ success: false, message: 'Email is required.' })
+
+    // Check for duplicate across active admins and pending invites
+    const alreadyExists = Array.from(mockState.adminUsers.values()).some(
+      (a) => normalizeEmail(a.email) === email
+    ) || (mockState.pendingAdminInvites || []).some(
+      (i) => normalizeEmail(i.email) === email
+    )
+    if (alreadyExists) {
+      return res.status(409).json({ success: false, message: `An invitation for ${req.body.email} already exists.` })
+    }
+
+    // Store pending invite so subsequent checks catch it
+    if (!mockState.pendingAdminInvites) mockState.pendingAdminInvites = []
+    mockState.pendingAdminInvites.push({ email, fullName: req.body.fullName || '', invitedAt: new Date().toISOString() })
+
+    res.status(201).json({ success: true, message: 'Sub-admin invitation sent (MOCK — no email sent).', data: { email: req.body.email, invitedAt: new Date().toISOString() } })
+  } catch (e) { next(e) }
 }
 
 async function revokeAdmin(req, res, next) {
@@ -183,7 +201,14 @@ async function revokeAdmin(req, res, next) {
     const adminId = req.params.adminId
     const found = Array.from(mockState.adminUsers.values()).find(a => a.userId === adminId)
     if (!found) return next(errors.notFound('Admin not found.', 'ADMIN_NOT_FOUND'))
-    mockState.adminUsers.delete(normalizeEmail(found.email))
+    const foundEmail = normalizeEmail(found.email)
+    mockState.adminUsers.delete(foundEmail)
+    // Also remove from pending invites so the email can be re-invited
+    if (mockState.pendingAdminInvites) {
+      mockState.pendingAdminInvites = mockState.pendingAdminInvites.filter(
+        (i) => normalizeEmail(i.email) !== foundEmail
+      )
+    }
     res.json({ success: true, message: 'Admin access revoked.', data: { adminId } })
   } catch (e) { next(e) }
 }
