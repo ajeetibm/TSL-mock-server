@@ -40,7 +40,7 @@ async function getDashboard(req, res, next) {
       data: {
         kpis: { totalUsers:2847, totalUsersTrend:'+12%', activeWizards:1234, activeWizardsTrend:'+8%', revenueMTD:48574, currency:'ZAR', issuesCount:26, criticalIssues:3 },
         topWizards: [{name:'NDA Generator',completions:1234},{name:'Employment Offer Letter',completions:987},{name:'Privacy & Cookies Policy',completions:756},{name:'Founders agreement and IP assignment',completions:543},{name:'Service Level Agreement (SLA)',completions:432}],
-        recentCounselRequests: mockState.adminRequests.map(r => ({ requestId:r.requestId, subject:r.subject, fromUser:r.fromUser, fromUserEmail:r.fromUserEmail||r.userEmail||null, receivedAt:r.receivedAt||r.submittedAt, status:r.status, assignedCounselName:r.assignedCounselName, rejectionReason:r.rejectionReason, rejectedAt:r.rejectedAt, description:r.description||null, relatedWizard:r.relatedWizard||null })),
+        recentCounselRequests: mockState.adminRequests.map(r => ({ requestId:r.requestId, subject:r.subject, fromUser:r.fromUser, fromUserEmail:r.fromUserEmail||r.userEmail||null, receivedAt:r.receivedAt||r.submittedAt, status:r.status, assignedCounselName:r.assignedCounselName, assignedBy:r.assignedBy||null, assignedByRole:r.assignedByRole||null, rejectionReason:r.rejectionReason, rejectedAt:r.rejectedAt, description:r.description||null, relatedWizard:r.relatedWizard||null })),
         notifications: adminNotificationService.listAdminNotifications(),
         revenueChart: { year:2026, months:REVENUE_MONTHS, summary:{ totalRevenue:total, avgMonthly:Math.round(total/REVENUE_MONTHS.length), bestMonth:Math.max(...actuals), growthRate:(((actuals[actuals.length-1]-actuals[0])/actuals[0])*100).toFixed(1)+'%' }, axis:{ yMax:60000, ticks:[60000,45000,30000,15000,0], tickLabels:['R99k','R45k','R30k','R15k','R0k'], format:'ZAR' } },
       },
@@ -126,26 +126,40 @@ async function assignCounselRequest(req, res, next) {
     const requestId = req.params.requestId
     const request = mockState.adminRequests.find(r => r.requestId === requestId)
     if (!request) return next(errors.notFound('Counsel request not found.', 'REQUEST_NOT_FOUND'))
+
+    // Assignments are a one-time action. Reassignment is permitted only after
+    // the currently assigned counsel member explicitly rejects the request.
+    const hasActiveAssignment = Boolean(
+      request.assignedCounselId || request.assignedCounselEmail || request.assignedAt,
+    ) && !request.reassignmentRequired
+    if (hasActiveAssignment) {
+      const assignedByRole = request.assignedByRole === 'super_admin' ? 'Super Admin' : 'Sub Admin'
+      const assignedByName = request.assignedBy ? ` (${request.assignedBy})` : ''
+      return next(errors.conflict(
+        `This request has already been assigned by ${assignedByRole}${assignedByName}.`,
+        'COUNSEL_REQUEST_ALREADY_ASSIGNED',
+      ))
+    }
+
+    // The authenticated account is the source of assignment ownership. The
+    // body values remain only as a mock-friendly display-name fallback.
+    const adminUser = getAdminByEmail(req.user?.email)
+    const assignedBy = adminUser?.fullName || req.body.assignedBy || req.body.adminName || 'Admin'
+    const assignedByRole = req.user?.role === 'super_admin' ? 'super_admin' : 'admin'
     const selectedEmail = normalizeEmail(req.body.counselEmail || req.body.email || req.body.assignedCounselEmail || 's.nkosi@tsl.co.za')
     const dirEntry = mockState.counselDirectory.find(e => normalizeEmail(e.email) === selectedEmail)
     let counselUser = getCounselByEmail(selectedEmail)
     if (!counselUser && dirEntry) { counselUser = { userId: dirEntry.counselId, fullName: dirEntry.fullName || dirEntry.name, email: normalizeEmail(dirEntry.email), password: 'temporary', role: 'counsel', portal: 'counsel', mustResetPassword: true, status: 'active' }; mockState.counselUsers.set(counselUser.email, counselUser) }
     counselUser = counselUser || getCounselByEmail('s.nkosi@tsl.co.za')
-    request.status = 'in_progress'; request.assignedCounselId = counselUser.userId; request.assignedCounselEmail = counselUser.email; request.assignedCounselName = counselUser.fullName; request.assignedAt = new Date().toISOString(); request.reassignmentRequired = false
+    request.status = 'in_progress'; request.assignedCounselId = counselUser.userId; request.assignedCounselEmail = counselUser.email; request.assignedCounselName = counselUser.fullName; request.assignedAt = new Date().toISOString(); request.assignedBy = assignedBy; request.assignedByRole = assignedByRole; request.reassignmentRequired = false
     if (request.reviewGate === 'founders_public_funding') {
       request.reviewStatus = 'pending'
       request.rejectionReason = null
     }
-    // Resolve the assigning admin's display name:
-    // 1. Look up the logged-in admin by email from mockState
-    // 2. Fall back to assignedBy/adminName sent in the request body (set by the frontend)
-    // 3. Last resort: 'Admin'
-    const adminUser = mockState.adminUsers.get(req.user.email)
-    const assignedBy = (adminUser && adminUser.fullName) || req.body.assignedBy || req.body.adminName || 'Admin'
-    const counselRequest = { requestId: request.requestId, subject: request.subject, fromUser: request.fromUser, userEmail: request.userEmail, company: request.company, earnings: request.earnings, currency: request.currency, status: 'pending', assignedBy, assignedCounselId: counselUser.userId, assignedCounselEmail: counselUser.email, assignedCounselName: counselUser.fullName, assignedCounsel: counselUser.fullName, date: new Date().toISOString().slice(0,10), assignedAt: request.assignedAt, timeAgo: 'just now', reviewGate: request.reviewGate || null, reviewStatus: request.reviewStatus || null, relatedWizard: request.relatedWizard || null, description: request.description || null, wizardData: request.wizardData || null }
+    const counselRequest = { requestId: request.requestId, subject: request.subject, fromUser: request.fromUser, userEmail: request.userEmail, company: request.company, earnings: request.earnings, currency: request.currency, status: 'pending', assignedBy, assignedByRole, assignedCounselId: counselUser.userId, assignedCounselEmail: counselUser.email, assignedCounselName: counselUser.fullName, assignedCounsel: counselUser.fullName, date: new Date().toISOString().slice(0,10), assignedAt: request.assignedAt, timeAgo: 'just now', reviewGate: request.reviewGate || null, reviewStatus: request.reviewStatus || null, relatedWizard: request.relatedWizard || null, description: request.description || null, wizardData: request.wizardData || null }
     const idx = mockState.counselRequests.findIndex(r => r.requestId === request.requestId)
     if (idx >= 0) mockState.counselRequests[idx] = counselRequest; else mockState.counselRequests.unshift(counselRequest)
-    res.json({ success: true, message: `Request assigned to ${counselUser.fullName}.`, data: { requestId: request.requestId, assignedCounselId: counselUser.userId, assignedCounselName: counselUser.fullName, assignedCounselEmail: counselUser.email, status: 'in_progress', assignedAt: request.assignedAt } })
+    res.json({ success: true, message: `Request assigned to ${counselUser.fullName}.`, data: { requestId: request.requestId, assignedCounselId: counselUser.userId, assignedCounselName: counselUser.fullName, assignedCounselEmail: counselUser.email, assignedBy, assignedByRole, status: 'in_progress', assignedAt: request.assignedAt } })
   } catch (e) { next(e) }
 }
 
