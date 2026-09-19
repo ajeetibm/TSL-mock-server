@@ -42,6 +42,35 @@ function addWizardsToDashboardWorkspace(email, selectedWizards) {
   })
 }
 
+// A successful plan purchase creates the customer's first dashboard queue.
+// This replaces the queue from that checkout rather than appending to it, so
+// a payment retry cannot duplicate its Blueprints. Existing work stays intact.
+function syncPurchasedWizardsToDashboardWorkspace(email, selectedWizards) {
+  const key = String(email || '').trim().toLowerCase()
+  const queuedCounts = {}
+
+  for (const { title, quantity } of (Array.isArray(selectedWizards) ? selectedWizards : [])) {
+    const wizardTitle = String(title || '').trim()
+    if (!wizardTitle) continue
+    const count = Math.max(1, Math.floor(Number(quantity) || 1))
+    queuedCounts[wizardTitle] = (Number(queuedCounts[wizardTitle]) || 0) + count
+  }
+
+  // Plan upgrades from Settings do not include any Blueprint selection and
+  // therefore must not clear a user's existing dashboard queue.
+  if (Object.keys(queuedCounts).length === 0) return
+
+  const current = mockState.dashboardWorkspaces.get(key) || {
+    viewMode: 'initial', queuedCounts: {}, inProgressInstances: [], completedInstances: [], updatedAt: null,
+  }
+  mockState.dashboardWorkspaces.set(key, {
+    ...current,
+    viewMode: 'returning',
+    queuedCounts,
+    updatedAt: new Date().toISOString(),
+  })
+}
+
 async function initializePayment(req, res, next) {
   try {
     const err = validatePaystackInitPayload(req.body) || validateWizardSelection(req.body)
@@ -141,6 +170,7 @@ async function completeMockPayment(req, res, next) {
       subscription = activateUserSubscription(txn.email, txn.plan, req.user?.userId)
       activatePaidSubscription(txn.email, txn.plan)
       activateWizardAccess(txn.email, txn.plan, txn.selectedWizards)
+      syncPurchasedWizardsToDashboardWorkspace(txn.email, txn.selectedWizards)
     }
 
     res.json({
@@ -220,6 +250,7 @@ async function verifyPayment(req, res, next) {
       subscription = activateUserSubscription(txn.email, txn.plan, req.user?.userId)
       activatePaidSubscription(txn.email, txn.plan)
       activateWizardAccess(txn.email, txn.plan, txn.selectedWizards)
+      syncPurchasedWizardsToDashboardWorkspace(txn.email, txn.selectedWizards)
     }
 
     // Add counsel credits on successful top-up payment.
@@ -300,6 +331,8 @@ async function paystackWebhook(req, res, next) {
         recordPaymentHistory(txn)
         activateUserSubscription(email, txn.plan, null)
         activatePaidSubscription(email, txn.plan)
+        activateWizardAccess(email, txn.plan, txn.selectedWizards)
+        syncPurchasedWizardsToDashboardWorkspace(email, txn.selectedWizards)
       }
     }
 
