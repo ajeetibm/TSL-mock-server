@@ -10,12 +10,36 @@ const { addAuditLog, AUDIT_ACTIONS } = require('../mock-data/audit')
 const { validatePaystackInitPayload } = require('../utils/validate')
 const { errors } = require('../utils/errors')
 const logger = require('../utils/logger')
-const { COUNSEL_TIERS, syncCounselCreditsForUser, addCounselTopUpCredits } = require('../mock-state')
+const { mockState, COUNSEL_TIERS, syncCounselCreditsForUser, addCounselTopUpCredits } = require('../mock-state')
 const { activatePaidSubscription } = require('./subscription.controller')
 
 function validateWizardSelection(body) {
   const plan = String(body.plan || 'operator').toLowerCase()
   return ['launchpad', 'operator', 'boardroom'].includes(plan) ? null : 'Unknown subscription plan.'
+}
+
+function addWizardsToDashboardWorkspace(email, selectedWizards) {
+  const key = String(email || '').trim().toLowerCase()
+  const current = mockState.dashboardWorkspaces.get(key) || {
+    viewMode: 'initial', queuedCounts: {}, inProgressInstances: [], completedInstances: [], updatedAt: null,
+  }
+  const queuedCounts = { ...(current.queuedCounts || {}) }
+
+  for (const { title, quantity } of (Array.isArray(selectedWizards) ? selectedWizards : [])) {
+    const wizardTitle = String(title || '').trim()
+    if (!wizardTitle) continue
+    const count = Math.max(1, Math.floor(Number(quantity) || 1))
+    queuedCounts[wizardTitle] = (Number(queuedCounts[wizardTitle]) || 0) + count
+  }
+
+  mockState.dashboardWorkspaces.set(key, {
+    ...current,
+    viewMode: 'returning',
+    queuedCounts,
+    inProgressInstances: Array.isArray(current.inProgressInstances) ? current.inProgressInstances : [],
+    completedInstances: Array.isArray(current.completedInstances) ? current.completedInstances : [],
+    updatedAt: new Date().toISOString(),
+  })
 }
 
 async function initializePayment(req, res, next) {
@@ -244,6 +268,10 @@ async function addWizardsToDashboard(req, res, next) {
       })
     }
     const access = addWizardsToAccess(email, req.body.selectedWizards)
+    // The dashboard reads its New/In Progress/Completed state from this
+    // account-scoped mock workspace. Update it in the same request so the
+    // redirect cannot lose the newly selected Blueprints.
+    addWizardsToDashboardWorkspace(email, req.body.selectedWizards)
     res.json({ success: true, message: 'Wizards added to your dashboard.', data: access })
   } catch (e) { next(errors.badRequest(e.message, 'WIZARD_LIMIT_REACHED')) }
 }
