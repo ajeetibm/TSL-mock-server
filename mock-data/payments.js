@@ -109,7 +109,9 @@ function initializeTransaction(data) {
     amount: data.amount || getPlanAmount(data.plan),
     amountInKobo: Math.round((data.amount || getPlanAmount(data.plan)) * 100),
     currency: data.currency || 'ZAR',
-    plan: data.plan || 'operator',
+    // The caller validates this value. Do not silently substitute Operator:
+    // that could activate a different subscription than the customer chose.
+    plan: String(data.plan || '').trim().toLowerCase(),
     paymentMethod: data.paymentMethod || 'Credit/Debit Cards',
     selectedWizards: Array.isArray(data.selectedWizards) ? data.selectedWizards : [],
     status: 'initialized',

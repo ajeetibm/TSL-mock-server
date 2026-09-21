@@ -14,7 +14,8 @@ const { mockState, COUNSEL_TIERS, syncCounselCreditsForUser, addCounselTopUpCred
 const { activatePaidSubscription } = require('./subscription.controller')
 
 function validateWizardSelection(body) {
-  const plan = String(body.plan || 'operator').toLowerCase()
+  const plan = String(body.plan || '').trim().toLowerCase()
+  if (!plan) return 'Choose a subscription plan before continuing to payment.'
   return ['launchpad', 'operator', 'boardroom'].includes(plan) ? null : 'Unknown subscription plan.'
 }
 
@@ -81,7 +82,7 @@ async function initializePayment(req, res, next) {
       email: accountEmail,
       amount: Number(req.body.amount),
       currency: req.body.currency || 'ZAR',
-      plan: req.body.plan || 'operator',
+      plan: String(req.body.plan).trim().toLowerCase(),
       paymentMethod: req.body.paymentMethod,
       selectedWizards: req.body.selectedWizards,
     })
@@ -130,7 +131,7 @@ async function initializeMockPayment(req, res, next) {
       email: accountEmail,
       amount: Number(req.body.amount),
       currency: req.body.currency || 'ZAR',
-      plan: req.body.plan || 'operator',
+      plan: String(req.body.plan).trim().toLowerCase(),
       paymentMethod: method,
       selectedWizards: req.body.selectedWizards,
     })
@@ -198,6 +199,7 @@ async function verifyPayment(req, res, next) {
     if (!txn) {
       const type = req.body.type || 'subscription'
       const isCounselTopUp = type === 'counsel-topup'
+      const isBlueprintTopUp = type === 'blueprint-topup'
       const credits = Number(req.body.credits)
       if (isCounselTopUp && (!Number.isInteger(credits) || credits < 1 || credits > 20)) return next(errors.badRequest('Counsel top-ups must be between 1 and 20 whole credits.', 'INVALID_TOPUP_QUANTITY'))
       // Counsel top-ups are independent purchases. The chosen tier determines
@@ -209,7 +211,12 @@ async function verifyPayment(req, res, next) {
       const activeTier = COUNSEL_TIERS[String(activePlanId || '').toLowerCase()] || COUNSEL_TIERS.free
       const tier = COUNSEL_TIERS[requestedPlanKey] || activeTier
       const expectedAmount = Number(req.body.amountPaid || 0)
-      const plan = isCounselTopUp ? tier.name : (req.body.plan || 'operator')
+      const selectedPlan = String(req.body.plan || '').trim().toLowerCase()
+      const planValidationError = validateWizardSelection(req.body)
+      if (!isCounselTopUp && !isBlueprintTopUp && planValidationError) {
+        return next(errors.badRequest(planValidationError, 'VALIDATION_ERROR'))
+      }
+      const plan = isCounselTopUp ? tier.name : selectedPlan
       txn = {
         reference,
         email,

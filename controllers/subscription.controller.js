@@ -121,11 +121,21 @@ function activatePaidSubscription(email, planId) {
   const nextBilling = new Date(now)
   nextBilling.setUTCMonth(nextBilling.getUTCMonth() + 1)
   const existing = subscriptionStore.get(key) || {}
+  const previousPlan = getPlan(existing.planId || 'free')
+  // Moving to a higher tier within the current billing period must not erase
+  // Blueprint units the customer has already bought or used. This function is
+  // also called from payment verification before upgradeSubscription(), so it
+  // must preserve that balance on its own.
+  const isInCycleUpgrade = Boolean(
+    previousPlan &&
+    previousPlan.planId !== 'free' &&
+    (PLAN_TIER[plan.planId] ?? -1) > (PLAN_TIER[previousPlan.planId] ?? -1),
+  )
   subscriptionStore.set(key, {
     ...existing,
     planId: plan.planId,
-    runsUsed: 0,
-    topUpUnits: 0,
+    runsUsed: isInCycleUpgrade ? Math.max(0, Number(existing.runsUsed || 0)) : 0,
+    topUpUnits: isInCycleUpgrade ? Math.max(0, Number(existing.topUpUnits || 0)) : 0,
     nextBillingDate: nextBilling.toISOString().slice(0, 10),
     paymentMethod: existing.paymentMethod || { brand: 'Visa', last4: '4242' },
     pendingDowngrade: null,
@@ -369,11 +379,9 @@ async function upgradeSubscription(req, res, next) {
     const email      = String(req.user?.email || 'thabo@company.co.za').toLowerCase()
     const { currentPlanId, toPlanId, paymentReference } = req.body
     const store      = applyScheduledDowngradeIfDue(email)
-    const current    = getPlan(store.planId)
     const newPlan    = getPlan(toPlanId)
 
     if (!newPlan) return next(errors.badRequest('Unknown target plan.', 'INVALID_PLAN'))
-    if (!current) return next(errors.badRequest('Current plan data is corrupt.', 'INVALID_PLAN'))
     const sentPlanId  = String(currentPlanId || '').toLowerCase()
 
     // When a paymentReference is present, the Paystack verify endpoint has
@@ -381,6 +389,13 @@ async function upgradeSubscription(req, res, next) {
     // The store already reflects the new plan — skip all tier/stale checks
     // and just record the invoice + return the success response.
     const alreadyActivatedByPayment = Boolean(paymentReference)
+    // Payment verification can set the target plan before this endpoint runs.
+    // In that case the submitted source plan is the correct plan to use for
+    // the invoice and to decide whether this is a true upgrade.
+    const current = alreadyActivatedByPayment && sentPlanId
+      ? getPlan(sentPlanId)
+      : getPlan(store.planId)
+    if (!current) return next(errors.badRequest('Current plan data is corrupt.', 'INVALID_PLAN'))
 
     if (!alreadyActivatedByPayment) {
       // 'free' is the canonical pre-subscription state — always allow upgrade from it
@@ -416,11 +431,16 @@ async function upgradeSubscription(req, res, next) {
     const total         = charge.totalDueToday
     const billingPeriod = makeBillingPeriod(invoiceDate, charge.nextBillingDate)
 
-    // Update subscription
-    store.planId           = newPlan.planId
+    // A plan upgrade adds the higher plan's allocation while retaining the
+    // current-cycle usage and purchased top-ups. Example: Launchpad 4, two
+    // used, seven top-up → Operator 12 becomes 17 of 19 remaining.
+    // A Free purchase and a same-plan renewal intentionally start a new cycle.
+    if (!alreadyActivatedByPayment) store.planId = newPlan.planId
     store.nextBillingDate  = charge.nextBillingDate
-    store.runsUsed         = 0
-    store.topUpUnits       = 0
+    if (!alreadyActivatedByPayment && (current.planId === 'free' || current.planId === newPlan.planId)) {
+      store.runsUsed = 0
+      store.topUpUnits = 0
+    }
     store.pendingDowngrade = null
     // Sync plan name back to smeUsers so admin Users & Activity reflects the new plan immediately
     const smeUser = mockState.smeUsers.get(email)
@@ -446,8 +466,7 @@ async function upgradeSubscription(req, res, next) {
       date:            invoiceDate,
     })
 
-    const runsTotal     = newPlan.wizardRuns
-    const runsRemaining = runsTotal
+    const usage = buildSubscriptionResponse(email).usage
 
     logger.info('subscriptionController', 'Upgrade confirmed', { email, from: current.planId, to: newPlan.planId, charged: total })
     addAuditLog({ action: 'SUBSCRIPTION_UPGRADE', userId: req.user?.userId, email, meta: { from: current.planId, to: newPlan.planId, amount: total, transactionId } })
@@ -462,12 +481,7 @@ async function upgradeSubscription(req, res, next) {
         tagline:         newPlan.tagline,
         wizardRuns:      newPlan.wizardRuns,
         teamMembers:     newPlan.teamMembers,
-        usage: {
-          runsUsed:      0,
-          runsTotal,
-          runsRemaining,
-          teamMembers:   newPlan.teamMembers,
-        },
+        usage,
         nextBillingDate: store.nextBillingDate,
         counselCreditsTotal: counselCredits.creditsTotal,
         counselCreditsRemaining: counselCredits.creditsRemaining,
