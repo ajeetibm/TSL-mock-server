@@ -173,6 +173,11 @@ async function acceptRequest(req, res, next) {
   try {
     const request = mockState.counselRequests.find(r => r.requestId === req.params.requestId)
     if (!request) return next(errors.notFound('Counsel request not found.', 'REQUEST_NOT_FOUND'))
+    // Completion is terminal. A delayed or retried accept request must never
+    // overwrite a completed request back to accepted/in-progress.
+    if (request.status === 'completed') {
+      return res.json({ success: true, message: 'Request is already completed.', data: { requestId: request.requestId, status: request.status, completedAt: request.completedAt } })
+    }
     request.status = 'accepted'; request.acceptedAt = new Date().toISOString()
     const adminReq = mockState.adminRequests.find(r => r.requestId === request.requestId)
     if (adminReq) { adminReq.status = 'accepted'; adminReq.acceptedAt = request.acceptedAt }
