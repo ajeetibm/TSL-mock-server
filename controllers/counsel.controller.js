@@ -26,8 +26,19 @@ function toCounselProfile(user) {
 
 function getCounselRequests(email) {
   const normalized = normalizeEmail(email)
-  if (!normalized) return mockState.counselRequests
-  return mockState.counselRequests.filter(r => normalizeEmail(r.assignedCounselEmail) === normalized)
+  const assignedRequests = !normalized
+    ? mockState.counselRequests
+    : mockState.counselRequests.filter(r => normalizeEmail(r.assignedCounselEmail) === normalized)
+
+  // Requests assigned before attachment copying was added may already have a
+  // counsel-side record without the user's uploads. Hydrate from the canonical
+  // admin request on read so those files are still visible to counsel.
+  return assignedRequests.map((request) => {
+    if (Array.isArray(request.attachments) && request.attachments.length > 0) return request
+    const adminRequest = mockState.adminRequests.find(item => item.requestId === request.requestId)
+    const attachments = Array.isArray(adminRequest?.attachments) ? adminRequest.attachments : []
+    return attachments.length > 0 ? { ...request, attachments } : request
+  })
 }
 
 async function getDashboard(req, res, next) {

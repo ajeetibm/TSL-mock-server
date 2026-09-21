@@ -156,7 +156,11 @@ async function assignCounselRequest(req, res, next) {
       request.reviewStatus = 'pending'
       request.rejectionReason = null
     }
-    const counselRequest = { requestId: request.requestId, subject: request.subject, fromUser: request.fromUser, userEmail: request.userEmail, company: request.company, earnings: request.earnings, currency: request.currency, status: 'pending', assignedBy, assignedByRole, assignedCounselId: counselUser.userId, assignedCounselEmail: counselUser.email, assignedCounselName: counselUser.fullName, assignedCounsel: counselUser.fullName, date: new Date().toISOString().slice(0,10), assignedAt: request.assignedAt, timeAgo: 'just now', reviewGate: request.reviewGate || null, reviewStatus: request.reviewStatus || null, relatedWizard: request.relatedWizard || null, description: request.description || null, wizardData: request.wizardData || null }
+    // Preserve the user's original uploads when the request moves from the
+    // admin queue to counsel. The counsel portal reads its own request record,
+    // so omitting this field makes a valid SME attachment disappear after
+    // assignment.
+    const counselRequest = { requestId: request.requestId, subject: request.subject, fromUser: request.fromUser, userEmail: request.userEmail, company: request.company, earnings: request.earnings, currency: request.currency, status: 'pending', assignedBy, assignedByRole, assignedCounselId: counselUser.userId, assignedCounselEmail: counselUser.email, assignedCounselName: counselUser.fullName, assignedCounsel: counselUser.fullName, date: new Date().toISOString().slice(0,10), assignedAt: request.assignedAt, timeAgo: 'just now', reviewGate: request.reviewGate || null, reviewStatus: request.reviewStatus || null, relatedWizard: request.relatedWizard || null, description: request.description || null, attachments: Array.isArray(request.attachments) ? request.attachments : [], wizardData: request.wizardData || null }
     const idx = mockState.counselRequests.findIndex(r => r.requestId === request.requestId)
     if (idx >= 0) mockState.counselRequests[idx] = counselRequest; else mockState.counselRequests.unshift(counselRequest)
     res.json({ success: true, message: `Request assigned to ${counselUser.fullName}.`, data: { requestId: request.requestId, assignedCounselId: counselUser.userId, assignedCounselName: counselUser.fullName, assignedCounselEmail: counselUser.email, assignedBy, assignedByRole, status: 'in_progress', assignedAt: request.assignedAt } })
