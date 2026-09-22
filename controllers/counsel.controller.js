@@ -41,16 +41,45 @@ function getCounselRequests(email) {
   })
 }
 
+function buildEarningsChart(completedRequests) {
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+  const year = new Date().getFullYear()
+  const months = monthNames.map(month => ({ month, earnings: 0, target: 0 }))
+
+  for (const request of completedRequests) {
+    const completedOn = new Date(request.completedAt || request.date || request.assignedAt)
+    if (Number.isNaN(completedOn.getTime()) || completedOn.getFullYear() !== year) continue
+    months[completedOn.getMonth()].earnings += Number(request.earnings) || 0
+  }
+
+  const totalEarnings = months.reduce((total, month) => total + month.earnings, 0)
+  return {
+    year,
+    months,
+    summary: {
+      totalEarnings,
+      avgMonthly: Math.round(totalEarnings / 12),
+      bestMonth: Math.max(0, ...months.map(month => month.earnings)),
+      growthRate: '0%',
+    },
+  }
+}
+
 async function getDashboard(req, res, next) {
   try {
     const email = normalizeEmail(req.query.email || req.user?.email || 's.nkosi@tsl.co.za')
     const requests = getCounselRequests(email)
     const counselUser = getCounselByEmail(email) || getCounselByEmail('s.nkosi@tsl.co.za')
-    const accepted = requests.filter(r => r.status === 'accepted')
+    // A completed request was accepted earlier in its lifecycle, so it remains
+    // part of the accepted count. Revenue, however, is recognised only when
+    // counsel has completed the review.
+    const accepted = requests.filter(r => r.status === 'accepted' || r.status === 'completed')
+    const completed = requests.filter(r => r.status === 'completed')
     const rejected = requests.filter(r => r.status === 'rejected')
     const pending  = requests.filter(r => r.status === 'pending')
     const total = requests.length || 1
-    const totalEarnings = accepted.reduce((s, r) => s + (r.earnings || 0), 0)
+    const totalEarnings = completed.reduce((s, r) => s + (Number(r.earnings) || 0), 0)
+    const earningsChart = buildEarningsChart(completed)
 
     // Read per-counsel availability; fall back to legacy global scalar for the default account.
     const counselAvailability = mockState.counselAvailability.get(email) ?? mockState.availability
@@ -59,10 +88,10 @@ async function getDashboard(req, res, next) {
       success: true,
       data: {
         counsel: { counselId: counselUser?.userId, fullName: counselUser?.fullName, email: counselUser?.email },
-        kpis: { totalRequests: requests.length, accepted: accepted.length, acceptedRate: Math.round((accepted.length/total)*100)+'%', rejected: rejected.length, rejectedRate: Math.round((rejected.length/total)*100)+'%', totalEarnings, currency: 'ZAR' },
+        kpis: { totalRequests: requests.length, accepted: accepted.length, acceptedRate: Math.round((accepted.length/total)*100)+'%', completed: completed.length, rejected: rejected.length, rejectedRate: Math.round((rejected.length/total)*100)+'%', totalEarnings, currency: 'ZAR' },
         availability: counselAvailability, pendingRequests: pending,
-        acceptedRequests: accepted.map(r => ({ requestId: r.requestId, subject: r.subject, company: r.company, date: r.date, earnings: r.earnings, currency: r.currency })),
-        earningsChart: { year: 2025, months: [{ month:'Jan',earnings:1800,target:2000},{ month:'Feb',earnings:2100,target:2200},{ month:'Mar',earnings:1950,target:2100},{ month:'Apr',earnings:2300,target:2300},{ month:'May',earnings:2200,target:2400},{ month:'Jun',earnings:2500,target:2500},{ month:'Jul',earnings:2700,target:2700},{ month:'Aug',earnings:2850,target:2850},{ month:'Sep',earnings:3000,target:3000},{ month:'Oct',earnings:3400,target:3300},{ month:'Nov',earnings:3650,target:3600},{ month:'Dec',earnings:3900,target:3800}], summary: { totalEarnings:32800, avgMonthly:2700, bestMonth:3900, growthRate:'108.1%' } },
+        acceptedRequests: accepted.map(r => ({ requestId: r.requestId, subject: r.subject, company: r.company, date: r.completedAt || r.date, earnings: r.status === 'completed' ? (Number(r.earnings) || 0) : 0, currency: r.currency })),
+        earningsChart,
       },
     })
   } catch (e) { next(e) }
