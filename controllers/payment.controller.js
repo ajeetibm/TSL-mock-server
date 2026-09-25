@@ -310,7 +310,7 @@ async function addWizardsToDashboard(req, res, next) {
     // account-scoped mock workspace. Update it in the same request so the
     // redirect cannot lose the newly selected Blueprints.
     addWizardsToDashboardWorkspace(email, req.body.selectedWizards)
-    res.json({ success: true, message: 'Wizards added to your dashboard.', data: access })
+    res.json({ success: true, message: 'Blueprints added to your dashboard.', data: access })
   } catch (e) { next(errors.badRequest(e.message, 'WIZARD_LIMIT_REACHED')) }
 }
 
