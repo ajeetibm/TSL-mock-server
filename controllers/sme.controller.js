@@ -23,6 +23,38 @@ function dashboardWorkspaceFor(email) {
   return mockState.dashboardWorkspaces.get(email) || emptyDashboardWorkspace()
 }
 
+function publicFundingDraftIdentity(instance) {
+  if (!instance || typeof instance !== 'object') return null
+  const data = instance.data && typeof instance.data === 'object' ? instance.data : {}
+  const stored = data.publicFundingReviewRequestId || data.publicFundingReviewDraftKey
+  if (typeof stored === 'string' && stored.trim()) return stored.trim()
+  if (
+    instance.wizardType === 'Founder Employment Contract' &&
+    data.publiclyFunded === 'Yes' &&
+    typeof data.companyId === 'string' && data.companyId.trim() &&
+    typeof data.founder === 'string' && data.founder.trim()
+  ) return `founder-employment:${data.companyId}:${data.founder}`
+  return null
+}
+
+function dedupePublicFundingInProgress(instances) {
+  const publicFundingWizards = new Set([
+    'Founders agreement and IP assignment',
+    'Founder Employment Contract',
+  ])
+  const seen = new Set()
+  // Preserve the most recently saved form state for each Counsel review.
+  return [...instances].reverse().filter((instance) => {
+    if (!publicFundingWizards.has(instance?.wizardType)) return true
+    const identity = publicFundingDraftIdentity(instance)
+    if (!identity) return true
+    const key = `${instance.wizardType}:${identity}`
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  }).reverse()
+}
+
 function sanitizeDashboardWorkspace(body = {}) {
   const queuedCounts = Object.fromEntries(
     Object.entries(body.queuedCounts || {}).flatMap(([wizardType, count]) => {
@@ -35,7 +67,9 @@ function sanitizeDashboardWorkspace(body = {}) {
   return {
     viewMode: body.viewMode === 'returning' ? 'returning' : 'initial',
     queuedCounts,
-    inProgressInstances: Array.isArray(body.inProgressInstances) ? body.inProgressInstances : [],
+    inProgressInstances: dedupePublicFundingInProgress(
+      Array.isArray(body.inProgressInstances) ? body.inProgressInstances : [],
+    ),
     completedInstances: Array.isArray(body.completedInstances) ? body.completedInstances : [],
     updatedAt: new Date().toISOString(),
   }
@@ -114,7 +148,7 @@ async function updateProfile(req, res, next) {
     const country = value(req.body, 'country', existing.country || 'South Africa') || 'South Africa'
     const idNumber = value(req.body, 'idNumber', existing.idNumber)
     if (entityType === 'Individual' && !idNumber) return next(errors.badRequest('Enter the 13-digit South African ID number for this individual.', 'SA_ID_REQUIRED'))
-    if (entityType === 'Individual' && !isValidSaId(idNumber)) return next(errors.badRequest('Enter a valid 13-digit South African ID number.', 'INVALID_SA_ID'))
+    if (idNumber && !isValidSaId(idNumber)) return next(errors.badRequest('Enter a valid 13-digit South African ID number.', 'INVALID_SA_ID'))
     if (country === 'South Africa' && businessPhone && !/^(?:\+27|0)\d{9}$/.test(businessPhone.replace(/[\s()-]/g, ''))) return next(errors.badRequest('Enter a valid South African telephone number.', 'INVALID_SA_TELEPHONE'))
     if (country === 'South Africa' && value(req.body, 'postalCode', existing.postalCode) && !/^\d{4}$/.test(value(req.body, 'postalCode', existing.postalCode))) return next(errors.badRequest('Enter a four-digit South African postal code.', 'INVALID_POSTAL_CODE'))
     const hasCipcRegistration = entityType === 'Company' || entityType === 'Close corporation'
@@ -273,7 +307,7 @@ async function createCounselRequest(req, res, next) {
   } catch (e) { next(e) }
 }
 
-// Mandatory review gate for Founders' Agreement & IP Assignment. A draft key
+// Mandatory public-funding review gate. A draft key
 // makes retries for the same wizard instance idempotent while still allowing
 // separate agreement drafts to create their own reviews.
 async function createPublicFundingReview(req, res, next) {
@@ -310,7 +344,7 @@ async function createPublicFundingReview(req, res, next) {
     const submittedAt = new Date().toISOString()
     const request = {
       requestId,
-      subject: "Founders' Agreement & IP Assignment - Publicly Funded IP Review",
+      subject: req.body.subject || "Founders' Agreement & IP Assignment - Publicly Funded IP Review",
       fromUser: req.body.fromUser || 'Founder',
       userEmail,
       company: req.body.company || 'Founder company',
@@ -320,8 +354,10 @@ async function createPublicFundingReview(req, res, next) {
       reviewStatus: 'pending',
       reviewGate: 'founders_public_funding',
       reviewDraftKey,
-      relatedWizard: 'founder-agreement',
-      description: 'Mandatory review before generating a Founders\' Agreement & IP Assignment containing publicly funded IP.',
+      relatedWizard: req.body.related_wizard || req.body.relatedWizard || 'founder-agreement',
+      description: req.body.related_wizard === 'founder-employment' || req.body.relatedWizard === 'founder-employment'
+        ? 'Mandatory review before generating a Founder Employment Contract containing publicly funded IP.'
+        : 'Mandatory review before generating a Founders\' Agreement & IP Assignment containing publicly funded IP.',
       wizardData,
       attachments: [],
       assignedBy: null,

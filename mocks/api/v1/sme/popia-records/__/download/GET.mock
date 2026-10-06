@@ -1,0 +1,14 @@
+HTTP/1.1 200 OK POPIA records document download
+Content-Type: application/json
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS
+Access-Control-Allow-Headers: Content-Type, Authorization
+
+{
+  "success": true,
+  "data": {
+    "downloadUrl": "https://mock-storage.startuplegal.co.za/popia-records-kit.pdf",
+    "expiresAt": "{{now}}",
+    "format": "pdf"
+  }
+}

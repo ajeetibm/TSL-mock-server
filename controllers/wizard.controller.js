@@ -13,7 +13,9 @@
 const { mockState } = require('../mock-state')
 const { normalizeEmail } = require('../services/authService')
 
-const VALID_TYPES = ['nda', 'employment', 'privacy-policy', 'founder-agreement', 'sla']
+const { validateRefundsPolicy } = require('./refundsPolicy.controller')
+
+const VALID_TYPES = ['nda', 'employment', 'privacy-policy', 'founder-agreement', 'sla', 'share-certificate', 'board-resolution', 'founder-employment-contract', 'popia-records', 'refunds-policy']
 
 function validateAddress(prefix, addr = {}) {
   const missing = []
@@ -253,6 +255,101 @@ function validateSla(data = {}) {
   return missing.length ? { message: `Missing required Service Level Agreement fields: ${[...new Set(missing)].join(', ')}` } : null
 }
 
+function validateShareCertificate(data = {}) {
+  const missing = []
+  const hasText = (v) => String(v || '').trim().length > 0
+  const required = ['company', 'shareholder', 'share_class', 'share_count', 'cert_number', 'issue_date', 'consideration_type', 'fully_paid', 'resolution']
+  for (const key of required) {
+    if (!hasText(data[key])) missing.push(key)
+  }
+  if (String(data.shareholder || '').trim() === '__new') {
+    for (const key of ['new_party_type', 'new_party_name', 'new_party_idnum', 'new_party_email']) {
+      if (!hasText(data[key])) missing.push(key)
+    }
+  }
+  if (data.consideration_type === 'cash') {
+    const amt = parseFloat(data.consideration_amount)
+    if (isNaN(amt) || amt <= 0) missing.push('consideration_amount')
+  } else if (data.consideration_type === 'noncash') {
+    if (!hasText(data.consideration_description)) missing.push('consideration_description')
+  }
+  if (!Array.isArray(data.signatories) || data.signatories.length === 0) missing.push('signatories')
+  return missing.length ? { message: `Missing required Share Certificate fields: ${[...new Set(missing)].join(', ')}` } : null
+}
+
+function validateBoardResolution(data = {}) {
+  const missing = []
+  const hasText = (v) => String(v || '').trim().length > 0
+  for (const key of ['company', 'resolution_type', 'subject', 'wording', 'meeting_type', 'meeting_date']) {
+    if (!hasText(data[key])) missing.push(key)
+  }
+  if (data.meeting_type === 'meeting') {
+    for (const key of ['meeting_time', 'meeting_venue', 'chairperson']) if (!hasText(data[key])) missing.push(key)
+  }
+  if (!Array.isArray(data.attendees)   || data.attendees.length   === 0) missing.push('attendees')
+  if (!Array.isArray(data.signatories) || data.signatories.length === 0) missing.push('signatories')
+  for (const key of ['votes_for', 'votes_against', 'votes_abstain']) {
+    if (!Number.isFinite(Number(data[key])) || Number(data[key]) < 0) missing.push(key)
+  }
+  return missing.length ? { message: `Missing required Board Resolution fields: ${[...new Set(missing)].join(', ')}` } : null
+}
+
+
+function validatePopiaRecords(data = {}) {
+  const missing = []
+  const hasText = (value) => String(value || '').trim().length > 0
+  const hasItems = (value) => Array.isArray(value) && value.length > 0
+  const requiredShared = [
+    'inheritedConfirmed', 'responsibleParty', 'infoOfficer', 'privacyEmail', 'domains',
+    'piCategories', 'childrenData', 'purposes', 'purposesBasis', 'retention',
+    'thirdParties', 'crossBorder', 'directMarketing', 'cookies', 'cookieConsent',
+    'dsrChannel', 'dsrDays', 'securitySummary', 'effectiveDate',
+  ]
+  for (const key of requiredShared) {
+    const value = data[key]
+    if (value === undefined || value === null || value === '' || value === false || (Array.isArray(value) && value.length === 0)) missing.push(key)
+  }
+  if (!data.inheritedConfirmed) missing.push('inheritedConfirmed')
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(data.privacyEmail || '').trim())) missing.push('privacyEmail')
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(data.dsrChannel || '').trim())) missing.push('dsrChannel')
+  if (!Number.isInteger(Number(data.dsrDays)) || Number(data.dsrDays) < 1) missing.push('dsrDays')
+  if (Array.isArray(data.specialPi) && data.specialPi.length && !hasText(data.specialPiBasis)) missing.push('specialPiBasis')
+  if (data.childrenData === 'Yes' && !hasText(data.childrenConsent)) missing.push('childrenConsent')
+  if (data.crossBorder === 'Yes' && (!hasText(data.crossBorderCountries) || !hasText(data.transferBasis))) missing.push('transferBasis')
+
+  if (!hasItems(data.activities)) missing.push('activities')
+  for (const [index, activity] of (data.activities || []).entries()) {
+    for (const key of ['activity', 'purpose', 'basis', 'recipients', 'retention']) if (!hasText(activity?.[key])) missing.push(`activities[${index}].${key}`)
+    if (!hasItems(activity?.categories)) missing.push(`activities[${index}].categories`)
+    if (!hasItems(activity?.security)) missing.push(`activities[${index}].security`)
+    if (activity?.crossBorder !== 'Yes' && activity?.crossBorder !== 'No') missing.push(`activities[${index}].crossBorder`)
+    if (activity?.crossBorder === 'Yes' && !hasText(data.transferBasis)) {
+      return { message: 'A cross-border processing entry cannot be generated without an adequate transfer basis.', gate: { type: 'block', fieldKey: 'transferBasis', reason: 'Cross-border transfer without an adequate basis.' } }
+    }
+  }
+
+  if (!hasItems(data.operators)) missing.push('operators')
+  for (const [index, operator] of (data.operators || []).entries()) {
+    for (const key of ['name', 'service', 'country', 'hasAgreement']) if (!hasText(operator?.[key])) missing.push(`operators[${index}].${key}`)
+    if (operator?.hasAgreement !== 'Yes' && operator?.hasAgreement !== 'No') missing.push(`operators[${index}].hasAgreement`)
+  }
+  if (data.generateOperatorAgreements !== 'Yes' && data.generateOperatorAgreements !== 'No') missing.push('generateOperatorAgreements')
+
+  const validateContact = (contact, prefix) => {
+    for (const key of ['fullNames', 'idNumber', 'street', 'streetName', 'suburb', 'city', 'province', 'postalCode', 'country', 'email']) if (!hasText(contact?.[key])) missing.push(`${prefix}.${key}`)
+    if (hasText(contact?.idNumber) && !isValidSaId(String(contact.idNumber).trim())) missing.push(`${prefix}.idNumber`)
+    if (hasText(contact?.postalCode) && !/^\d{4}$/.test(String(contact.postalCode).trim())) missing.push(`${prefix}.postalCode`)
+    if (hasText(contact?.email) && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(contact.email).trim())) missing.push(`${prefix}.email`)
+  }
+  validateContact(data.breachOwner, 'breachOwner')
+  validateContact(data.breachEscalation, 'breachEscalation')
+  if (!hasText(data.dsrOwner)) missing.push('dsrOwner')
+  if (!hasItems(data.securityMeasures)) missing.push('securityMeasures')
+  if (data.paiaManual !== 'Yes' && data.paiaManual !== 'No') missing.push('paiaManual')
+
+  return missing.length ? { message: `Missing or invalid POPIA Records Starter Kit fields: ${[...new Set(missing)].join(', ')}` } : null
+}
+
 function draftKey(email, wizardType) {
   return `${normalizeEmail(email)}::${wizardType}`
 }
@@ -287,11 +384,15 @@ async function completeWizard(req, res, next) {
       return res.status(400).json({ success: false, message: `Unknown wizard type: ${wizardType}` })
     const payload = req.body.data || req.body
     const validationError =
-      wizardType === 'employment' ? validateEmploymentOffer(payload) :
-      wizardType === 'nda'        ? validateNda(payload)             :
-      wizardType === 'privacy-policy' ? validatePrivacyPolicy(payload) :
-      wizardType === 'sla' ? validateSla(payload) :
-      wizardType === 'founder-agreement' ? validateFounderAgreement(payload) : null
+      wizardType === 'employment'        ? validateEmploymentOffer(payload)  :
+      wizardType === 'nda'               ? validateNda(payload)              :
+      wizardType === 'privacy-policy'    ? validatePrivacyPolicy(payload)    :
+      wizardType === 'sla'               ? validateSla(payload)              :
+      wizardType === 'founder-agreement' ? validateFounderAgreement(payload) :
+      wizardType === 'share-certificate'  ? validateShareCertificate(payload)  :
+      wizardType === 'board-resolution'   ? validateBoardResolution(payload)   :
+      wizardType === 'popia-records'      ? validatePopiaRecords(payload)      :
+      wizardType === 'refunds-policy'     ? validateRefundsPolicy(payload)     : null
     if (validationError) return res.status(422).json({ success: false, ...validationError })
     const email = req.user?.email || 'thabo@company.co.za'
     const key = draftKey(email, wizardType)

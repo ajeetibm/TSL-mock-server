@@ -1,0 +1,56 @@
+HTTP/1.1 200 OK POPIA Records kit submitted
+Content-Type: application/json
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS
+Access-Control-Allow-Headers: Content-Type, Authorization
+
+{
+  "success": true,
+  "data": {
+    "blueprintId": "popia-records-starter-kit",
+    "instanceId": "popia_{{guid}}",
+    "status": "completed",
+    "completedAt": "{{now}}",
+    "documents": [
+      {
+        "type": "processing-register",
+        "label": "Processing Register",
+        "format": "pdf",
+        "downloadUrl": "/api/v1/sme/popia-records/{{guid}}/download/processing-register"
+      },
+      {
+        "type": "operator-agreement",
+        "label": "Operator Agreement",
+        "format": "pdf",
+        "downloadUrl": "/api/v1/sme/popia-records/{{guid}}/download/operator-agreement"
+      },
+      {
+        "type": "breach-procedure",
+        "label": "Breach Response Procedure",
+        "format": "pdf",
+        "downloadUrl": "/api/v1/sme/popia-records/{{guid}}/download/breach-procedure"
+      },
+      {
+        "type": "request-procedure",
+        "label": "Data Subject Request Procedure",
+        "format": "pdf",
+        "downloadUrl": "/api/v1/sme/popia-records/{{guid}}/download/request-procedure"
+      }
+    ],
+    "evidencePack": {
+      "blueprintId": "popia-records-starter-kit",
+      "schemaVersion": "2.0",
+      "templateVersion": "1.0",
+      "generationTimestamp": "{{now}}",
+      "inputFingerprint": "sha256-mock-fingerprint-popia",
+      "outputFingerprints": [
+        "sha256-mock-output-register",
+        "sha256-mock-output-operator",
+        "sha256-mock-output-breach",
+        "sha256-mock-output-request"
+      ]
+    },
+    "runsConsumed": 3,
+    "runsRemaining": 7
+  }
+}
