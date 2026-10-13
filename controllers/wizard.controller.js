@@ -15,7 +15,7 @@ const { normalizeEmail } = require('../services/authService')
 
 const { validateRefundsPolicy } = require('./refundsPolicy.controller')
 
-const VALID_TYPES = ['nda', 'employment', 'privacy-policy', 'founder-agreement', 'sla', 'share-certificate', 'board-resolution', 'founder-employment-contract', 'popia-records', 'refunds-policy']
+const VALID_TYPES = ['nda', 'employment', 'privacy-policy', 'founder-agreement', 'sla', 'share-certificate', 'board-resolution', 'founder-employment-contract', 'popia-records', 'refunds-policy', 'contractor-agreement']
 
 function validateAddress(prefix, addr = {}) {
   const missing = []
@@ -295,6 +295,87 @@ function validateBoardResolution(data = {}) {
 }
 
 
+function validateContractorAgreement(data = {}) {
+  const missing = []
+  const hasText = (value) => String(value || '').trim().length > 0
+  const positiveWhole = (value) => /^[1-9]\d*$/.test(String(value || '').trim())
+  const validDate = (value) => {
+    const date = String(value || '').trim()
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return false
+    const parsed = new Date(`${date}T00:00:00Z`)
+    return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === date
+  }
+  const emailOk = (value) => /^\S+@\S+\.\S+$/.test(String(value || '').trim())
+  const contractorTypes = ['A company', 'A close corporation', 'A sole proprietor', 'An individual']
+  const yesNo = ['Yes', 'No']
+  const provinces = ['Eastern Cape', 'Free State', 'Gauteng', 'KwaZulu-Natal', 'Limpopo', 'Mpumalanga', 'Northern Cape', 'North West', 'Western Cape']
+  const countries = ['South Africa', 'Botswana', 'Eswatini', 'Lesotho', 'Namibia', 'Zimbabwe', 'United Kingdom', 'United States', 'Other']
+  const signatoryCapacities = ['Director', 'Member', 'Trustee', 'Partner', 'Authorised representative']
+  const person = ['A sole proprietor', 'An individual'].includes(data.contractorType)
+  const entity = ['A company', 'A close corporation'].includes(data.contractorType)
+
+  if (!hasText(data.clientCompanyId) || !hasText(data.clientCompanyName) || data.clientCompanyConfirmed !== true) missing.push('clientCompanyId (confirmed Company Snapshot link)')
+  if (!contractorTypes.includes(data.contractorType)) missing.push('contractorType')
+  if (entity) {
+    for (const key of ['contractorLegalName', 'contractorRegNumber', 'contractorSignatoryName', 'contractorSignatoryCapacity', 'performerName']) {
+      if (!hasText(data[key])) missing.push(key)
+    }
+    if (hasText(data.contractorSignatoryCapacity) && !signatoryCapacities.includes(data.contractorSignatoryCapacity)) missing.push('contractorSignatoryCapacity')
+    if (hasText(data.contractorRegNumber) && !/^\d{4}\/\d{6}\/\d{2}$/.test(data.contractorRegNumber)) missing.push('contractorRegNumber (format YYYY/NNNNNN/NN)')
+  }
+  if (person) {
+    if (!hasText(data.contractorFullNames)) missing.push('contractorFullNames')
+    if (!isValidSaId(String(data.contractorIdNumber || '').trim())) missing.push('contractorIdNumber (valid 13-digit South African ID)')
+  }
+  if (person || entity) {
+    for (const key of ['addressStreetNumber', 'addressStreetName', 'addressSuburb', 'addressCity', 'addressPostalCode', 'addressCountry', 'contractorEmail']) {
+      if (!hasText(data[key])) missing.push(key)
+    }
+    if (!emailOk(data.contractorEmail)) missing.push('contractorEmail (valid email)')
+    if (hasText(data.addressCountry) && !countries.includes(data.addressCountry)) missing.push('addressCountry')
+    if (data.addressCountry === 'South Africa') {
+      if (!provinces.includes(data.addressProvince)) missing.push('addressProvince')
+      if (!/^\d{4}$/.test(String(data.addressPostalCode || ''))) missing.push('addressPostalCode (4 digits)')
+    }
+  }
+
+  const classificationKeys = ['ctrlHours', 'ctrlMethod', 'exclusive', 'clientTools', 'integrated', 'substitution', 'overThreeMonths']
+  for (const key of classificationKeys) if (!yesNo.includes(data[key])) missing.push(key)
+  const employmentMatches = [
+    data.ctrlHours === 'Yes', data.ctrlMethod === 'Yes', data.exclusive === 'Yes',
+    data.clientTools === 'Yes', data.integrated === 'Yes', data.substitution === 'No',
+    data.overThreeMonths === 'Yes',
+  ].filter(Boolean).length
+  if (employmentMatches >= 3) {
+    return {
+      message: 'Several answers suggest a possible employment relationship. Do not generate a Contractor Agreement; review the facts and use an employment Blueprint.',
+      gate: { type: 'block', fieldKey: 'classification', reason: 'Three or more answers suggest employee-like control or integration.', employmentMatches },
+    }
+  }
+
+  for (const key of ['services', 'feeBasis', 'feeAmount', 'invoiceFrequency', 'paymentDays', 'startDate', 'endDate', 'terminationDays']) {
+    if (!hasText(data[key])) missing.push(key)
+  }
+  if (data.feeBasis && !['Fixed fee', 'Hourly', 'Daily', 'Per milestone'].includes(data.feeBasis)) missing.push('feeBasis')
+  if (data.invoiceFrequency && !['On completion', 'Monthly', 'Per milestone'].includes(data.invoiceFrequency)) missing.push('invoiceFrequency')
+  if (hasText(data.feeAmount) && (!/^(?:\d+)(?:\.\d{1,2})?$/.test(String(data.feeAmount)) || !Number.isFinite(Number(data.feeAmount)) || Number(data.feeAmount) <= 0)) missing.push('feeAmount (positive amount)')
+  if (hasText(data.paymentDays) && !positiveWhole(data.paymentDays)) missing.push('paymentDays (positive whole number)')
+  if (hasText(data.terminationDays) && !positiveWhole(data.terminationDays)) missing.push('terminationDays (positive whole number)')
+  if (!validDate(data.startDate)) missing.push('startDate (valid date)')
+  if (!validDate(data.endDate) || (validDate(data.startDate) && validDate(data.endDate) && data.endDate <= data.startDate)) missing.push('endDate (valid date after start date)')
+
+  if (!['Assigned to the client', 'Licensed to the client', 'Retained by the contractor'].includes(data.ipTreatment)) missing.push('ipTreatment')
+  if (!yesNo.includes(data.confidentiality)) missing.push('confidentiality')
+  if (data.insurance !== '' && !yesNo.includes(data.insurance)) missing.push('insurance')
+  if (data.insurance === 'Yes') {
+    if (!hasText(data.insuranceType)) missing.push('insuranceType')
+    if (!/^(?:\d+)(?:\.\d{1,2})?$/.test(String(data.insuranceCover || '')) || !Number.isFinite(Number(data.insuranceCover)) || Number(data.insuranceCover) <= 0) missing.push('insuranceCover')
+  }
+  if (data.taxConfirmation !== true) missing.push('taxConfirmation')
+
+  return missing.length ? { message: `Missing or invalid Contractor Agreement fields: ${[...new Set(missing)].join(', ')}` } : null
+}
+
 function validatePopiaRecords(data = {}) {
   const missing = []
   const hasText = (value) => String(value || '').trim().length > 0
@@ -392,7 +473,8 @@ async function completeWizard(req, res, next) {
       wizardType === 'share-certificate'  ? validateShareCertificate(payload)  :
       wizardType === 'board-resolution'   ? validateBoardResolution(payload)   :
       wizardType === 'popia-records'      ? validatePopiaRecords(payload)      :
-      wizardType === 'refunds-policy'     ? validateRefundsPolicy(payload)     : null
+      wizardType === 'refunds-policy'     ? validateRefundsPolicy(payload)     :
+      wizardType === 'contractor-agreement' ? validateContractorAgreement(payload) : null
     if (validationError) return res.status(422).json({ success: false, ...validationError })
     const email = req.user?.email || 'thabo@company.co.za'
     const key = draftKey(email, wizardType)
@@ -412,4 +494,4 @@ async function deleteDraft(req, res, next) {
   } catch (e) { next(e) }
 }
 
-module.exports = { getDraft, saveDraft, completeWizard, deleteDraft }
+module.exports = { getDraft, saveDraft, completeWizard, deleteDraft, validateContractorAgreement }
